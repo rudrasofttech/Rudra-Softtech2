@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Studio</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="codemirror-5.49.2/lib/codemirror.css" rel="stylesheet" />
+    <!--<link href="codemirror-5.49.2/doc/docs.css" rel="stylesheet" />-->
+    <script src="codemirror-5.49.2/lib/codemirror.js"></script>
+    <script src="codemirror-5.49.2/mode/xml/xml.js"></script>
+    <script src="codemirror-5.49.2/mode/javascript/javascript.js"></script>
+    <script src="codemirror-5.49.2/mode/css/css.js"></script>
+    <script src="codemirror-5.49.2/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="codemirror-5.49.2/addon/edit/matchbrackets.js"></script>
+    <script src="https://kit.fontawesome.com/e3c61653ca.js"></script>
+    <style>
+        .direxpheightfull {
+            height: calc(100vh - 56px);
+        }
+
+        .direxpheighthalf {
+            height: calc(50vh - 50px);
+        }
+
+        .show {
+            display: block;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .codeeditor {
+            width: 100%;
+            height: calc(100vh - 100px);
+            border-color: #DEE2E6;
+            border-top: none;
+        }
+
+        .CodeMirror {
+            height: calc(100vh - 100px);
+        }
+
+        .filechanged:after {
+            content: "*";
+        }
+
+        .nav-link {
+            padding: 3px;
+        }
+
+        .tabclose {
+            padding-left: 15px;
+        }
+
+        a.nav-link.selected {
+            border: 2px solid;
+        }
+    </style>
+</head>
+<body ng-app="Studio">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Studio</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#"><i class="fas fa-folder-plus"></i> New Folder</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#"><i class="far fa-file-code"></i> New File</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#"><i class="far fa-save"></i> Save</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#"><i class="far fa-save"></i> Save All</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-lg-2 d-none d-md-block bg-light sidebar" ng-controller="dirCtrl">
+                <div class="sidebar-sticky">
+                    <div style="overflow-y:auto;" ng-class="{'direxpheightfull' : !showProperties, 'direxpheighthalf' : showProperties }">
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">New</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#"><i class="fas fa-folder-plus"></i> Folder</a>
+                                    <a class="dropdown-item" href="#"><i class="far fa-file-code"></i> File</a>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#"></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Link</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+                            </li>
+                        </ul>
+                        <ul class="nav flex-column">
+                            <li class="nav-item" ng-repeat="node in root.Subitems" ng-include="'tree_view'">
+
+                            </li>
+                        </ul>
+                    </div>
+                    <div style="overflow-y:auto;" class="direxpheighthalf" ng-class="{ 'show' : showProperties, 'hide' : !showProperties}">
+                        <ul class="list-group">
+                            
+                            <li class="list-group-item">Created on {{ selectedItem.CreateDate }}</li>
+                            <li class="list-group-item">Last Accessed on {{ selectedItem.LastAccessDate }}</li>
+                            <li class="list-group-item">Last Written on {{ selectedItem.LastWriteDate }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <main role="main" class="col-lg-10">
+                <div ng-controller="editAreaCtrl">
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item" ng-attr-id="{{f.Name}}" ng-repeat="f in openFiles">
+                            <a class="nav-link filetab-link" ng-class="{ 'active' : f.IsActive, 'filechanged' : f.IsChanged }" ng-click="setTab($index)">
+                                {{ f.Name }}
+                                <button type="button" class="close tabclose" aria-label="Close" ng-click="closeTab(f.Path)">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </a>
+
+                        </li>
+                    </ul>
+                    <div ng-class="{ 'show' : f.IsActive, 'hide' : !f.IsActive }" ng-repeat="f in openFiles">
+                        <textarea class="codeeditor" ng-attr-index="{{ $index }}" ng-attr-id="{{'editor' + $index}}">{{ f.Data }}</textarea>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script type="text/ng-template" id="tree_view">
+        <a class="nav-link" href="#" ng-class="{ 'selected' : selectedItem.Path == node.Path }" ng-click="getDetail(node.Name, node.Path, node.IsFile, node.CreateDate, node.LastAccessDate, node.LastWriteDate)" ng-dblclick="openFile(node.Name, node.Path, node.IsFile)">
+            <i ng-class="{'far fa-folder' : !node.IsFile, 'far fa-file-code' : node.IsFile}"></i>  {{ node.Name }}
+        </a>
+        <ul>
+            <li ng-repeat="node in node.Subitems" ng-include="'tree_view'">
+            </li>
+        </ul>
+    </script>
+    <script>
+        var app = angular.module('Studio', []);
+        app.service('codeFilesService', function ($http) {
+            var openFiles = [], selectedItem = null, rootDirectory = null, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories;
+
+            addToOpenFiles = function (obj) {
+                if (obj.IsFile) {
+                    var alreadyOpen = false;
+                    for (var k in openFiles) {
+                        if (openFiles[k].Path == obj.Path) {
+                            openFiles[k].IsActive = true;
+                            alreadyOpen = true;
+                        } else {
+                            openFiles[k].IsActive = false;
+                        }
+                    }
+                    if (!alreadyOpen) {
+                        openFiles.push({ Name: obj.Name, Path: obj.Path, Data: "", IsActive: true, IsChanged: false });
+                        document.title = "Studio - " + obj.Name;
+                        $http.get("filedata.ashx?path=" + obj.Path).then(function (response) {
+                            for (var k in openFiles) {
+
+                                if (openFiles[k].Path == obj.Path) {
+                                    openFiles[k].Data = response.data;
+                                    var editor = CodeMirror.fromTextArea(document.getElementById("editor" + k), {
+                                        lineNumbers: true,
+                                        mode: "text/html",
+                                        indentUnit: 4,
+                                        indentWithTabs: true,
+                                        matchBrackets: true
+                                    });
+                                    editor.setValue(response.data);
+                                    editor.on('change', function (instance, obj) {
+                                        var index = parseInt(instance.getTextArea().getAttribute("index"));
+
+                                        openFiles[index].IsChanged = true;
+
+                                    });
+                                    return;
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+
+            getOpenFiles = function () {
+                return openFiles;
+            };
+
+            removeFromOpenFiles = function (path) {
+                for (var k in openFiles) {
+                    if (openFiles[k].Path == path) {
+                        openFiles.splice(k, 1);
+                        if (k == 0) {
+                            openFiles[0].IsActive = true;
+                        } else if (k >= openFiles.length) {
+                            openFiles[openFiles.length - 1].IsActive = true;
+                        } else {
+                            openFiles[k - 1].IsActive = true;
+                        }
+
+                        return;
+                    }
+                }
+            };
+
+            getDirectories = function () {
+                $http.get("directorylist.ashx").then(function (response) {
+                    rootDirectory = response.data;
+                });
+            };
+            return {
+                addToOpenFiles: addToOpenFiles,
+                getOpenFiles: getOpenFiles,
+                removeFromOpenFiles: removeFromOpenFiles,
+                selectedItem: selectedItem,
+                getDirectories: getDirectories
+            };
+        });
+        app.controller('dirCtrl', function ($scope, $http, codeFilesService) {
+            $scope.root = codeFilesService.getDirectories();
+            $scope.showProperties = false;
+            $scope.selectedItem = null;
+            $scope.getDetail = function (name, path, isFile, createDate, lastAccessDate, lastWriteDate) {
+                $scope.selectedItem = { Name: name, Path: path, IsFile: isFile, CreateDate: createDate, LastAccessDate: lastAccessDate, LastWriteDate: lastWriteDate }
+                codeFilesService.selectedItem = $scope.selectedItem;
+                $scope.showProperties = true;
+            }
+            $scope.openFile = function (name, path, isFile) {
+                $scope.selectedItem = null;
+                $scope.showProperties = false;
+                codeFilesService.addToOpenFiles({ Name: name, Path: path, IsFile: isFile });
+            }
+            
+        });
+        app.controller('editAreaCtrl', function ($scope, $http, codeFilesService) {
+            $scope.openFiles = codeFilesService.getOpenFiles();
+
+            $scope.setTab = function (index) {
+                for (var k in $scope.openFiles) {
+                    if (k == index) {
+                        $scope.openFiles[k].IsActive = true;
+                        document.title = "Studio - " + $scope.openFiles[k].Name;
+                    } else {
+                        $scope.openFiles[k].IsActive = false;
+                    }
+                }
+            };
+            $scope.closeTab = function (path) {
+                codeFilesService.removeFromOpenFiles(path);
+            };
+            $scope.setChanged = function (index) {
+                $scope.openFiles[index].IsChanged = true;
+            };
+        });
+    </script>
+</body>
+</html>
