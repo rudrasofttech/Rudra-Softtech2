@@ -11,7 +11,10 @@
     <script src="codemirror-5.49.2/mode/javascript/javascript.js"></script>
     <script src="codemirror-5.49.2/mode/css/css.js"></script>
     <script src="codemirror-5.49.2/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="codemirror-5.49.2/mode/htmlembedded/htmlembedded.js"></script>
     <script src="codemirror-5.49.2/addon/edit/matchbrackets.js"></script>
+
+    <script src="codemirror-5.49.2/addon/mode/multiplex.js"></script>
     <script src="https://kit.fontawesome.com/e3c61653ca.js"></script>
     <style>
         .direxpheightfull {
@@ -40,44 +43,82 @@
         .CodeMirror {
             height: calc(100vh - 100px);
         }
-
+        .filetab-link {
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor:pointer;
+        }
         .filechanged:after {
             content: "*";
         }
 
         .nav-link {
-            padding: 3px;
+            padding: 2px;
         }
 
         .tabclose {
-            padding-left: 15px;
+            margin-left: 10px;
         }
 
         a.nav-link.selected {
-            border: 2px solid;
+            border-left: 2px solid;
+        }
+
+        ul.folder, ul.folder ul {
+            margin: 0px;
+            padding: 0px;
+        }
+
+            ul.folder li {
+                list-style-type: none;
+                padding-left: 10px;
+            }
+
+            ul.folder > li > ul {
+                margin-left: 10px;
+            }
+
+        .directorytreeitem {
+            white-space: nowrap;
         }
     </style>
 </head>
 <body ng-app="Studio">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">Studio</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#"><i class="fas fa-folder-plus"></i> New Folder</a>
+                    <a class="nav-link" href="#" onclick="$('#folderModal').show();"><i class="fas fa-folder-plus"></i> New Folder</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#"><i class="far fa-file-code"></i> New File</a>
+                    <a class="nav-link" href="#" onclick="$('#fileModal').show();"><i class="far fa-file-code"></i> New File</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#"><i class="far fa-save"></i> Save</a>
+                    <a class="nav-link" ng-class="{ 'disabled' : $root.selectedItem.Path === '~'}" href="#" onclick="$('#renameModal').show();"><i class="far fa-edit"></i> Rename</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#"><i class="far fa-save"></i> Save All</a>
+                <li class="nav-item" ng-controller="saveFileCtrl">
+                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded}" ng-click="saveFile($root.activeEditorIndex)" href="#"><i class="far fa-save"></i> Save</a>
+                </li>
+                <li class="nav-item" ng-controller="saveFileCtrl">
+                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded}" ng-click="saveAll()" href="#"><i class="far fa-save"></i> Save All</a>
+                </li>
+                <li class="nav-item" ng-controller="deleteCtrl">
+                    <a class="nav-link" href="#" ng-class="{ 'disabled' : !$root.selectedItem.IsFile}" ng-click="delete()"><i class="far fa-trash-alt"></i> Delete</a>
+                </li>
+                <li class="nav-item dropdown" ng-controller="templateCtrl">
+                    <a class="nav-link dropdown-toggle" id="templateDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" ng-class="{ 'disabled' : !Enabled}"><i class="far fa-file-code"></i> Template</a>
+                    <div class="dropdown-menu" aria-labelledby="templateDropdown">
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                    </div>
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
@@ -90,55 +131,28 @@
         <div class="row">
             <nav class="col-lg-2 d-none d-md-block bg-light sidebar" ng-controller="dirCtrl">
                 <div class="sidebar-sticky">
-                    <div style="overflow-y:auto;" ng-class="{'direxpheightfull' : !showProperties, 'direxpheighthalf' : showProperties }">
-                        <ul class="nav">
-                            <li class="nav-item">
-                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">New</a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#"><i class="fas fa-folder-plus"></i> Folder</a>
-                                    <a class="dropdown-item" href="#"><i class="far fa-file-code"></i> File</a>
-                                </div>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#"></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Link</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-                            </li>
-                        </ul>
-                        <ul class="nav flex-column">
-                            <li class="nav-item" ng-repeat="node in root.Subitems" ng-include="'tree_view'">
-
+                    <div style="overflow-y:auto;" class="direxpheightfull">
+                        <ul class="folder">
+                            <li ng-repeat="node in root.Subitems" ng-include="'tree_view'">
                             </li>
                         </ul>
                     </div>
-                    <div style="overflow-y:auto;" class="direxpheighthalf" ng-class="{ 'show' : showProperties, 'hide' : !showProperties}">
-                        <ul class="list-group">
-                            
-                            <li class="list-group-item">Created on {{ selectedItem.CreateDate }}</li>
-                            <li class="list-group-item">Last Accessed on {{ selectedItem.LastAccessDate }}</li>
-                            <li class="list-group-item">Last Written on {{ selectedItem.LastWriteDate }}</li>
-                        </ul>
-                    </div>
+                    
                 </div>
             </nav>
             <main role="main" class="col-lg-10">
                 <div ng-controller="editAreaCtrl">
                     <ul class="nav nav-tabs">
-                        <li class="nav-item" ng-attr-id="{{f.Name}}" ng-repeat="f in openFiles">
-                            <a class="nav-link filetab-link" ng-class="{ 'active' : f.IsActive, 'filechanged' : f.IsChanged }" ng-click="setTab($index)">
-                                {{ f.Name }}
+                        <li class="nav-item" ng-attr-id="{{f.Name.replace('.', '') + '_tab'}}" ng-repeat="f in files">
+                            <a class="nav-link filetab-link" title="{{f.Name}}" ng-class="{ 'active' : f.IsActive, 'filechanged' : f.IsChanged }" ng-click="setTab($index)">
                                 <button type="button" class="close tabclose" aria-label="Close" ng-click="closeTab(f.Path)">
                                     <span aria-hidden="true">&times;</span>
-                                </button>
+                                </button>{{f.Name}}
                             </a>
-
+                            
                         </li>
                     </ul>
-                    <div ng-class="{ 'show' : f.IsActive, 'hide' : !f.IsActive }" ng-repeat="f in openFiles">
+                    <div ng-class="{ 'show' : f.IsActive, 'hide' : !f.IsActive }" ng-repeat="f in $root.openFiles">
                         <textarea class="codeeditor" ng-attr-index="{{ $index }}" ng-attr-id="{{'editor' + $index}}">{{ f.Data }}</textarea>
                     </div>
                 </div>
@@ -146,26 +160,112 @@
             </main>
         </div>
     </div>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <!-- Modal -->
+    <div class="modal" id="folderModal" ng-controller="newFolderCtrl">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="folderModalLabel">New Folder</h5>
+                    <button type="button" class="close" onclick="$('#folderModal').hide();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" ng-model="name" maxlength="50" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="saveFolder('createdir',name)">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="fileModal" ng-controller="newFileCtrl">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileModalLabel">New File</h5>
+                    <button type="button" class="close" onclick="$('#fileModal').hide();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" ng-model="name" maxlength="50" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="saveFile('createfile',name)">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="renameModal" ng-controller="renameCtrl">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fileModalLabel">Rename</h5>
+                    <button type="button" class="close" onclick="$('#renameModal').hide();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" maxlength="50" ng-model="name" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="rename()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
     <script type="text/ng-template" id="tree_view">
-        <a class="nav-link" href="#" ng-class="{ 'selected' : selectedItem.Path == node.Path }" ng-click="getDetail(node.Name, node.Path, node.IsFile, node.CreateDate, node.LastAccessDate, node.LastWriteDate)" ng-dblclick="openFile(node.Name, node.Path, node.IsFile)">
-            <i ng-class="{'far fa-folder' : !node.IsFile, 'far fa-file-code' : node.IsFile}"></i>  {{ node.Name }}
+        <a  class="nav-link directorytreeitem" href="#" title="{{ node.Name }}" ng-class="{ 'selected' : selectedItem.Path == node.Path }" ng-click="getDetail(node.Name, node.Path, node.IsFile, node.CreateDate, node.LastAccessDate, node.LastWriteDate)" ng-dblclick="openFile(node)">
+            <i ng-class="{'far fa-folder' : !node.IsFile, 'far fa-file-code' : node.IsFile}"></i> {{ node.Name }}
         </a>
-        <ul>
+        <ul ng-class="{ 'show' : node.Expanded, 'hide' : !node.Expanded }">
             <li ng-repeat="node in node.Subitems" ng-include="'tree_view'">
             </li>
         </ul>
     </script>
     <script>
         var app = angular.module('Studio', []);
-        app.service('codeFilesService', function ($http) {
-            var openFiles = [], selectedItem = null, rootDirectory = null, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories;
+        
+        app.service('codeFilesService', function ($rootScope, $http) {
+            var rootDirectory = { Name: "", Subitems: [] },
+                getChangedFilesIndex, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories, getOpenFile, updateOpenFile;
+
+            $rootScope.selectedItem = { Name: "", Path: "~", IsFile: false };
+
+            typeOfFileOpen = function (name) {
+                if (name.endsWith(".html")) {
+                    return "text/html";
+                } else if (name.endsWith(".cshtml")) {
+                    return "application/x-aspx";
+                } else if (name.endsWith(".css")) {
+                    return "text/css";
+                }
+                else if (name.endsWith(".js")) {
+                    return "text/javascript";
+                } else if (name.endsWith(".config") || name.endsWith(".xml")) {
+                    return "application/xml";
+                } else if (name.endsWith(".json")) {
+                    return "application/json";
+                } else if (name.endsWith(".cs")) {
+                    return "text/x-csharp";
+                } else if (name.endsWith(".vb")) {
+                    return "text/x-vb";
+                }
+            }
 
             addToOpenFiles = function (obj) {
+                if ($rootScope.openFiles == undefined) {
+                    $rootScope.openFiles = [];
+                }
                 if (obj.IsFile) {
+                    var openFiles = $rootScope.openFiles;
                     var alreadyOpen = false;
                     for (var k in openFiles) {
                         if (openFiles[k].Path == obj.Path) {
@@ -177,15 +277,17 @@
                     }
                     if (!alreadyOpen) {
                         openFiles.push({ Name: obj.Name, Path: obj.Path, Data: "", IsActive: true, IsChanged: false });
+                        $rootScope.activeEditorIndex = openFiles.length - 1;
                         document.title = "Studio - " + obj.Name;
-                        $http.get("filedata.ashx?path=" + obj.Path).then(function (response) {
+                        $http.get("studioworker.ashx?action=getdata&path=" + obj.Path).then(function (response) {
+                            var openFiles = $rootScope.openFiles;
                             for (var k in openFiles) {
 
                                 if (openFiles[k].Path == obj.Path) {
-                                    openFiles[k].Data = response.data;
+                                    //openFiles[k].Data = response.data;
                                     var editor = CodeMirror.fromTextArea(document.getElementById("editor" + k), {
                                         lineNumbers: true,
-                                        mode: "text/html",
+                                        mode: typeOfFileOpen(openFiles[k].Name),
                                         indentUnit: 4,
                                         indentWithTabs: true,
                                         matchBrackets: true
@@ -193,10 +295,11 @@
                                     editor.setValue(response.data);
                                     editor.on('change', function (instance, obj) {
                                         var index = parseInt(instance.getTextArea().getAttribute("index"));
-
-                                        openFiles[index].IsChanged = true;
-
+                                        $rootScope.openFiles[index].IsChanged = true;
+                                        getChangedFilesIndex();
                                     });
+                                    openFiles[k].Editor = editor;
+                                    $rootScope.$broadcast('openFilesUpdate');
                                     return;
                                 }
                             }
@@ -204,12 +307,93 @@
                     }
                 }
             };
-
-            getOpenFiles = function () {
-                return openFiles;
+            getDirectories = function () {
+                $http.get("studioworker.ashx?action=dirlist").then(function (response) {
+                    $rootScope.rootDirectory = response.data;
+                    $rootScope.$broadcast('dirReloaded');
+                });
             };
+            getOpenFiles = function () {
+                return $rootScope.openFiles;
+            };
+            getOpenFile = function (index) {
+                if (index < $rootScope.openFiles.length) {
+                    return $rootScope.openFiles[index];
+                } else {
+                    return null;
+                }
+            }
 
+            addItemToTree = function (obj, root, addTo) {
+                if (addTo.Path == root.Path) {
+                    root.Subitems.push(obj);
+                    $rootScope.$broadcast('dirReloaded');
+                    return;
+                }
+                for (var k in root.Subitems) {
+                    if (addTo.Path == root.Subitems[k].Path) {
+                        root.Subitems[k].Subitems.push(obj);
+                        $rootScope.$broadcast('dirReloaded');
+                        return;
+                    }
+                    addItemToTree(obj, root.Subitems[k], addTo);
+                }
+
+            }
+
+            removeItemFromTree = function (obj, root) {
+                for (var k in root.Subitems) {
+                    if (obj.Path == root.Subitems[k].Path) {
+                        root.Subitems.splice(k, 1);
+                        $rootScope.$broadcast('dirReloaded');
+                        return;
+                    }
+                    removeItemFromTree(obj, root.Subitems[k]);
+                }
+
+            }
+            updateItemFromTree = function (s, t, root) {
+                for (var k in root.Subitems) {
+                    if (s.Path == root.Subitems[k].Path) {
+                        root.Subitems[k].Name = t.Name;
+                        root.Subitems[k].Path = t.Path;
+                        root.Subitems[k].IsFile = t.IsFile;
+                        $rootScope.$broadcast('dirReloaded');
+                        return;
+                    }
+                    updateItemFromTree(s, t, root.Subitems[k]);
+                }
+            }
+            getChangedFilesIndex = function () {
+                var changedFilesIndex = [];
+                $rootScope.saveNeeded = false;
+                for (var k in $rootScope.openFiles) {
+                    if ($rootScope.openFiles[k].IsChanged) {
+                        $rootScope.saveNeeded = true;
+                        changedFilesIndex.push(k);
+                    }
+                }
+
+                $rootScope.changedFilesIndex = changedFilesIndex;
+            };
+            getParentFromTree = function (obj, root) {
+                var result = null;
+                for (var k in root.Subitems) {
+                    if (root.Subitems[k].Path == obj.Path) {
+                        result = root;
+                        break;
+                    }
+                    result = getParentFromTree(obj, root.Subitems[k]);
+                    if (result != null) {
+                        break;
+                    }
+
+                }
+
+                return result;
+            }
             removeFromOpenFiles = function (path) {
+                var openFiles = $rootScope.openFiles;
                 for (var k in openFiles) {
                     if (openFiles[k].Path == path) {
                         openFiles.splice(k, 1);
@@ -225,55 +409,233 @@
                     }
                 }
             };
-
-            getDirectories = function () {
-                $http.get("directorylist.ashx").then(function (response) {
-                    rootDirectory = response.data;
-                });
+            ///
+            ///f is source obj
+            ///n is target obj
+            updateOpenFile = function (f, n) {
+                for (var k in $rootScope.openFiles) {
+                    if ($rootScope.openFiles[k].Path == f.Path) {
+                        if (n.IsActive !== undefined) {
+                            $rootScope.openFiles[k].IsActive = n.IsActive;
+                        }
+                        if (n.IsFile !== undefined) {
+                            $rootScope.openFiles[k].IsFile = n.IsFile;
+                        }
+                        if (n.Name !== undefined) {
+                            $rootScope.openFiles[k].Name = n.Name;
+                        }
+                        if (n.Path !== undefined) {
+                            $rootScope.openFiles[k].Path = n.Path;
+                        }
+                        if (n.IsChanged !== undefined) {
+                            $rootScope.openFiles[k].IsChanged = n.IsChanged;
+                        }
+                        $rootScope.$broadcast('openFilesUpdate');
+                        break;
+                    }
+                }
+            }
+            broadcastItem = function () {
+                $rootScope.$broadcast('broadCastData');
             };
+
             return {
                 addToOpenFiles: addToOpenFiles,
                 getOpenFiles: getOpenFiles,
                 removeFromOpenFiles: removeFromOpenFiles,
-                selectedItem: selectedItem,
-                getDirectories: getDirectories
+                rootDirectory: rootDirectory,
+                getDirectories: getDirectories,
+                getChangedFilesIndex: getChangedFilesIndex,
+                getOpenFile: getOpenFile,
+                updateOpenFile: updateOpenFile,
+                broadcastItem: broadcastItem,
+                addItemToTree: addItemToTree,
+                removeItemFromTree: removeItemFromTree,
+                getParentFromTree: getParentFromTree,
+                updateItemFromTree: updateItemFromTree
             };
         });
-        app.controller('dirCtrl', function ($scope, $http, codeFilesService) {
-            $scope.root = codeFilesService.getDirectories();
+        app.controller('dirCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+
+            $scope.root = $rootScope.rootDirectory;
+            codeFilesService.getDirectories();
+            $scope.$on('dirReloaded', function () {
+                $scope.root = $rootScope.rootDirectory;
+            });
             $scope.showProperties = false;
             $scope.selectedItem = null;
             $scope.getDetail = function (name, path, isFile, createDate, lastAccessDate, lastWriteDate) {
                 $scope.selectedItem = { Name: name, Path: path, IsFile: isFile, CreateDate: createDate, LastAccessDate: lastAccessDate, LastWriteDate: lastWriteDate }
-                codeFilesService.selectedItem = $scope.selectedItem;
+                $rootScope.selectedItem = $scope.selectedItem;
                 $scope.showProperties = true;
+                codeFilesService.broadcastItem();
             }
-            $scope.openFile = function (name, path, isFile) {
-                $scope.selectedItem = null;
+            $scope.openFile = function (n) {
                 $scope.showProperties = false;
-                codeFilesService.addToOpenFiles({ Name: name, Path: path, IsFile: isFile });
-            }
-            
-        });
-        app.controller('editAreaCtrl', function ($scope, $http, codeFilesService) {
-            $scope.openFiles = codeFilesService.getOpenFiles();
+                if (n.IsFile) {
+                    codeFilesService.addToOpenFiles({ Name: n.Name, Path: n.Path, IsFile: n.IsFile, Editor: null });
+                } else {
 
+                    setFolderEpanded($scope.root, n.Path);
+                }
+            }
+
+            function setFolderEpanded(r, path) {
+                for (var k in r.Subitems) {
+                    if (r.Subitems[k].Path == path) {
+                        r.Subitems[k].Expanded = !r.Subitems[k].Expanded;
+                        return;
+                    }
+                    setFolderEpanded(r.Subitems[k], path);
+                }
+            }
+
+        });
+        app.controller('editAreaCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+
+            $scope.files = $rootScope.openFiles;
+            $scope.$on('openFilesUpdate', function () {
+                $scope.files = $rootScope.openFiles;
+            });
             $scope.setTab = function (index) {
-                for (var k in $scope.openFiles) {
+                for (var k in $rootScope.openFiles) {
                     if (k == index) {
-                        $scope.openFiles[k].IsActive = true;
-                        document.title = "Studio - " + $scope.openFiles[k].Name;
+                        $rootScope.openFiles[k].IsActive = true;
+                        $rootScope.activeEditorIndex = k;
+                        document.title = "Studio - " + $rootScope.openFiles[k].Name;
                     } else {
-                        $scope.openFiles[k].IsActive = false;
+                        $rootScope.openFiles[k].IsActive = false;
                     }
                 }
             };
             $scope.closeTab = function (path) {
                 codeFilesService.removeFromOpenFiles(path);
             };
-            $scope.setChanged = function (index) {
-                $scope.openFiles[index].IsChanged = true;
-            };
+
+        });
+        app.controller('newFolderCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+            $scope.name = "";
+            $scope.saveFolder = function (a, p) {
+                var o = $rootScope.selectedItem;
+                //if current selected item is a file and choose parent folder of the file
+                if ($rootScope.selectedItem.IsFile) {
+                    o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                }
+                $http.post("studioworker.ashx?action=" + a + "&path=" + o.Path + "\\" + p, {}).then(function (data, status, headers, config) {
+                    var o = $rootScope.selectedItem;
+                    //need to do this again since the context changed
+                    //if current selected item is a file and choose parent folder of the file
+                    if ($rootScope.selectedItem.IsFile) {
+                        o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                    }
+                    codeFilesService.addItemToTree(data.data.item, $rootScope.rootDirectory, o);
+                    $('#folderModal').hide();
+                    $scope.name = "";
+                }, function (data, status, headers, config) {
+                    alert(data.data.message);
+                });
+            }
+        });
+        app.controller('newFileCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+            $scope.name = "";
+            $scope.saveFile = function (a, p) {
+                var o = $rootScope.selectedItem;
+                if ($rootScope.selectedItem.IsFile) {
+                    o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                }
+                $http.post("studioworker.ashx?action=" + a + "&path=" + o.Path + "\\" + p, {}).then(function (data, status, headers, config) {
+                    var o = $rootScope.selectedItem;
+                    if ($rootScope.selectedItem.IsFile) {
+                        o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                    }
+                    codeFilesService.addItemToTree(data.data.item, $rootScope.rootDirectory, o);
+                    codeFilesService.addToOpenFiles({ Name: data.data.item.Name, Path: data.data.item.Path, IsFile: data.data.item.IsFile, Editor: null });
+                    $('#fileModal').hide();
+                    $scope.name = "";
+                }, function (data, status, headers, config) {
+                    alert(data.data.message);
+                });
+            }
+        });
+
+        app.controller('renameCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+            $scope.name = $rootScope.selectedItem.Name;
+            $scope.$on('broadCastData', function () {
+                $scope.name = $rootScope.selectedItem.Name;
+            });
+            $scope.rename = function () {
+                var path = $rootScope.selectedItem.Path.substr(0, $rootScope.selectedItem.Path.length - $rootScope.selectedItem.Name.length) + $scope.name;
+
+                if ($rootScope.selectedItem.IsFile) {
+                    $http.post("studioworker.ashx?action=renamefile&spath=" + $rootScope.selectedItem.Path + "&tpath=" + path, {}).then(function (response, status, headers, config) {
+                        $('#renameModal').hide();
+                        if (response.data.result) {
+                            codeFilesService.updateItemFromTree(response.data.sitem, response.data.titem, $rootScope.rootDirectory);
+                            codeFilesService.updateOpenFile(response.data.sitem, { Name: response.data.titem.Name, Path: response.data.titem.Path })
+                        }
+                    }, function (response, status, headers, config) {
+                        alert(response.data.message);
+                    });
+                } else {
+                    $http.post("studioworker.ashx?action=renamedir&spath=" + $rootScope.selectedItem.Path + "&tpath=" + path, {}).then(function (response, status, headers, config) {
+                        $('#renameModal').hide();
+                        if (response.data.result) {
+                            codeFilesService.updateItemFromTree(response.data.sitem, response.data.titem, $rootScope.rootDirectory);
+                        }
+                    }, function (response, status, headers, config) {
+                        alert(response.data.message);
+                    });
+                }
+            }
+        });
+
+        app.controller('deleteCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+            $scope.delete = function () {
+                $http.post("studioworker.ashx?action=removefile&path=" + $rootScope.selectedItem.Path, {}).then(function (response, status, headers, config) {
+                    codeFilesService.removeItemFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                    $rootScope.selectedItem = { Name: "", Path: "~", IsFile: false };
+                }, function (response, status, headers, config) {
+                    alert(response.data.message);
+                });
+            }
+        });
+        app.controller('saveFileCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+
+            $scope.saveFile = function (i) {
+                var openf = codeFilesService.getOpenFile(i);
+                if (openf != null) {
+                    $http({
+                        method: 'POST',
+                        url: 'studioworker.ashx',
+                        data: "action=savedata&path=" + openf.Path + "&data=" + openf.Editor.getValue(),
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    }).then(function (response, status, headers, config) {
+
+                        codeFilesService.updateOpenFile({ Name: response.data.file.Name, Path: response.data.file.Path },{ Name: response.data.file.Name, Path: response.data.file.Path, IsChanged: false });
+                    });
+                }
+            }
+
+            $scope.saveAll = function () {
+                for (var k in $rootScope.openFiles) {
+                    if ($rootScope.openFiles[k].IsChanged) {
+                        $http({
+                            method: 'POST',
+                            url: 'studioworker.ashx',
+                            data: "action=savedata&path=" + $rootScope.openFiles[k].Path + "&data=" + $rootScope.openFiles[k].Editor.getValue(),
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                        }).then(function (response, status, headers, config) {
+                            console.log(response)
+                            codeFilesService.updateOpenFile({ Name: response.data.file.Name, Path: response.data.file.Path }, { Name: response.data.file.Name, Path: response.data.file.Path, IsChanged: false });
+                        });
+                    }
+                }
+            }
+        });
+
+        
+        app.controller('templateCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+            $scope.Enabled = true;
         });
     </script>
 </body>
