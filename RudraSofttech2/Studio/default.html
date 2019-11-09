@@ -43,14 +43,16 @@
         .CodeMirror {
             height: calc(100vh - 100px);
         }
+
         .filetab-link {
             max-width: 150px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            cursor:pointer;
+            cursor: pointer;
         }
-        .filechanged:after {
+
+        .filechanged:before {
             content: "*";
         }
 
@@ -114,10 +116,10 @@
                 <li class="nav-item dropdown" ng-controller="templateCtrl">
                     <a class="nav-link dropdown-toggle" id="templateDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" ng-class="{ 'disabled' : !Enabled}"><i class="far fa-file-code"></i> Template</a>
                     <div class="dropdown-menu" aria-labelledby="templateDropdown">
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Something else here</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('html')">HTML</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('aspx')">Web From</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('cs')">C#</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('cshtml')">Razor Content Page</a>
                     </div>
                 </li>
             </ul>
@@ -137,7 +139,7 @@
                             </li>
                         </ul>
                     </div>
-                    
+
                 </div>
             </nav>
             <main role="main" class="col-lg-10">
@@ -149,7 +151,7 @@
                                     <span aria-hidden="true">&times;</span>
                                 </button>{{f.Name}}
                             </a>
-                            
+
                         </li>
                     </ul>
                     <div ng-class="{ 'show' : f.IsActive, 'hide' : !f.IsActive }" ng-repeat="f in $root.openFiles">
@@ -222,7 +224,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
     <script type="text/ng-template" id="tree_view">
-        <a  class="nav-link directorytreeitem" href="#" title="{{ node.Name }}" ng-class="{ 'selected' : selectedItem.Path == node.Path }" ng-click="getDetail(node.Name, node.Path, node.IsFile, node.CreateDate, node.LastAccessDate, node.LastWriteDate)" ng-dblclick="openFile(node)">
+        <a class="nav-link directorytreeitem" href="#" title="{{ node.Name }}" ng-class="{ 'selected' : selectedItem.Path == node.Path }" ng-click="getDetail(node.Name, node.Path, node.IsFile, node.CreateDate, node.LastAccessDate, node.LastWriteDate)" ng-dblclick="openFile(node)">
             <i ng-class="{'far fa-folder' : !node.IsFile, 'far fa-file-code' : node.IsFile}"></i> {{ node.Name }}
         </a>
         <ul ng-class="{ 'show' : node.Expanded, 'hide' : !node.Expanded }">
@@ -232,7 +234,7 @@
     </script>
     <script>
         var app = angular.module('Studio', []);
-        
+
         app.service('codeFilesService', function ($rootScope, $http) {
             var rootDirectory = { Name: "", Subitems: [] },
                 getChangedFilesIndex, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories, getOpenFile, updateOpenFile;
@@ -279,6 +281,7 @@
                         openFiles.push({ Name: obj.Name, Path: obj.Path, Data: "", IsActive: true, IsChanged: false });
                         $rootScope.activeEditorIndex = openFiles.length - 1;
                         document.title = "Studio - " + obj.Name;
+                        $rootScope.$broadcast('editAreaActiveTabChanged');
                         $http.get("studioworker.ashx?action=getdata&path=" + obj.Path).then(function (response) {
                             var openFiles = $rootScope.openFiles;
                             for (var k in openFiles) {
@@ -435,6 +438,16 @@
                     }
                 }
             }
+
+            setOpenFileData = function (f, d) {
+                for (var k in $rootScope.openFiles) {
+                    if ($rootScope.openFiles[k].Path == f.Path) {
+                        $rootScope.openFiles[k].Editor.setValue(d);
+                        $rootScope.$broadcast('openFilesUpdate');
+                        break;
+                    }
+                }
+            }
             broadcastItem = function () {
                 $rootScope.$broadcast('broadCastData');
             };
@@ -452,7 +465,8 @@
                 addItemToTree: addItemToTree,
                 removeItemFromTree: removeItemFromTree,
                 getParentFromTree: getParentFromTree,
-                updateItemFromTree: updateItemFromTree
+                updateItemFromTree: updateItemFromTree,
+                setOpenFileData: setOpenFileData
             };
         });
         app.controller('dirCtrl', function ($scope, $rootScope, $http, codeFilesService) {
@@ -503,6 +517,7 @@
                         $rootScope.openFiles[k].IsActive = true;
                         $rootScope.activeEditorIndex = k;
                         document.title = "Studio - " + $rootScope.openFiles[k].Name;
+                        $rootScope.$broadcast('editAreaActiveTabChanged');
                     } else {
                         $rootScope.openFiles[k].IsActive = false;
                     }
@@ -549,7 +564,7 @@
                         o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
                     }
                     codeFilesService.addItemToTree(data.data.item, $rootScope.rootDirectory, o);
-                    codeFilesService.addToOpenFiles({ Name: data.data.item.Name, Path: data.data.item.Path, IsFile: data.data.item.IsFile, Editor: null });
+                    codeFilesService.addToOpenFiles({ Name: data.data.item.Name, Path: data.data.item.Path, IsFile: data.data.item.IsFile, Editor: null, IsActive : true, IsChanged : false });
                     $('#fileModal').hide();
                     $scope.name = "";
                 }, function (data, status, headers, config) {
@@ -593,12 +608,14 @@
             $scope.delete = function () {
                 $http.post("studioworker.ashx?action=removefile&path=" + $rootScope.selectedItem.Path, {}).then(function (response, status, headers, config) {
                     codeFilesService.removeItemFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
+                    codeFilesService.removeFromOpenFiles($rootScope.selectedItem.Path);
                     $rootScope.selectedItem = { Name: "", Path: "~", IsFile: false };
                 }, function (response, status, headers, config) {
                     alert(response.data.message);
                 });
             }
         });
+
         app.controller('saveFileCtrl', function ($scope, $rootScope, $http, codeFilesService) {
 
             $scope.saveFile = function (i) {
@@ -611,7 +628,14 @@
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     }).then(function (response, status, headers, config) {
 
-                        codeFilesService.updateOpenFile({ Name: response.data.file.Name, Path: response.data.file.Path },{ Name: response.data.file.Name, Path: response.data.file.Path, IsChanged: false });
+                        codeFilesService.updateOpenFile({
+                            Name: response.data.file.Name,
+                            Path: response.data.file.Path
+                        }, {
+                                Name: response.data.file.Name,
+                                Path: response.data.file.Path,
+                                IsChanged: false
+                            });
                     });
                 }
             }
@@ -633,9 +657,17 @@
             }
         });
 
-        
         app.controller('templateCtrl', function ($scope, $rootScope, $http, codeFilesService) {
-            $scope.Enabled = true;
+            $scope.Enabled = !isNaN($rootScope.activeEditorIndex);
+            $scope.$on('editAreaActiveTabChanged', function () {
+                $scope.Enabled = !isNaN($rootScope.activeEditorIndex);
+            });
+
+            $scope.setTemplate = function (n) {
+                $http.get("template/t." + n + ".txt").then(function (response) {
+                    codeFilesService.setOpenFileData($rootScope.openFiles[$rootScope.activeEditorIndex], response.data);
+                });
+            }
         });
     </script>
 </body>
