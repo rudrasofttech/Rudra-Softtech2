@@ -10,12 +10,30 @@ public class StudioWorker : IHttpHandler
 {
     HttpContext currentContext;
     string action = "";
+    string role = "";
+
     JavaScriptSerializer s = new JavaScriptSerializer();
 
     public void ProcessRequest(HttpContext context)
     {
         currentContext = context;
         context.Response.ContentType = "text/json";
+        if (String.IsNullOrEmpty(context.Request.Headers["Auth-Token"]))
+        {
+            if (!Authenticate(context.Request.Headers["Auth-Token"]))
+            {
+                context.Response.Write(s.Serialize(new { result = false, message = "Unauthorized" }));
+                context.Response.StatusCode = 401;
+                context.Response.End();
+            }
+        }
+        else
+        {
+            context.Response.Write(s.Serialize(new { result = false, message = "Unauthorized" }));
+            context.Response.StatusCode = 401;
+            context.Response.End();
+        }
+
         if (string.IsNullOrEmpty(context.Request["action"]))
         {
             context.Response.Write(s.Serialize(new { result = false, message = "Action Missing" }));
@@ -30,31 +48,58 @@ public class StudioWorker : IHttpHandler
         switch (action)
         {
             case "dirlist":
-                GetDirectoryTree();
+                if (role == "admin" || role == "demo")
+                {
+                    GetDirectoryTree();
+                }
                 break;
             case "createfile":
-                CreateFile();
+                if (role == "admin")
+                {
+                    CreateFile();
+                }
                 break;
             case "renamefile":
-                RenameFile();
+                if (role == "admin")
+                {
+                    RenameFile();
+                }
                 break;
             case "removefile":
-                RemoveFile();
+                if (role == "admin")
+                {
+                    RemoveFile();
+                }
                 break;
             case "createdir":
-                CreateDirectory();
+                if (role == "admin")
+                {
+                    CreateDirectory();
+                }
                 break;
             case "renamedir":
-                RenameDirectory();
+                if (role == "admin")
+                {
+                    RenameDirectory();
+                }
                 break;
             case "removedir":
-                RemoveDirectory();
+                if (role == "admin")
+                {
+                    RemoveDirectory();
+                }
                 break;
             case "savedata":
-                SaveFileData();
+                if (role == "admin")
+                {
+                    SaveFileData();
+                }
                 break;
             case "getdata":
-                GetFileData();
+                if (role == "admin" || role == "demo")
+                {
+                    GetFileData();
+                }
                 break;
             default:
                 context.Response.Write(s.Serialize(new { result = false, message = "" }));
@@ -63,6 +108,27 @@ public class StudioWorker : IHttpHandler
                 break;
         }
 
+    }
+
+    private bool Authenticate(string token)
+    {
+        if (File.Exists(currentContext.Server.MapPath(string.Format("~/studio/token/{0}.txt", token))))
+        {
+            string[] lines = File.ReadAllLines(currentContext.Server.MapPath(string.Format("~/studio/token/{0}.txt", token)));
+            if (lines.Length == 2)
+            {
+                DateTime expiry;
+                if (DateTime.TryParse(lines[1], out expiry))
+                {
+                    if (expiry > DateTime.Now)
+                    {
+                        role = lines[0];
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void GetDirectoryTree()
