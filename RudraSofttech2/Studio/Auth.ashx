@@ -15,8 +15,8 @@ public class Auth : IHttpHandler
     {
         currentContext = context;
 
-        context.Response.Write(HashPassword(context.Request["u"]));
-        context.Response.End();
+        //context.Response.Write(HashPassword(context.Request["u"]));
+        //context.Response.End();
         if (string.IsNullOrEmpty(context.Request["u"]) || string.IsNullOrEmpty(context.Request["p"]))
         {
             context.Response.ContentType = "text/json";

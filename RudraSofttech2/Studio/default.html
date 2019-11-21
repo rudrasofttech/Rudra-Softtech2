@@ -17,6 +17,10 @@
     <script src="codemirror-5.49.2/addon/mode/multiplex.js"></script>
     <script src="https://kit.fontawesome.com/e3c61653ca.js"></script>
     <style>
+        body {
+            background-color: #F8F9FA;
+        }
+
         .direxpheightfull {
             height: calc(100vh - 56px);
         }
@@ -96,25 +100,25 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#folderModal').show();"><i class="fas fa-folder-plus"></i> New Folder</a>
+                    <a class="nav-link" ng-class="{'disabled' : !$root.isloggedin}" href="#" onclick="$('#folderModal').show();"><i class="fas fa-folder-plus"></i> New Folder</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#fileModal').show();"><i class="far fa-file-code"></i> New File</a>
+                    <a class="nav-link" href="#" ng-class="{'disabled' : !$root.isloggedin}" onclick="$('#fileModal').show();"><i class="far fa-file-code"></i> New File</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" ng-class="{ 'disabled' : $root.selectedItem.Path === '~'}" href="#" onclick="$('#renameModal').show();"><i class="far fa-edit"></i> Rename</a>
+                    <a class="nav-link" ng-class="{ 'disabled' : $root.selectedItem.Path === '~' || !$root.isloggedin}" href="#" onclick="$('#renameModal').show();"><i class="far fa-edit"></i> Rename</a>
                 </li>
                 <li class="nav-item" ng-controller="saveFileCtrl">
-                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded}" ng-click="saveFile($root.activeEditorIndex)" href="#"><i class="far fa-save"></i> Save</a>
+                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded || !$root.isloggedin}" ng-click="saveFile($root.activeEditorIndex)" href="#"><i class="far fa-save"></i> Save</a>
                 </li>
                 <li class="nav-item" ng-controller="saveFileCtrl">
-                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded}" ng-click="saveAll()" href="#"><i class="far fa-save"></i> Save All</a>
+                    <a class="nav-link" ng-class="{ 'disabled' : !$root.saveNeeded || !$root.isloggedin}" ng-click="saveAll()" href="#"><i class="far fa-save"></i> Save All</a>
                 </li>
                 <li class="nav-item" ng-controller="deleteCtrl">
-                    <a class="nav-link" href="#" ng-class="{ 'disabled' : !$root.selectedItem.IsFile}" ng-click="delete()"><i class="far fa-trash-alt"></i> Delete</a>
+                    <a class="nav-link" href="#" ng-class="{ 'disabled' : !$root.selectedItem.IsFile || !$root.isloggedin}" ng-click="delete()"><i class="far fa-trash-alt"></i> Delete</a>
                 </li>
                 <li class="nav-item dropdown" ng-controller="templateCtrl">
-                    <a class="nav-link dropdown-toggle" id="templateDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" ng-class="{ 'disabled' : !Enabled}"><i class="far fa-file-code"></i> Template</a>
+                    <a class="nav-link dropdown-toggle" id="templateDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="#" ng-class="{ 'disabled' : !Enabled || !$root.isloggedin}"><i class="far fa-file-code"></i> Template</a>
                     <div class="dropdown-menu" aria-labelledby="templateDropdown">
                         <a class="dropdown-item" href="#" ng-click="setTemplate('html')">HTML</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('aspx')">Web From</a>
@@ -123,13 +127,13 @@
                     </div>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0">
+            <form class="form-inline my-2 my-lg-0" ng-show="{{ $root.isloggedin }}">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
         </div>
     </nav>
-    <div class="container-fluid">
+    <div class="container-fluid" ng-class="{ 'show' : $root.isloggedin, 'hide' : !$root.isloggedin }">
         <div class="row">
             <nav class="col-lg-2 d-none d-md-block bg-light sidebar" ng-controller="dirCtrl">
                 <div class="sidebar-sticky">
@@ -139,10 +143,9 @@
                             </li>
                         </ul>
                     </div>
-
                 </div>
             </nav>
-            <main role="main" class="col-lg-10">
+            <div class="col-lg-10">
                 <div ng-controller="editAreaCtrl">
                     <ul class="nav nav-tabs">
                         <li class="nav-item" ng-attr-id="{{f.Name.replace('.', '') + '_tab'}}" ng-repeat="f in files">
@@ -159,7 +162,27 @@
                     </div>
                 </div>
 
-            </main>
+            </div>
+        </div>
+    </div>
+    <div class="container" ng-class="{ 'show' : !$root.isloggedin, 'hide' : $root.isloggedin }" style="height:calc(100vh - 60px);">
+        <div class="row justify-content-center" ng-controller="loginCtrl" style="padding-top:100px;">
+            <div class="col-lg-3">
+                <div class="card" style="padding:10px;">
+                    <form>
+                        <div class="form-group">
+                            <label for="exampleInputEmail1">Email</label>
+                            <input type="text" class="form-control" ng-model="email" />
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputPassword1">Password</label>
+                            <input type="password" class="form-control" ng-model="password" />
+                        </div>
+                        <button type="button" class="btn btn-primary" ng-click="login()">Submit</button>
+                    </form>
+                </div>
+
+            </div>
         </div>
     </div>
     <!-- Modal -->
@@ -240,6 +263,7 @@
                 getChangedFilesIndex, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories, getOpenFile, updateOpenFile;
 
             $rootScope.selectedItem = { Name: "", Path: "~", IsFile: false };
+            $rootScope.isloggedin = false;
 
             typeOfFileOpen = function (name) {
                 if (name.endsWith(".html")) {
@@ -314,7 +338,7 @@
                 $http.get("studioworker.ashx?action=dirlist").then(function (response) {
                     $rootScope.rootDirectory = response.data;
                     $rootScope.$broadcast('dirReloaded');
-                });
+                }).then(function (response) { });
             };
             getOpenFiles = function () {
                 return $rootScope.openFiles;
@@ -472,9 +496,12 @@
         app.controller('dirCtrl', function ($scope, $rootScope, $http, codeFilesService) {
 
             $scope.root = $rootScope.rootDirectory;
-            codeFilesService.getDirectories();
+            //codeFilesService.getDirectories();
             $scope.$on('dirReloaded', function () {
                 $scope.root = $rootScope.rootDirectory;
+            });
+            $scope.$on('loginsuccess', function () {
+                codeFilesService.getDirectories();
             });
             $scope.showProperties = false;
             $scope.selectedItem = null;
@@ -564,7 +591,7 @@
                         o = codeFilesService.getParentFromTree($rootScope.selectedItem, $rootScope.rootDirectory);
                     }
                     codeFilesService.addItemToTree(data.data.item, $rootScope.rootDirectory, o);
-                    codeFilesService.addToOpenFiles({ Name: data.data.item.Name, Path: data.data.item.Path, IsFile: data.data.item.IsFile, Editor: null, IsActive : true, IsChanged : false });
+                    codeFilesService.addToOpenFiles({ Name: data.data.item.Name, Path: data.data.item.Path, IsFile: data.data.item.IsFile, Editor: null, IsActive: true, IsChanged: false });
                     $('#fileModal').hide();
                     $scope.name = "";
                 }, function (data, status, headers, config) {
@@ -666,6 +693,30 @@
             $scope.setTemplate = function (n) {
                 $http.get("template/t." + n + ".txt").then(function (response) {
                     codeFilesService.setOpenFileData($rootScope.openFiles[$rootScope.activeEditorIndex], response.data);
+                });
+            }
+        });
+
+        app.controller('loginCtrl', function ($scope, $rootScope, $http, codeFilesService) {
+
+            $scope.email = "";
+            $scope.password = "";
+            $rootScope.token = "";
+            $scope.login = function () {
+                $http.post("Auth.ashx?u=" + $scope.email + "&p=" + $scope.password, {}).then(function (response, status, headers, config) {
+                    if (response.data.result) {
+                        $rootScope.token = response.data.token;
+                        $rootScope.isloggedin = true;
+                        $http.defaults.headers.common["Auth-Token"] = $rootScope.token;
+                        $rootScope.$broadcast('loginsuccess');
+                    } else {
+                        $rootScope.token = "";
+                        $rootScope.isloggedin = false;
+                    }
+                }, function (response, status, headers, config) {
+                    alert(response.data.message);
+                    $rootScope.token = "";
+                    $rootScope.isloggedin = false;
                 });
             }
         });

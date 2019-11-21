@@ -20,19 +20,18 @@ public class StudioWorker : IHttpHandler
         context.Response.ContentType = "text/json";
         if (String.IsNullOrEmpty(context.Request.Headers["Auth-Token"]))
         {
-            if (!Authenticate(context.Request.Headers["Auth-Token"]))
-            {
-                context.Response.Write(s.Serialize(new { result = false, message = "Unauthorized" }));
-                context.Response.StatusCode = 401;
-                context.Response.End();
-            }
-        }
-        else
-        {
             context.Response.Write(s.Serialize(new { result = false, message = "Unauthorized" }));
             context.Response.StatusCode = 401;
             context.Response.End();
         }
+        else if (!Authenticate(context.Request.Headers["Auth-Token"]))
+        {
+            context.Response.Write(s.Serialize(new { result = false, message = "Unauthorized" }));
+            context.Response.StatusCode = 401;
+            context.Response.End();
+
+        }
+
 
         if (string.IsNullOrEmpty(context.Request["action"]))
         {
