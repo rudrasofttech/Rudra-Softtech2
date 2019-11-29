@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>Studio</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="style.css" rel="stylesheet" />
     <link href="codemirror-5.49.2/lib/codemirror.css" rel="stylesheet" />
-    <!--<link href="codemirror-5.49.2/doc/docs.css" rel="stylesheet" />-->
     <script src="codemirror-5.49.2/lib/codemirror.js"></script>
     <script src="codemirror-5.49.2/mode/xml/xml.js"></script>
     <script src="codemirror-5.49.2/mode/javascript/javascript.js"></script>
@@ -16,80 +16,7 @@
 
     <script src="codemirror-5.49.2/addon/mode/multiplex.js"></script>
     <script src="https://kit.fontawesome.com/e3c61653ca.js"></script>
-    <style>
-        body {
-            background-color: #F8F9FA;
-        }
 
-        .direxpheightfull {
-            height: calc(100vh - 56px);
-        }
-
-        .direxpheighthalf {
-            height: calc(50vh - 50px);
-        }
-
-        .show {
-            display: block;
-        }
-
-        .hide {
-            display: none;
-        }
-
-        .codeeditor {
-            width: 100%;
-            height: calc(100vh - 100px);
-            border-color: #DEE2E6;
-            border-top: none;
-        }
-
-        .CodeMirror {
-            height: calc(100vh - 100px);
-        }
-
-        .filetab-link {
-            max-width: 150px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-        }
-
-        .filechanged:before {
-            content: "*";
-        }
-
-        .nav-link {
-            padding: 2px;
-        }
-
-        .tabclose {
-            margin-left: 10px;
-        }
-
-        a.nav-link.selected {
-            border-left: 2px solid;
-        }
-
-        ul.folder, ul.folder ul {
-            margin: 0px;
-            padding: 0px;
-        }
-
-            ul.folder li {
-                list-style-type: none;
-                padding-left: 10px;
-            }
-
-            ul.folder > li > ul {
-                margin-left: 10px;
-            }
-
-        .directorytreeitem {
-            white-space: nowrap;
-        }
-    </style>
 </head>
 <body ng-app="Studio">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -122,9 +49,13 @@
                     <div class="dropdown-menu" aria-labelledby="templateDropdown">
                         <a class="dropdown-item" href="#" ng-click="setTemplate('html')">HTML</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('aspx')">Web From</a>
-                        <a class="dropdown-item" href="#" ng-click="setTemplate('cs')">C#</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('codebehind.cs')">Web From Code Behind</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('cs')">C# Class</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('vb')">VB.Net Class</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('cshtml')">Razor Content Page</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('asax')">Global Application Class</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('master')">Master Page</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('ashx')">Generic Handler</a>
                     </div>
                 </li>
             </ul>
