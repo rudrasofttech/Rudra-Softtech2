@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 
-public partial class Studio_template_webform : System.Web.UI.Page
+/// <summary>
+/// Summary description for Class1
+/// </summary>
+public class Class1
 {
-    protected void Page_Load(object sender, EventArgs e)
+    public Class1()
     {
-
+        //
+        // TODO: Add constructor logic here
+        //
     }
 }
