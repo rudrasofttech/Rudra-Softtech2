@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Studio</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link href="style.css" rel="stylesheet" />
+
     <link href="codemirror-5.49.2/lib/codemirror.css" rel="stylesheet" />
     <script src="codemirror-5.49.2/lib/codemirror.js"></script>
     <script src="codemirror-5.49.2/mode/xml/xml.js"></script>
@@ -16,7 +16,7 @@
 
     <script src="codemirror-5.49.2/addon/mode/multiplex.js"></script>
     <script src="https://kit.fontawesome.com/e3c61653ca.js"></script>
-
+    <link href="style.css" rel="stylesheet" />
 </head>
 <body ng-app="Studio">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -56,6 +56,7 @@
                         <a class="dropdown-item" href="#" ng-click="setTemplate('asax')">Global Application Class</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('master')">Master Page</a>
                         <a class="dropdown-item" href="#" ng-click="setTemplate('ashx')">Generic Handler</a>
+                        <a class="dropdown-item" href="#" ng-click="setTemplate('Layout.cshtml')">Content Layout Page</a>
                     </div>
                 </li>
             </ul>
@@ -582,10 +583,11 @@
             $scope.saveFile = function (i) {
                 var openf = codeFilesService.getOpenFile(i);
                 if (openf != null) {
+                    var d = $.param({ action: "savedata", path: openf.Path, data: openf.Editor.getValue() });
                     $http({
                         method: 'POST',
                         url: 'studioworker.ashx',
-                        data: "action=savedata&path=" + openf.Path + "&data=" + openf.Editor.getValue(),
+                        data: d, 
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     }).then(function (response, status, headers, config) {
 
@@ -604,10 +606,11 @@
             $scope.saveAll = function () {
                 for (var k in $rootScope.openFiles) {
                     if ($rootScope.openFiles[k].IsChanged) {
+                        
                         $http({
                             method: 'POST',
                             url: 'studioworker.ashx',
-                            data: "action=savedata&path=" + $rootScope.openFiles[k].Path + "&data=" + $rootScope.openFiles[k].Editor.getValue(),
+                            data: $.param({ action: "savedata", path: $rootScope.openFiles[k].Path, data: $rootScope.openFiles[k].Editor.getValue() }),
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                         }).then(function (response, status, headers, config) {
                             console.log(response)
