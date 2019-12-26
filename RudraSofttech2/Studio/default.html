@@ -193,7 +193,7 @@
 
         app.service('codeFilesService', function ($rootScope, $http) {
             var rootDirectory = { Name: "", Subitems: [] },
-                getChangedFilesIndex, addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories, getOpenFile, updateOpenFile;
+                 addToOpenFiles, getOpenFiles, removeFromOpenFiles, getDirectories, getOpenFile, updateOpenFile;
 
             $rootScope.selectedItem = { Name: "", Path: "~", IsFile: false };
             $rootScope.isloggedin = false;
@@ -256,7 +256,8 @@
                                     editor.on('change', function (instance, obj) {
                                         var index = parseInt(instance.getTextArea().getAttribute("index"));
                                         $rootScope.openFiles[index].IsChanged = true;
-                                        getChangedFilesIndex();
+                                        $rootScope.saveNeeded = true;
+                                        $rootScope.$broadcast('openFilesUpdate');
                                     });
                                     openFiles[k].Editor = editor;
                                     $rootScope.$broadcast('openFilesUpdate');
@@ -324,18 +325,7 @@
                     updateItemFromTree(s, t, root.Subitems[k]);
                 }
             }
-            getChangedFilesIndex = function () {
-                var changedFilesIndex = [];
-                $rootScope.saveNeeded = false;
-                for (var k in $rootScope.openFiles) {
-                    if ($rootScope.openFiles[k].IsChanged) {
-                        $rootScope.saveNeeded = true;
-                        changedFilesIndex.push(k);
-                    }
-                }
-
-                $rootScope.changedFilesIndex = changedFilesIndex;
-            };
+            
             getParentFromTree = function (obj, root) {
                 var result = null;
                 for (var k in root.Subitems) {
@@ -417,7 +407,6 @@
                 removeFromOpenFiles: removeFromOpenFiles,
                 rootDirectory: rootDirectory,
                 getDirectories: getDirectories,
-                getChangedFilesIndex: getChangedFilesIndex,
                 getOpenFile: getOpenFile,
                 updateOpenFile: updateOpenFile,
                 broadcastItem: broadcastItem,

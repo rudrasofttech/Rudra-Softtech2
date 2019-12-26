@@ -293,6 +293,9 @@ section.meet-container.expertise-container {
 .green-flower-pot.parallax.four.ipad {
     top: 340px;
 }
+.about-detail-leftbar {
+    padding: 0;
+}
 }
 
 @media only screen and (min-width:768px) and (max-width:979px) 
@@ -716,6 +719,20 @@ section.meet-container.expertise-container {
 }
 h1.small-font {
     font-size: 69px;
+}
+.about-detail-leftbar {
+    padding: 0;
+}
+.about-con h2 {
+    font-size: 90px;
+    line-height: 90px;
+}
+.privacy-con {
+    padding: 20px 0 0;
+}
+.privacy-con h2 {
+    font-size: 58px;
+    padding: 0;
 }
 }
 @media only screen and (max-width:767px) {
@@ -1185,6 +1202,30 @@ section.meet-container.expertise-container {
     padding: 9px 9px;
     margin: 0 7px 0 0;
 }
+.about-con h2 {
+    font-size: 80px;
+    line-height: 80px;
+}
+.about-detail-leftbar {
+    width: auto;
+    float: left;
+    position: relative;
+    text-align: left;
+    padding: 0 0 25px 0;
+    z-index: 8;
+}
+.privacy-con {
+    padding: 0 0 10px;
+}
+.privacy-con h2 {
+    font-size: 44px;
+    padding: 0;
+    line-height:90px;
+}
+.privacy-detail p {
+    line-height: 25px;
+    margin: 0 0 18px;
+}
 }
 @media only screen and (max-width:599px) {
 .banner-slide-leftbar 
@@ -1386,6 +1427,29 @@ h1.small-font {
 h1.small-font br
 {
 	display:none;
+}
+.about-con h2 {
+    font-size: 60px;
+    line-height: 70px;
+}
+.about-con {
+    padding-top: 25px;
+}
+.about-detail {
+    padding: 18px 0 0 0;
+}
+.privacy-con {
+    padding: 0 0 10px;
+}
+.privacy-con h2 {
+    font-size: 36px;
+    padding: 0;
+    line-height: 70px;
+    margin-bottom: 18px;
+}
+.privacy-con h2:after {
+    width: 120px;
+    height: 2px;
 }
 }
 @media only screen and (max-width:479px) {
@@ -1791,5 +1855,21 @@ h1.small-font {
     font-size: 34px !important;
     line-height: 48px!important;
     margin-bottom: 1px!important;
+}
+.about-con {
+    padding-top: 10px;
+}
+.plugins-container h2 {
+    font-size: 39px;
+    line-height: 47px;
+}
+.privacy-con h2 {
+    font-size: 30px;
+    padding: 15px 0;
+    line-height: 45px;
+    margin-bottom: 18px;
+}
+.privacy-con {
+    padding: 0;
 }
 }
