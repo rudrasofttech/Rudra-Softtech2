@@ -3,38 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.902
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "RudraSofttech2(1)", "RudraSofttech2\", "{A01CE30C-35DB-45B4-BF15-A9FDC3208123}"
-	ProjectSection(WebsiteProperties) = preProject
-		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.7.1"
-		Debug.AspNetCompiler.VirtualPath = "/localhost_59190"
-		Debug.AspNetCompiler.PhysicalPath = "RudraSofttech2\"
-		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59190\"
-		Debug.AspNetCompiler.Updateable = "true"
-		Debug.AspNetCompiler.ForceOverwrite = "true"
-		Debug.AspNetCompiler.FixedNames = "false"
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.VirtualPath = "/localhost_59190"
-		Release.AspNetCompiler.PhysicalPath = "RudraSofttech2\"
-		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_59190\"
-		Release.AspNetCompiler.Updateable = "true"
-		Release.AspNetCompiler.ForceOverwrite = "true"
-		Release.AspNetCompiler.FixedNames = "false"
-		Release.AspNetCompiler.Debug = "False"
-		VWDPort = "59190"
-		SlnRelativePath = "RudraSofttech2\"
-	EndProjectSection
-EndProject
 Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A01CE30C-35DB-45B4-BF15-A9FDC3208123}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A01CE30C-35DB-45B4-BF15-A9FDC3208123}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A01CE30C-35DB-45B4-BF15-A9FDC3208123}.Release|Any CPU.ActiveCfg = Debug|Any CPU
-		{A01CE30C-35DB-45B4-BF15-A9FDC3208123}.Release|Any CPU.Build.0 = Debug|Any CPU
-	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
