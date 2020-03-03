@@ -1,0 +1,29 @@
+﻿@model RST.Models.CustomPageDisplayModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@Model.Page.Title</title>
+    @Html.Raw(Model.Page.PageMeta)
+    @Html.Raw(Model.CommonHeadContent)
+    @Html.Raw(Model.Page.Head)
+</head>
+<body>
+    @if (!Model.Page.NoTemplate)
+    {
+        @Html.Raw(Model.SiteHeader)
+    }
+    @Html.Raw(Model.Page.Body)
+    @if (!Model.Page.NoTemplate)
+    {
+        @Html.Raw(Model.SiteFooter)
+    }
+    <script type="text/javascript" src="@Url.Content("~/home/routine")"></script>
+</body>
+</html>

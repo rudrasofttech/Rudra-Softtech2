@@ -1,0 +1,45 @@
+﻿@using RST.Helper_Code;
+@model RST.Models.Post
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@(string.IsNullOrEmpty(Model.MetaTitle) ? Model.Title : Model.MetaTitle)</title>
+    <meta name="description" content="@Model.OGDescription" />
+    <meta name="keywords" content="@Model.Tag" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="@Utility.GenerateBlogArticleURL(Model, Utility.SiteURL)" />
+    <meta property="og:site_name" content="@Utility.SiteName" />
+    <meta property="og:title" content="@(string.IsNullOrEmpty(Model.MetaTitle) ? Model.Title : Model.MetaTitle)" />
+    <meta property="og:description" content="@Model.OGDescription" />
+    <meta property="og:image" content="@Model.OGImage" />
+    @Html.Raw(Utility.GetSiteSetting("CommonHeadContent"))
+    <link href="http://www.rudrasofttech.com/js-tools/SlideShow/slides.css" rel="stylesheet"
+          type="text/css" />
+    <script src="http://www.rudrasofttech.com/js-tools/SlideShow/slides.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(window).load(function () {
+            $(".rst-slides").slides({ Circular: true, HoverPause: true, ScrollInterval: 10000 });
+        });
+    </script>
+    <link href="http://www.rudrasofttech.com/js-tools/Question/question.css" rel="stylesheet"
+          type="text/css" />
+    <script src="http://www.rudrasofttech.com/js-tools/Question/question.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".rstquestion").question({ Attempts: 1, OnAttempt: function (i, attemptcount) { } });
+        });
+    </script>
+</head>
+<body>
+    @Html.Raw(Utility.GetSiteSetting("SiteHeader"))
+    @Html.Raw(Model.Article)
+    @Html.Raw(Utility.GetSiteSetting("SiteFooter"))
+</body>
+</html>

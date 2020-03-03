@@ -1,0 +1,75 @@
+﻿@using RST.Helper_Code;
+@using RST.Models;
+@model IEnumerable<RST.Models.Post>
+
+
+@{
+    ViewBag.Title = "List";
+    Layout = "~/Views/Shared/_BlogLayout.cshtml";
+}
+@section top{
+    <title>Blogs</title>
+}
+@section head{
+}
+
+@if (Model.Count() == 0)
+{
+    <p class="well">
+        There are no articles and videos here.
+    </p>
+}
+else
+{
+    foreach (var a in Model)
+    {
+        <article class="blog-post">
+            <div class="post-heading">
+                <h3>
+                    <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)">
+                        @a.Title
+                    </a>
+                </h3>
+            </div>
+            <div class="row">
+                <div class="span8">
+                    <div class="post-image">
+                        @if (a.OGImage != string.Empty)
+                        {
+                            <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)">
+                                <img src="@a.OGImage" alt="" />
+                            </a>
+                        }
+                    </div>
+                    <ul class="post-meta">
+                        <li class="first">
+                            <i class="icon-calendar"></i><span>
+                                @a.DateCreated.ToString("MMM dd, yyyy")
+                            </span>
+                        </li>
+                        <li>
+                            <i class="icon-comments"></i><span>
+                                @a.Viewed
+                                Views
+                            </span>
+                        </li>
+                        <li class="last">
+                            <i class="icon-tags"></i>
+                            @a.Tag
+                        </li>
+                    </ul>
+                    <div class="clearfix">
+                    </div>
+                    <p>
+                        @a.OGDescription
+                    </p>
+                    <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)" class="btn btn-small btn-theme">
+                        Read more
+                    </a>
+                </div>
+            </div>
+        </article>
+    }
+}
+
+
