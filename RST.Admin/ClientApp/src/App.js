@@ -10,6 +10,7 @@ import { ArticleList } from './components/ArticleList';
 import { CustomDataSourceList } from './components/CustomDataSourceList';
 import { CategoryList } from './components/CategoryList';
 import { MemberList } from './components/MemberList';
+import { WebsiteSettings } from './components/WebsiteSettings';
  
 export default class App extends Component {
     displayName = App.name
@@ -26,6 +27,7 @@ export default class App extends Component {
                 <Route path='/CustomDataSourceList' component={CustomDataSourceList} />
                 <Route path='/CategoryList' component={CategoryList} />
                 <Route path='/MemberList' component={MemberList} />
+                <Route path='/WebsiteSettings' component={WebsiteSettings} />
             </Layout>
         );
     }

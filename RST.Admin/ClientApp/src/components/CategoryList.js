@@ -27,13 +27,21 @@ export class CategoryList extends Component {
                     return response.json();
                 })
                 .then(data => {
-                    console.log(data);
+                    for (var k in data) {
+                        if (data[k].Status === 0) {
+                            data[k].StatusName = "Active";
+                        } else if (data[k].Status === 1) {
+                            data[k].StatusName = "InActive";
+                        } else if (data[k].Status === 2) {
+                            data[k].StatusName = "Deleted";
+                        }
+                    }
                     this.setState({ datasources: data, loading: false });
                 });
         }
     }
 
-    renderDataSourcesTable(ds) {
+    renderTable(ds) {
         return (
             <table className='table'>
                 <thead>
@@ -51,7 +59,7 @@ export class CategoryList extends Component {
                             <td>{cp.ID}</td>
                             <td>{cp.Name}</td>
                             <td>{cp.UrlName}</td>
-                            <td>{cp.Status}</td>
+                            <td>{cp.StatusName}</td>
                         </tr>
                     )}
                 </tbody>
@@ -66,10 +74,10 @@ export class CategoryList extends Component {
         } else {
             let contents = this.state.loading
                 ? <p><em>Loading...</em></p>
-                : this.renderDataSourcesTable(this.state.datasources);
+                : this.renderTable(this.state.datasources);
             return (
                 <div>
-                    <h1>Data Sources</h1>
+                    <h1>Categories</h1>
                     {contents}
                 </div>
             );

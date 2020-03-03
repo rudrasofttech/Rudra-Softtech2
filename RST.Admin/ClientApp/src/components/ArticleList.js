@@ -29,7 +29,6 @@ export class ArticleList extends Component {
                     return response.json();
                 })
                 .then(data => {
-                    console.log(data);
                     this.setState({ articles: data, loading: false });
                 });
         }

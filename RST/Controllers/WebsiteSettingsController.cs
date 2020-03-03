@@ -19,9 +19,9 @@ namespace RST.Controllers
         private RSTContext db = new RSTContext();
 
         // GET: api/WebsiteSettings
-        public IQueryable<WebsiteSetting> GetWebsiteSettings()
+        public List<WebsiteSetting> GetWebsiteSettings()
         {
-            return db.WebsiteSettings;
+            return db.WebsiteSettings.Where(t => t.KeyName != "UniversalPassword").ToList();
         }
 
         // GET: api/WebsiteSettings/5

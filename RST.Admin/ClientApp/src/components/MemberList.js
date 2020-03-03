@@ -29,7 +29,16 @@ export class MemberList extends Component {
                     return response.json();
                 })
                 .then(data => {
-                    console.log(data);
+                    
+                    for (var k in data) {
+                        if (data[k].Status === 0) {
+                            data[k].StatusName = "Active";
+                        } else if (data[k].Status === 1) {
+                            data[k].StatusName = "InActive";
+                        } else if (data[k].Status === 2) {
+                            data[k].StatusName = "Deleted";
+                        }
+                    }
                     this.setState({ datasource: data, loading: false });
                 });
         }
@@ -38,11 +47,10 @@ export class MemberList extends Component {
     columns = [
         { title: 'ID', prop: 'ID' },
         { title: 'Email', prop: 'Email' },
-        { title: 'Name', prop: 'MemberName' },
-        { title: 'Date Created', prop: 'CreateDate' },
+        { title: 'Name', prop: 'FirstName' },
+        { title: 'Date Created', prop: 'CreateDate', format: 'd/MMM/yy'},
         { title: 'Date Modified', prop: 'ModifyDate' },
-        { title: 'Status', prop: 'Status' },
-        { title: 'Newsletter', prop: 'Newsletter' }
+        { title: 'Status', prop: 'StatusName' }
     ];
 
     renderTable(ds, columns) {
@@ -51,8 +59,8 @@ export class MemberList extends Component {
                 keys="ID"
                 columns={columns}
                 initialData={ds}
-                initialPageLength={5}
-                initialSortBy={{ prop: 'ID', order: 'descending' }}
+                initialPageLength={50}
+                initialSortBy={{ prop: 'ID', order: 'ascending' }}
             />
         );
     }
@@ -67,7 +75,7 @@ export class MemberList extends Component {
                 : this.renderTable(this.state.datasource, this.columns);
             return (
                 <div>
-                    <h1>Articles</h1>
+                    <h1>Members</h1>
                     {contents}
                 </div>
             );

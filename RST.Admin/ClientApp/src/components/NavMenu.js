@@ -58,6 +58,11 @@ export class NavMenu extends Component {
                                 Members
               </NavItem>
                         </LinkContainer>
+                        <LinkContainer to={'/WebsiteSettings'}>
+                            <NavItem>
+                                Website Settings
+              </NavItem>
+                        </LinkContainer>
                         <LinkContainer to={'/loginform'}>
                             <NavItem>
                                 <Glyphicon glyph='th-list' /> Login
