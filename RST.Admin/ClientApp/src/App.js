@@ -11,7 +11,7 @@ import { CustomDataSourceList } from './components/CustomDataSourceList';
 import { CategoryList } from './components/CategoryList';
 import { MemberList } from './components/MemberList';
 import { WebsiteSettings } from './components/WebsiteSettings';
- 
+import { CustomPageManage } from './components/CustomPageManage';
 export default class App extends Component {
     displayName = App.name
 
@@ -28,6 +28,7 @@ export default class App extends Component {
                 <Route path='/CategoryList' component={CategoryList} />
                 <Route path='/MemberList' component={MemberList} />
                 <Route path='/WebsiteSettings' component={WebsiteSettings} />
+                <Route path='/CustomPageManage/:ID' component={CustomPageManage} />
             </Layout>
         );
     }

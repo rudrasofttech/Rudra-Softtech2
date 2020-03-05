@@ -57,6 +57,7 @@ export class CustomPageList extends Component {
                         <th>Modified By</th>
                         <th>Status</th>
                         <th>Sitemap</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +73,7 @@ export class CustomPageList extends Component {
                             <td>
                                 <input type="checkbox" defaultChecked={cp.Sitemap} disabled />
                             </td>
+                            <td><Link to={'/custompagemanage/' + cp.ID }>Edit</Link></td>
                         </tr>
                     )}
                 </tbody>

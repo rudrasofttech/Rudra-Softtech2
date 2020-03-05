@@ -53,23 +53,35 @@ namespace RST.Controllers
 
         // PUT: api/CustomDataSources/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutCustomDataSource(int id, CustomDataSource customDataSource)
+        public IHttpActionResult PutCustomDataSource(int id, [FromBody]string Name, [FromBody]string Query, [FromBody]string HtmlTemplate)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != customDataSource.ID)
+            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(HtmlTemplate))
             {
-                return BadRequest();
+                return BadRequest("Either name or html template is missing");
             }
-
-            db.Entry(customDataSource).State = EntityState.Modified;
 
             try
             {
-                db.SaveChanges();
+                CustomDataSource cds = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
+                if (cds != null)
+                {
+                    cds.HtmlTemplate = HtmlTemplate;
+                    cds.Name = Name;
+                    cds.Query = Query;
+                    cds.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                    cds.DateModified = DateTime.Now;
+                    db.Entry(cds).State = EntityState.Modified;
+                    db.SaveChanges();
+                }
+                else
+                {
+                    return BadRequest("Unable to find data source with this id.");
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -88,17 +100,30 @@ namespace RST.Controllers
 
         // POST: api/CustomDataSources
         [ResponseType(typeof(CustomDataSource))]
-        public IHttpActionResult PostCustomDataSource(CustomDataSource customDataSource)
+        public IHttpActionResult PostCustomDataSource([FromBody]string Name, [FromBody]string Query, [FromBody]string HtmlTemplate)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-
-            db.CustomDataSources.Add(customDataSource);
-            db.SaveChanges();
-
-            return CreatedAtRoute("DefaultApi", new { id = customDataSource.ID }, customDataSource);
+            if (db.CustomDataSources.Count(t => t.Name.Trim() == Name.Trim()) == 0)
+            {
+                CustomDataSource cds = new CustomDataSource()
+                {
+                    CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name),
+                    DateCreated = DateTime.Now,
+                    HtmlTemplate = HtmlTemplate,
+                    Name = Name,
+                    Query = Query
+                };
+                db.CustomDataSources.Add(cds);
+                db.SaveChanges();
+                return CreatedAtRoute("DefaultApi", new { id = cds.ID }, cds);
+            }
+            else
+            {
+                return BadRequest("Data source with same name exist.");
+            }
         }
 
         // DELETE: api/CustomDataSources/5

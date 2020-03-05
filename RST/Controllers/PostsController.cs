@@ -53,23 +53,63 @@ namespace RST.Controllers
 
         // PUT: api/Posts/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutPost(int id, Post post)
+        public IHttpActionResult PutPost(int id, [FromBody] string Title,
+        [FromBody] PostStatus Status,
+        [FromBody] int CategoryID,
+        [FromBody] string Tag,
+        [FromBody] string Description,
+        [FromBody] string Article,
+        [FromBody] string WriterName,
+        [FromBody] string WriterEmail,
+        [FromBody] string OGImage,
+        [FromBody] string OGDescription,
+        [FromBody] string MetaTitle,
+        [FromBody] int Viewed,
+        [FromBody] string URL,
+        [FromBody] string TemplateName,
+        [FromBody] bool Sitemap)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != post.ID)
+            if (string.IsNullOrEmpty(Title) || string.IsNullOrEmpty(Tag) || string.IsNullOrEmpty(Description)
+                || string.IsNullOrEmpty(Article) || string.IsNullOrEmpty(WriterName) || string.IsNullOrEmpty(WriterEmail)
+                || string.IsNullOrEmpty(URL))
             {
-                return BadRequest();
+                return BadRequest("Required field missing.");
             }
-
-            db.Entry(post).State = EntityState.Modified;
 
             try
             {
-                db.SaveChanges();
+                Post p = db.Posts.FirstOrDefault(t => t.ID == id && (t.URL == URL && t.ID != id));
+                if (p != null)
+                {
+                    p.Article = Article;
+                    p.Category = db.Categories.FirstOrDefault(t => t.ID == CategoryID);
+                    p.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                    p.DateModified = DateTime.Now;
+                    p.Description = Description;
+                    p.MetaTitle = MetaTitle;
+                    p.OGDescription = OGDescription;
+                    p.OGImage = OGImage;
+                    p.Sitemap = Sitemap;
+                    p.Status = Status;
+                    p.Tag = Tag;
+                    p.TemplateName = TemplateName;
+                    p.Title = Title;
+                    p.URL = URL;
+                    p.WriterEmail = WriterEmail;
+                    p.WriterName = WriterName;
+
+                    db.Entry(p).State = EntityState.Modified;
+                    db.SaveChanges();
+                }
+                else
+                {
+                    return BadRequest("URL already exist.");
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -88,17 +128,60 @@ namespace RST.Controllers
 
         // POST: api/Posts
         [ResponseType(typeof(Post))]
-        public IHttpActionResult PostPost(Post post)
+        public IHttpActionResult PostPost([FromBody] string Title,
+        [FromBody] PostStatus Status,
+        [FromBody] int CategoryID,
+        [FromBody] string Tag,
+        [FromBody] string Description,
+        [FromBody] string Article,
+        [FromBody] string WriterName,
+        [FromBody] string WriterEmail,
+        [FromBody] string OGImage,
+        [FromBody] string OGDescription,
+        [FromBody] string MetaTitle,
+        [FromBody] int Viewed,
+        [FromBody] string URL,
+        [FromBody] string TemplateName,
+        [FromBody] bool Sitemap)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            if (string.IsNullOrEmpty(Title) || string.IsNullOrEmpty(Tag) || string.IsNullOrEmpty(Description)
+                || string.IsNullOrEmpty(Article) || string.IsNullOrEmpty(WriterName) || string.IsNullOrEmpty(WriterEmail)
+                || string.IsNullOrEmpty(URL))
+            {
+                return BadRequest("Required field missing.");
+            }
+            if (db.Posts.Count(t => t.URL == URL) == 0)
+            {
+                Post p = new Post();
+                p.Article = Article;
+                p.Category = db.Categories.FirstOrDefault(t => t.ID == CategoryID);
+                p.CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                p.DateCreated = DateTime.Now;
+                p.Description = Description;
+                p.MetaTitle = MetaTitle;
+                p.OGDescription = OGDescription;
+                p.OGImage = OGImage;
+                p.Sitemap = Sitemap;
+                p.Status = Status;
+                p.Tag = Tag;
+                p.TemplateName = TemplateName;
+                p.Title = Title;
+                p.URL = URL;
+                p.WriterEmail = WriterEmail;
+                p.WriterName = WriterName;
+                db.Posts.Add(p);
+                db.SaveChanges();
 
-            db.Posts.Add(post);
-            db.SaveChanges();
-
-            return CreatedAtRoute("DefaultApi", new { id = post.ID }, post);
+                return CreatedAtRoute("DefaultApi", new { id = p.ID }, p);
+            }
+            else
+            {
+                return BadRequest("URL already exist.");
+            }
         }
 
         // DELETE: api/Posts/5

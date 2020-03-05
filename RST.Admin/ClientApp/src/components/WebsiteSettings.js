@@ -4,7 +4,7 @@ import { Table, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 
 export class WebsiteSettings extends Component {
     displayName = WebsiteSettings.name
-
+    
     constructor(props) {
         super(props);
         const token = localStorage.getItem("token");
@@ -71,6 +71,7 @@ export class WebsiteSettings extends Component {
     handleChange(e) {
         if (e.target.name === "Address") {
             this.setState({ Address: e.target.value });
+            
         } else if (e.target.name === "AdminName") {
             this.setState({ AdminName: e.target.value });
         } else if (e.target.name === "ContactEmail") {
@@ -95,9 +96,30 @@ export class WebsiteSettings extends Component {
         } else if (e.target.name === "SiteURL") {
             this.setState({ SiteURL: e.target.value });
         }
+        this.saveWebsiteSetting(e.target.name, e.target.value);
     }
 
-    
+    saveWebsiteSetting(keyname, keyvalue) {
+        fetch('http://localhost:59709/api/websitesettings/' + keyname,
+            {
+                method: 'Put',
+                body: JSON.stringify({ KeyName: keyname, KeyValue: keyvalue }),
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                
+                this.setState({ loading: false });
+                if (response.status === 200 || response.status === 204) {
+                    console.log(response.status);
+                }
+                else if (response.status === 401) {
+                    this.setState({ error: true, message: "Authorization has been denied for this request." });
+                }
+            });
+    }
 
     renderTable() {
         return (

@@ -6,6 +6,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Web.Http.Description;
@@ -59,22 +60,33 @@ namespace RST.Controllers
 
         // PUT: api/CustomPages/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutCustomPage(int id, CustomPage customPage)
+        public IHttpActionResult PutCustomPage(int id, [FromBody] string Name, [FromBody]PostStatus Status, [FromBody]bool Sitemap,
+            [FromBody]string Body, [FromBody]string Head, [FromBody]bool NoTemplate, [FromBody]string PageMeta, [FromBody] string Title)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != customPage.ID)
+            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Body) || string.IsNullOrEmpty(Title))
             {
-                return BadRequest();
+                return BadRequest("Either name or body or title is missing.");
             }
-
-            db.Entry(customPage).State = EntityState.Modified;
 
             try
             {
+                CustomPage cp = db.CustomPages.FirstOrDefault(t => t.ID == id);
+                cp.Head = Head;
+                cp.Name = Name;
+                cp.NoTemplate = NoTemplate;
+                cp.PageMeta = PageMeta;
+                cp.Sitemap = Sitemap;
+                cp.Status = Status;
+                cp.Title = Title;
+                cp.Body = Body;
+                cp.DateModified = DateTime.Now;
+                cp.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                db.Entry(cp).State = EntityState.Modified;
                 db.SaveChanges();
             }
             catch (DbUpdateConcurrencyException)
@@ -94,17 +106,41 @@ namespace RST.Controllers
 
         // POST: api/CustomPages
         [ResponseType(typeof(CustomPage))]
-        public IHttpActionResult PostCustomPage(CustomPage customPage)
+        public IHttpActionResult PostCustomPage([FromBody] string Name, [FromBody]PostStatus Status, [FromBody]bool Sitemap,
+            [FromBody]string Body, [FromBody]string Head, [FromBody]bool NoTemplate, [FromBody]string PageMeta, [FromBody] string Title)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            db.CustomPages.Add(customPage);
-            db.SaveChanges();
+            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Body) || string.IsNullOrEmpty(Title))
+            {
+                return BadRequest("Either name or body or title is missing.");
+            }
+            if (db.CustomPages.Count(t => t.Name.Trim() == Name.Trim()) == 0)
+            {
+                CustomPage cp = new CustomPage()
+                {
+                    Body = Body,
+                    CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name),
+                    DateCreated = DateTime.Now,
+                    Head = Head,
+                    Name = Name,
+                    NoTemplate = NoTemplate,
+                    PageMeta = PageMeta,
+                    Sitemap = Sitemap,
+                    Status = Status,
+                    Title = Title
+                };
+                db.CustomPages.Add(cp);
+                db.SaveChanges();
 
-            return CreatedAtRoute("DefaultApi", new { id = customPage.ID }, customPage);
+                return CreatedAtRoute("DefaultApi", new { id = cp.ID }, cp);
+            }
+            else {
+                return BadRequest("Page with same name exist.");
+            }
         }
 
         // DELETE: api/CustomPages/5
