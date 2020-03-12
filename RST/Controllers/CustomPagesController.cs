@@ -46,29 +46,51 @@ namespace RST.Controllers
         }
 
         // GET: api/CustomPages/5
-        [ResponseType(typeof(CustomPage))]
+        [ResponseType(typeof(CustomPageDTO))]
         public IHttpActionResult GetCustomPage(int id)
         {
-            CustomPage customPage = db.CustomPages.Find(id);
-            if (customPage == null)
+            if(id == 0)
+            {
+                return Ok(new CustomPageDTO());
+            }
+            CustomPage m = db.CustomPages.Find(id);
+            if (m == null)
             {
                 return NotFound();
             }
+            CustomPageDTO result = new CustomPageDTO()
+            {
+                ID = m.ID,
+                Body = m.Body,
+                CreatedBy = (m.CreatedBy == null) ? 0 : m.CreatedBy.ID,
+                Title = m.Title,
+                Status = m.Status.ToString(),
+                CreatedByName = (m.CreatedBy == null) ? "" : m.CreatedBy.FirstName,
+                DateCreated = m.DateCreated,
+                DateModified = m.DateModified,
+                Head = m.Head,
+                ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
+                Name = m.Name,
+                NoTemplate = m.NoTemplate,
+                PageMeta = m.PageMeta,
+                Sitemap = m.Sitemap,
+                ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
+            };
 
-            return Ok(customPage);
+
+            return Ok(result);
         }
 
         // PUT: api/CustomPages/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutCustomPage(int id, [FromBody] string Name, [FromBody]PostStatus Status, [FromBody]bool Sitemap,
-            [FromBody]string Body, [FromBody]string Head, [FromBody]bool NoTemplate, [FromBody]string PageMeta, [FromBody] string Title)
+        public IHttpActionResult PutCustomPage(int id, [FromBody] CustomPageDTO page)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Body) || string.IsNullOrEmpty(Title))
+            if (string.IsNullOrEmpty(page.Name) || string.IsNullOrEmpty(page.Body) || string.IsNullOrEmpty(page.Title))
             {
                 return BadRequest("Either name or body or title is missing.");
             }
@@ -76,14 +98,14 @@ namespace RST.Controllers
             try
             {
                 CustomPage cp = db.CustomPages.FirstOrDefault(t => t.ID == id);
-                cp.Head = Head;
-                cp.Name = Name;
-                cp.NoTemplate = NoTemplate;
-                cp.PageMeta = PageMeta;
-                cp.Sitemap = Sitemap;
-                cp.Status = Status;
-                cp.Title = Title;
-                cp.Body = Body;
+                cp.Head = page.Head;
+                cp.Name = page.Name;
+                cp.NoTemplate = page.NoTemplate;
+                cp.PageMeta = page.PageMeta;
+                cp.Sitemap = page.Sitemap;
+                cp.Status = (PostStatus)Enum.Parse(typeof(PostStatus), page.Status);
+                cp.Title = page.Title;
+                cp.Body = page.Body;
                 cp.DateModified = DateTime.Now;
                 cp.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
                 db.Entry(cp).State = EntityState.Modified;
@@ -101,37 +123,36 @@ namespace RST.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok();
         }
 
         // POST: api/CustomPages
         [ResponseType(typeof(CustomPage))]
-        public IHttpActionResult PostCustomPage([FromBody] string Name, [FromBody]PostStatus Status, [FromBody]bool Sitemap,
-            [FromBody]string Body, [FromBody]string Head, [FromBody]bool NoTemplate, [FromBody]string PageMeta, [FromBody] string Title)
+        public IHttpActionResult PostCustomPage([FromBody] CustomPageDTO page)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Body) || string.IsNullOrEmpty(Title))
+            if (string.IsNullOrEmpty(page.Name) || string.IsNullOrEmpty(page.Body) || string.IsNullOrEmpty(page.Title))
             {
                 return BadRequest("Either name or body or title is missing.");
             }
-            if (db.CustomPages.Count(t => t.Name.Trim() == Name.Trim()) == 0)
+            if (db.CustomPages.Count(t => t.Name.Trim() == page.Name.Trim()) == 0)
             {
                 CustomPage cp = new CustomPage()
                 {
-                    Body = Body,
+                    Body = page.Body,
                     CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name),
                     DateCreated = DateTime.Now,
-                    Head = Head,
-                    Name = Name,
-                    NoTemplate = NoTemplate,
-                    PageMeta = PageMeta,
-                    Sitemap = Sitemap,
-                    Status = Status,
-                    Title = Title
+                    Head = page.Head,
+                    Name = page.Name,
+                    NoTemplate = page.NoTemplate,
+                    PageMeta = page.PageMeta,
+                    Sitemap = page.Sitemap,
+                    Status = (PostStatus)Enum.Parse(typeof(PostStatus), page.Status),
+                    Title = page.Title
                 };
                 db.CustomPages.Add(cp);
                 db.SaveChanges();

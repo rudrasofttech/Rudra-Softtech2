@@ -12,6 +12,7 @@ import { CategoryList } from './components/CategoryList';
 import { MemberList } from './components/MemberList';
 import { WebsiteSettings } from './components/WebsiteSettings';
 import { CustomPageManage } from './components/CustomPageManage';
+import { ArticleManage } from './components/ArticleManage';
 export default class App extends Component {
     displayName = App.name
 
@@ -29,6 +30,8 @@ export default class App extends Component {
                 <Route path='/MemberList' component={MemberList} />
                 <Route path='/WebsiteSettings' component={WebsiteSettings} />
                 <Route path='/CustomPageManage/:ID' component={CustomPageManage} />
+                <Route path='/ArticleManage/:ID' component={ArticleManage} />
+
             </Layout>
         );
     }

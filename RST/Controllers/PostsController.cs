@@ -42,7 +42,11 @@ namespace RST.Controllers
         [ResponseType(typeof(Post))]
         public IHttpActionResult GetPost(int id)
         {
-            Post post = db.Posts.Find(id);
+            if (id == 0)
+            {
+                return Ok(new Post() { Category = new Category() { ID = 0, Name = "" } });
+            }
+            Post post = db.Posts.Include(c => c.Category).FirstOrDefault( t=> t.ID == id);
             if (post == null)
             {
                 return NotFound();

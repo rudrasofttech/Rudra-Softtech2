@@ -143,6 +143,13 @@ namespace RST.Models
         public bool NoTemplate { get; set; }
         public string PageMeta { get; set; }
         public string Title { get; set; }
+
+        public CustomPageDTO()
+        {
+            Status = PostStatus.Draft.ToString();
+            CreatedByName = "";
+            ModifiedByName = "";
+        }
     }
 
     public class EmailMessage

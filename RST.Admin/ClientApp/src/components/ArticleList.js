@@ -14,25 +14,70 @@ export class ArticleList extends Component {
             loggedin = false;
         }
         this.state = { articles: [], loading: true, loggedin: loggedin };
+        this.handleDeleteArticle = this.handleDeleteArticle.bind(this);
         if (loggedin) {
-            fetch('http://localhost:59709/api/posts', {
-                method: 'get',
-                headers: {
-                    'Authorization': 'Bearer ' + token
+            this.fetchData(token);
+        }
+    }
+    fetchData(t) {
+        fetch('http://localhost:59709/api/posts', {
+            method: 'get',
+            headers: {
+                'Authorization': 'Bearer ' + t
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
                 }
+                return response.json();
             })
-                .then(response => {
-                    if (response.status === 401) {
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+            .then(data => {
+                this.setState({ articles: data, loading: false });
+            });
+    }
+    handleDeleteArticle(e) {
+        if (window.confirm("Are you sure you want to delete this particle?")) {
+            fetch('http://localhost:59709/api/posts/' + e.target.name,
+                {
+                    method: 'delete',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     }
-                    return response.json();
                 })
-                .then(data => {
-                    this.setState({ articles: data, loading: false });
+                .then(response => {
+                    console.log(response.status);
+                    if (response.status === 200) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let list = this.state.articles;
+                            for (var k in list) {
+                                if (list[k].ID === data.ID) {
+                                    list.splice(k, 1);
+                                    this.setState({ articles: list });
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    else if (response.status === 401) {
+
+                        localStorage.removeItem("token");
+                        this.setState({ error: true, message: "Authorization has been denied for this request." });
+
+                    }
+                    else {
+                        response.json().then(data => {
+                            console.log(data);
+                            this.setState({ error: false, loggedin: false });
+                        });
+                    }
                 });
         }
     }
+
     columns = [
         { title: 'ID', prop: 'ID' },
         { title: 'Title', prop: 'Title' },
@@ -40,18 +85,38 @@ export class ArticleList extends Component {
         { title: 'Created By', prop: 'CreatedByName' },
         { title: 'Date Modified', prop: 'DateModified' },
         { title: 'Modified By', prop: 'ModifiedByName' },
-        { title: 'Status', prop: 'Status' },
-        { title: 'Sitemap', prop: 'Sitemap' }
+        { title: 'Status', prop: 'Status' }
     ];
     renderTable(ds, columns) {
         return (
-            <DataTable
-                keys="ID"
-                columns={columns}
-                initialData={ds}
-                initialPageLength={5}
-                initialSortBy={{ prop: 'ID', order: 'descending' }}
-            />
+            <table className='table'>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Date Created</th>
+                        <th>Created By</th>
+                        <th>Date Modified</th>
+                        <th>Modified By</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {ds.map(cp =>
+                        <tr key={cp.ID}>
+                            <td>{cp.ID}</td>
+                            <td>{cp.Title}</td>
+                            <td>{cp.DateCreated}</td>
+                            <td>{cp.CreatedByName}</td>
+                            <td>{cp.DateModified}</td>
+                            <td>{cp.ModifiedByName}</td>
+                            <td>{cp.Status}</td>
+                            <td><Link className='btn btn-link' to={'/articlemanage/' + cp.ID}>Edit</Link>
+                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeleteArticle}>Delete</button></td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
         );
     }
 
@@ -66,6 +131,7 @@ export class ArticleList extends Component {
             return (
                 <div>
                     <h1>Articles</h1>
+                    <Link to={'/articlemanage/0'} className="pull-right btn btn-primary">Create New</Link>
                     {contents}
                 </div>
             );

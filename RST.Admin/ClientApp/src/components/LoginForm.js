@@ -1,18 +1,18 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Alert } from 'react-bootstrap';
+import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Alert, Col, Grid, Row } from 'react-bootstrap';
 
 export class LoginForm extends Component {
     constructor(props) {
         super(props);
         const token = localStorage.getItem("token");
-        
+
         let loggedin = true;
         if (token === null) {
             loggedin = false;
-        } 
-        this.state = { email: '', password: '', loading: false, loggedin: loggedin, error: false, message : '' };
-        
+        }
+        this.state = { email: '', password: '', loading: false, loggedin: loggedin, error: false, message: '' };
+
         this.handleEmailChange = this.handleEmailChange.bind(this);
         this.handlePassChange = this.handlePassChange.bind(this);
         this.formSubmit = this.formSubmit.bind(this);
@@ -43,7 +43,7 @@ export class LoginForm extends Component {
                 else {
                     response.json().then(data => {
                         console.log(data);
-                        this.setState({ error: false,loggedin: false });
+                        this.setState({ error: false, loggedin: false });
                     });
                 }
             });
@@ -76,7 +76,7 @@ export class LoginForm extends Component {
         if (this.state.loggedin) {
             return (<Redirect to="/custompagelist" />);
         } else {
-            let alert=<span />;
+            let alert = <span />;
             if (this.state.error) {
                 alert = <Alert>{this.state.message}</Alert>;
             }
@@ -112,10 +112,14 @@ export class LoginForm extends Component {
     render() {
         let contents = this.renderForm();
         return (
-            <div>
-                <h1>Login</h1>
-                {contents}
-            </div>
+            <Grid>
+                <Row>
+                    <Col sm={3} smOffset={4}>
+                        <h1>Login</h1>
+                        {contents}
+                    </Col>
+                </Row>
+            </Grid>
         );
     }
 }

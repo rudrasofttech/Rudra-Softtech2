@@ -1,5 +1,5 @@
 ﻿import React, { Component } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Modal, Checkbox } from 'react-bootstrap';
 
 export class CustomPageManage extends Component {
@@ -15,14 +15,14 @@ export class CustomPageManage extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
-        this.state = { custompage: null, loading: true, loggedin: loggedin };
+        this.state = { custompage: null, loading: true, loggedin: loggedin, reload: false };
         if (loggedin) {
-            this.fetchData(token);
+            this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
         }
     }
 
-    fetchData(t) {
-        fetch('http://localhost:59709/api/custompages/' + this.props.match.params.ID, {
+    fetchData(t, id) {
+        fetch('http://localhost:59709/api/custompages/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -44,15 +44,18 @@ export class CustomPageManage extends Component {
 
     saveData(e) {
         let saveurl = 'http://localhost:59709/api/custompages';
-        if (this.props.match.params.ID !== null) {
-            saveurl = saveurl + '/' + this.props.match.params.ID;
+        let method = 'post';
+        if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.custompage.ID !== 0) {
+            saveurl = saveurl + '/' + ((this.state.custompage.ID !== 0) ? this.state.custompage.ID : this.props.match.params.ID);
+            method = 'put';
         }
         this.setState({ loading: true });
         fetch(saveurl, {
-            method: this.props.match.params.ID !== null ? 'put' : 'post',
+            method: method,
             body: JSON.stringify({
                 Name: this.state.custompage.Name, Status: this.state.custompage.Status, Sitemap: this.state.custompage.Sitemap,
-                Body: this.state.custompage.Body, Head: this.state.custompage.Head, NoTemplate: this.state.custompage.NoTemplate, PageMeta: this.state.custompage.PageMeta, Title: this.state.custompage.Title
+                Body: this.state.custompage.Body, Head: this.state.custompage.Head, NoTemplate: this.state.custompage.NoTemplate,
+                PageMeta: this.state.custompage.PageMeta, Title: this.state.custompage.Title
             }),
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem("token"),
@@ -64,16 +67,17 @@ export class CustomPageManage extends Component {
                     this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
                 } else if (response.status === 200) {
                     this.setState({ loading: false, message: "Page saved.", error: false });
-                    alert("Page Saved");
+                    console.log("Page Saved");
+                } else if (response.status === 201) {
+                    this.setState({ loading: false, message: "Page saved.", error: false });
+                    console.log("Page Created");
+                    response.json().then(data => {
+                        this.fetchData(localStorage.getItem("token"), data.ID);
+                    });
                 } else {
                     this.setState({ loading: false, message: "Page cannot be saved.", error: false });
                     alert("Unable to save page.");
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-
             });
     }
     handleChange(e) {
@@ -112,7 +116,7 @@ export class CustomPageManage extends Component {
                 <tbody>
                     <tr>
                         <td><FormGroup controlId="Status">
-                            <ControlLabel>Status</ControlLabel>
+                            <ControlLabel>Status (Required)</ControlLabel>
                             <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
                                 <option value="1">Draft</option>
                                 <option value="2">Publish</option>
@@ -127,7 +131,7 @@ export class CustomPageManage extends Component {
                     <tr>
                         <td colSpan="3">
                             <FormGroup controlId="Name" >
-                                <ControlLabel>Page Name</ControlLabel>
+                                <ControlLabel>Page Name (Required)</ControlLabel>
                                 <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
@@ -135,7 +139,7 @@ export class CustomPageManage extends Component {
                     <tr>
                         <td colSpan="3">
                             <FormGroup controlId="Title" >
-                                <ControlLabel>Page Title</ControlLabel>
+                                <ControlLabel>Page Title (Required)</ControlLabel>
                                 <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
@@ -157,18 +161,11 @@ export class CustomPageManage extends Component {
                             </FormGroup>
                         </td>
                     </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="Head">
-                                <ControlLabel>Page Head(optional)</ControlLabel>
-                                <FormControl name="Head" componentClass="textarea" rows="6" placeholder="textarea" value={page.Head} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+
                     <tr>
                         <td colSpan="3">
                             <FormGroup controlId="Body">
-                                <ControlLabel>Body</ControlLabel>
+                                <ControlLabel>Body (Required)</ControlLabel>
                                 <FormControl name="Body" componentClass="textarea" rows="20" placeholder="textarea" value={page.Body} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
@@ -184,17 +181,19 @@ export class CustomPageManage extends Component {
     }
 
     render() {
-        let progressbar = this.state.loading ? <ProgressBar active now={100} /> : <span />;
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
-        } else {
+        }
+        else if (this.state.reload) {
+            return <Redirect to={'/custompagelist'} />;
+        }
+        else {
             let contents = this.state.loading
                 ? <ProgressBar active now={100} />
                 : this.renderTable(this.state.custompage);
             return (
                 <div>
                     <h1>Web Page</h1>
-                    {progressbar}
                     {contents}
                 </div>
             );

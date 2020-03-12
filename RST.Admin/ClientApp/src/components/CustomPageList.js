@@ -9,28 +9,75 @@ export class CustomPageList extends Component {
         super(props);
         const token = localStorage.getItem("token");
         let loggedin = true;
-        
+
         if (token === null) {
             loggedin = false;
-        } 
+        }
         this.state = { custompages: [], loading: true, loggedin: loggedin };
+        this.handleDeletePage = this.handleDeletePage.bind(this);
+
         if (loggedin) {
-            fetch('http://localhost:59709/api/custompages', {
-                method: 'get',
-                headers: {
-                    'Authorization': 'Bearer ' + token
+            this.fetchData(token);
+        }
+    }
+
+    fetchData(t) {
+        fetch('http://localhost:59709/api/custompages', {
+            method: 'get',
+            headers: {
+                'Authorization': 'Bearer ' + t
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
                 }
+                return response.json();
             })
-                .then(response => {
-                    if (response.status === 401) {
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+            .then(data => {
+                console.log(data);
+                this.setState({ custompages: data, loading: false });
+            });
+    }
+
+    handleDeletePage(e) {
+        if (window.confirm("Are you sure you want to delete this page?")) {
+            fetch('http://localhost:59709/api/custompages/' + e.target.name,
+                {
+                    method: 'delete',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     }
-                    return response.json();
                 })
-                .then(data => {
-                    console.log(data);
-                    this.setState({ custompages: data, loading: false });
+                .then(response => {
+                    console.log(response.status);
+                    if (response.status === 200) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let list = this.state.custompages;
+                            for (var k in list) {
+                                if (list[k].ID === data.ID) {
+                                    list.splice(k, 1);
+                                    this.setState({ custompages: list });
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    else if (response.status === 401) {
+
+                        localStorage.removeItem("token");
+                        this.setState({ error: true, message: "Authorization has been denied for this request." });
+
+                    }
+                    else {
+                        response.json().then(data => {
+                            console.log(data);
+                            this.setState({ error: false, loggedin: false });
+                        });
+                    }
                 });
         }
     }
@@ -57,7 +104,7 @@ export class CustomPageList extends Component {
                         <th>Modified By</th>
                         <th>Status</th>
                         <th>Sitemap</th>
-                        <th></th>
+
                     </tr>
                 </thead>
                 <tbody>
@@ -73,7 +120,8 @@ export class CustomPageList extends Component {
                             <td>
                                 <input type="checkbox" defaultChecked={cp.Sitemap} disabled />
                             </td>
-                            <td><Link to={'/custompagemanage/' + cp.ID }>Edit</Link></td>
+                            <td><Link className='btn btn-link' to={'/custompagemanage/' + cp.ID}>Edit</Link>
+                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeletePage}>Delete</button></td>
                         </tr>
                     )}
                 </tbody>
@@ -82,7 +130,7 @@ export class CustomPageList extends Component {
     }
 
     render() {
-        
+
         if (!this.state.loggedin) {
             return (<Redirect to="/loginform" />);
         } else {
@@ -92,7 +140,7 @@ export class CustomPageList extends Component {
             return (
                 <div>
                     <h1>Custom Pages</h1>
-                    <p>This component demonstrates fetching data from the server.</p>
+                    <Link to={'/custompagemanage/0'} className="pull-right btn btn-primary">Create New</Link>
                     {contents}
                 </div>
             );
