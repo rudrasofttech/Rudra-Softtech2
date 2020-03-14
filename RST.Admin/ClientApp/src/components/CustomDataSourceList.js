@@ -14,26 +14,70 @@ export class CustomDataSourceList extends Component {
         }
         this.state = { datasources: [], loading: true, loggedin: loggedin };
         if (loggedin) {
-            fetch('http://localhost:59709/api/CustomDataSources', {
-                method: 'get',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            })
-                .then(response => {
-                    if (response.status === 401) {
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data);
-                    this.setState({ datasources: data, loading: false });
-                });
+            this.fetchData(token);
         }
     }
    
+    fetchData(t) {
+        fetch('http://localhost:59709/api/CustomDataSources', {
+            method: 'get',
+            headers: {
+                'Authorization': 'Bearer ' + t
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                this.setState({ datasources: data, loading: false });
+            });
+    }
+
+    handleDeleteDS(e) {
+        if (window.confirm("Are you sure you want to delete this data source?")) {
+            fetch('http://localhost:59709/api/CustomDataSources/' + e.target.name,
+                {
+                    method: 'delete',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    console.log(response.status);
+                    if (response.status === 200) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let list = this.state.datasources;
+                            for (var k in list) {
+                                if (list[k].ID === data.ID) {
+                                    list.splice(k, 1);
+                                    this.setState({ datasources: list });
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    else if (response.status === 401) {
+
+                        localStorage.removeItem("token");
+                        this.setState({ error: true, message: "Authorization has been denied for this request." });
+
+                    }
+                    else {
+                        response.json().then(data => {
+                            console.log(data);
+                            this.setState({ error: false, loggedin: false });
+                        });
+                    }
+                });
+        }
+    }
 
     renderDataSourcesTable(ds) {
         return (
@@ -57,6 +101,8 @@ export class CustomDataSourceList extends Component {
                             <td>{cp.CreatedByName}</td>
                             <td>{cp.DateModified}</td>
                             <td>{cp.ModifiedByName}</td>
+                            <td><Link className='btn btn-link' to={'/datasourcemanage/' + cp.ID}>Edit</Link>
+                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeleteDS}>Delete</button></td>
                         </tr>
                     )}
                 </tbody>
@@ -75,6 +121,7 @@ export class CustomDataSourceList extends Component {
             return (
                 <div>
                     <h1>Data Sources</h1>
+                    <Link to={'/datasourcemanage/0'} className="pull-right btn btn-primary">Create New</Link>
                     {contents}
                 </div>
             );

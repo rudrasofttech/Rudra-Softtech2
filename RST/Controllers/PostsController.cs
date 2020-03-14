@@ -57,57 +57,43 @@ namespace RST.Controllers
 
         // PUT: api/Posts/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutPost(int id, [FromBody] string Title,
-        [FromBody] PostStatus Status,
-        [FromBody] int CategoryID,
-        [FromBody] string Tag,
-        [FromBody] string Description,
-        [FromBody] string Article,
-        [FromBody] string WriterName,
-        [FromBody] string WriterEmail,
-        [FromBody] string OGImage,
-        [FromBody] string OGDescription,
-        [FromBody] string MetaTitle,
-        [FromBody] int Viewed,
-        [FromBody] string URL,
-        [FromBody] string TemplateName,
-        [FromBody] bool Sitemap)
+        public IHttpActionResult PutPost(int id, [FromBody]Post post)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(Title) || string.IsNullOrEmpty(Tag) || string.IsNullOrEmpty(Description)
-                || string.IsNullOrEmpty(Article) || string.IsNullOrEmpty(WriterName) || string.IsNullOrEmpty(WriterEmail)
-                || string.IsNullOrEmpty(URL))
+            if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
+                || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
+                || string.IsNullOrEmpty(post.URL))
             {
                 return BadRequest("Required field missing.");
             }
 
             try
             {
-                Post p = db.Posts.FirstOrDefault(t => t.ID == id && (t.URL == URL && t.ID != id));
+                Post p = db.Posts.FirstOrDefault(t => t.ID == id && !(t.URL == post.URL && t.ID != id));
                 if (p != null)
                 {
-                    p.Article = Article;
-                    p.Category = db.Categories.FirstOrDefault(t => t.ID == CategoryID);
+                    p.Article = post.Article;
+                    p.Category = db.Categories.FirstOrDefault(t => t.ID == post.Category.ID);
                     p.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
                     p.DateModified = DateTime.Now;
-                    p.Description = Description;
-                    p.MetaTitle = MetaTitle;
-                    p.OGDescription = OGDescription;
-                    p.OGImage = OGImage;
-                    p.Sitemap = Sitemap;
-                    p.Status = Status;
-                    p.Tag = Tag;
-                    p.TemplateName = TemplateName;
-                    p.Title = Title;
-                    p.URL = URL;
-                    p.WriterEmail = WriterEmail;
-                    p.WriterName = WriterName;
+                    p.Description = post.Description;
+                    p.MetaTitle = post.MetaTitle;
+                    p.OGDescription = post.OGDescription;
+                    p.OGImage = post.OGImage;
+                    p.Sitemap = post.Sitemap;
+                    p.Status = post.Status;
+                    p.Tag = post.Tag;
+                    p.TemplateName = post.TemplateName;
+                    p.Title = post.Title;
+                    p.URL = post.URL;
+                    p.WriterEmail = post.WriterEmail;
+                    p.WriterName = post.WriterName;
 
-                    db.Entry(p).State = EntityState.Modified;
+                    //db.Entry(p).State = EntityState.Modified;
                     db.SaveChanges();
                 }
                 else
@@ -127,56 +113,42 @@ namespace RST.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok();
         }
 
         // POST: api/Posts
         [ResponseType(typeof(Post))]
-        public IHttpActionResult PostPost([FromBody] string Title,
-        [FromBody] PostStatus Status,
-        [FromBody] int CategoryID,
-        [FromBody] string Tag,
-        [FromBody] string Description,
-        [FromBody] string Article,
-        [FromBody] string WriterName,
-        [FromBody] string WriterEmail,
-        [FromBody] string OGImage,
-        [FromBody] string OGDescription,
-        [FromBody] string MetaTitle,
-        [FromBody] int Viewed,
-        [FromBody] string URL,
-        [FromBody] string TemplateName,
-        [FromBody] bool Sitemap)
+        public IHttpActionResult PostPost([FromBody]Post post)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            if (string.IsNullOrEmpty(Title) || string.IsNullOrEmpty(Tag) || string.IsNullOrEmpty(Description)
-                || string.IsNullOrEmpty(Article) || string.IsNullOrEmpty(WriterName) || string.IsNullOrEmpty(WriterEmail)
-                || string.IsNullOrEmpty(URL))
+            if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
+                || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
+                || string.IsNullOrEmpty(post.URL))
             {
                 return BadRequest("Required field missing.");
             }
-            if (db.Posts.Count(t => t.URL == URL) == 0)
+            if (db.Posts.Count(t => t.URL == post.URL) == 0)
             {
                 Post p = new Post();
-                p.Article = Article;
-                p.Category = db.Categories.FirstOrDefault(t => t.ID == CategoryID);
+                p.Article = post.Article;
+                p.Category = db.Categories.FirstOrDefault(t => t.ID == post.Category.ID);
                 p.CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
                 p.DateCreated = DateTime.Now;
-                p.Description = Description;
-                p.MetaTitle = MetaTitle;
-                p.OGDescription = OGDescription;
-                p.OGImage = OGImage;
-                p.Sitemap = Sitemap;
-                p.Status = Status;
-                p.Tag = Tag;
-                p.TemplateName = TemplateName;
-                p.Title = Title;
-                p.URL = URL;
-                p.WriterEmail = WriterEmail;
-                p.WriterName = WriterName;
+                p.Description = post.Description;
+                p.MetaTitle = post.MetaTitle;
+                p.OGDescription = post.OGDescription;
+                p.OGImage = post.OGImage;
+                p.Sitemap = post.Sitemap;
+                p.Status = post.Status;
+                p.Tag = post.Tag;
+                p.TemplateName = post.TemplateName;
+                p.Title = post.Title;
+                p.URL = post.URL;
+                p.WriterEmail = post.WriterEmail;
+                p.WriterName = post.WriterName;
                 db.Posts.Add(p);
                 db.SaveChanges();
 

@@ -1,5 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
+import Moment from 'react-moment';
 import { DataTable } from 'react-data-components';
 
 export class ArticleList extends Component {
@@ -106,9 +107,10 @@ export class ArticleList extends Component {
                         <tr key={cp.ID}>
                             <td>{cp.ID}</td>
                             <td>{cp.Title}</td>
-                            <td>{cp.DateCreated}</td>
+                            <td><Moment format="MM/DD/YYYY">
+                                {cp.DateCreated}</Moment></td>
                             <td>{cp.CreatedByName}</td>
-                            <td>{cp.DateModified}</td>
+                            <td><Moment format="MM/DD/YYYY">{cp.DateModified}</Moment></td>
                             <td>{cp.ModifiedByName}</td>
                             <td>{cp.Status}</td>
                             <td><Link className='btn btn-link' to={'/articlemanage/' + cp.ID}>Edit</Link>

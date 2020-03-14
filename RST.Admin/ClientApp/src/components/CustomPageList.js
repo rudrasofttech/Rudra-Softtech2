@@ -1,5 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
+import Moment from 'react-moment';
 //import DataTable from 'react-data-components';
 
 export class CustomPageList extends Component {
@@ -112,9 +113,14 @@ export class CustomPageList extends Component {
                         <tr key={cp.ID}>
                             <td>{cp.ID}</td>
                             <td>{cp.Name}</td>
-                            <td>{cp.DateCreated}</td>
+                            <td>
+                                <Moment format="MM/DD/YYYY">
+                                    {cp.DateCreated}
+                                </Moment>
+                            </td>
                             <td>{cp.CreatedByName}</td>
-                            <td>{cp.DateModified}</td>
+                            <td><Moment format="YYYY/MM/DD">
+                                {cp.DateModified}</Moment> </td>
                             <td>{cp.ModifiedByName}</td>
                             <td>{cp.Status}</td>
                             <td>

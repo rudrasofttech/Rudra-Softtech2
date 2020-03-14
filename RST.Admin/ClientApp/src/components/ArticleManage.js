@@ -15,10 +15,13 @@ export class ArticleManage extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
-        this.state = { article: null, categories: [], loading: true, loggedin: loggedin, reload: false };
+        this.state = {
+            article: null, categories: [], blogtemplates: [], loading: true, loggedin: loggedin, reload: false };
         if (loggedin) {
-            this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
+            
             this.fetchCategory(token);
+            this.fetchBlogTemplates(token);
+            this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
         }
     }
     fetchCategory(t) {
@@ -40,7 +43,7 @@ export class ArticleManage extends Component {
                 this.setState({ categories: data });
             });
     }
-    fetchTemplate(t) {
+    fetchBlogTemplates(t) {
         fetch('http://localhost:59709/api/CustomDataSources', {
             method: 'get',
             headers: {
@@ -56,9 +59,32 @@ export class ArticleManage extends Component {
             })
             .then(data => {
                 console.log(data);
-                this.setState({ categories: data });
+                let cds = [];
+                for (var d in data) {
+                    if (data[d].Name.toLowerCase().endsWith("blogtemplate")) {
+                        cds.push(data[d]);
+                    }
+                }
+                this.setState({ blogtemplates: cds });
             });
     }
+
+    slugify() {
+        //fetch('http://localhost:59709/Utility/Slugify/123', { method: 'get', data: { t: this.state.article.URL} })
+        //    .then(response => {
+        //        if (response.status === 401) {
+        //            localStorage.removeItem("token");
+        //            this.setState({ error: true, message: "Authorization has been denied for this request." });
+        //        }
+        //        return response.json();
+        //    })
+        //    .then(data => {
+        //        let a = this.state.article;
+        //        a.URL = data.d;
+        //        this.setState({ article: a });
+        //    });
+    }
+
     fetchData(t, id) {
         fetch('http://localhost:59709/api/posts/' + id, {
             method: 'get',
@@ -110,7 +136,7 @@ export class ArticleManage extends Component {
                     console.log("Page Saved");
                 } else if (response.status === 201) {
                     this.setState({ loading: false, message: "Page saved.", error: false });
-                    console.log("Page Created");
+                    console.log("Article Created");
                     response.json().then(data => {
                         this.fetchData(localStorage.getItem("token"), data.ID);
                     });
@@ -121,7 +147,7 @@ export class ArticleManage extends Component {
             });
     }
     handleChange(e) {
-        var temp = this.state.custompage;
+        var temp = this.state.article;
         switch (e.target.name) {
             case 'Status':
                 temp.Status = e.target.value;
@@ -143,6 +169,8 @@ export class ArticleManage extends Component {
                 break;
             case 'Category':
                 temp.Category.ID = e.target.value;
+                temp.Category.Name = "Temp";
+                temp.Category.UrlName = "Temp";
                 break;
             case 'WriterName':
                 temp.WriterName = e.target.value;
@@ -166,7 +194,10 @@ export class ArticleManage extends Component {
                 temp.TemplateName = e.target.value;
                 break;
         }
-        this.setState({ custompage: temp });
+        this.setState({ article: temp });
+        if (e.target.name === "URL") {
+            this.slugify();
+        }
     }
     renderTable(page) {
         return (
@@ -242,12 +273,26 @@ export class ArticleManage extends Component {
                         <td>
                             <FormGroup controlId="Category">
                                 <ControlLabel>Category (Required)</ControlLabel>
-                                <FormControl componentClass="select" placeholder="select" value={page.Category.ID} onChange={this.handleChange}>
+                                <FormControl name="Category" componentClass="select" placeholder="select" value={page.Category.ID} onChange={this.handleChange}>
                                     <option value="select">select</option>
                                     {this.state.categories.map(cp =>
                                         <option key={cp.ID} value={cp.ID}>{cp.Name}</option>
                                     )}
                                     
+                                </FormControl>
+                            </FormGroup>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <FormGroup controlId="Template">
+                                <ControlLabel>Template (Required)</ControlLabel>
+                                <FormControl name="TemplateName" componentClass="select" placeholder="select" value={page.Category.TemplateName} onChange={this.handleChange}>
+                                    <option value="">select</option>
+                                    {this.state.blogtemplates.map(cp =>
+                                        <option key={cp.Name} value={cp.Name}>{cp.Name}</option>
+                                    )}
+
                                 </FormControl>
                             </FormGroup>
                         </td>

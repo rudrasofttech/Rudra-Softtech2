@@ -42,6 +42,10 @@ namespace RST.Controllers
         [ResponseType(typeof(CustomDataSource))]
         public IHttpActionResult GetCustomDataSource(int id)
         {
+            if (id == 0)
+            {
+                return Ok(new CustomDataSource());
+            }
             CustomDataSource customDataSource = db.CustomDataSources.Find(id);
             if (customDataSource == null)
             {
@@ -53,14 +57,14 @@ namespace RST.Controllers
 
         // PUT: api/CustomDataSources/5
         [ResponseType(typeof(void))]
-        public IHttpActionResult PutCustomDataSource(int id, [FromBody]string Name, [FromBody]string Query, [FromBody]string HtmlTemplate)
+        public IHttpActionResult PutCustomDataSource(int id, [FromBody]CustomDataSource ds)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(HtmlTemplate))
+            if (string.IsNullOrEmpty(ds.Name) || string.IsNullOrEmpty(ds.HtmlTemplate))
             {
                 return BadRequest("Either name or html template is missing");
             }
@@ -70,9 +74,9 @@ namespace RST.Controllers
                 CustomDataSource cds = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
                 if (cds != null)
                 {
-                    cds.HtmlTemplate = HtmlTemplate;
-                    cds.Name = Name;
-                    cds.Query = Query;
+                    cds.HtmlTemplate = ds.HtmlTemplate;
+                    cds.Name = ds.Name;
+                    cds.Query = ds.Query;
                     cds.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
                     cds.DateModified = DateTime.Now;
                     db.Entry(cds).State = EntityState.Modified;
@@ -95,26 +99,26 @@ namespace RST.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok();
         }
 
         // POST: api/CustomDataSources
         [ResponseType(typeof(CustomDataSource))]
-        public IHttpActionResult PostCustomDataSource([FromBody]string Name, [FromBody]string Query, [FromBody]string HtmlTemplate)
+        public IHttpActionResult PostCustomDataSource([FromBody]CustomDataSource ds)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            if (db.CustomDataSources.Count(t => t.Name.Trim() == Name.Trim()) == 0)
+            if (db.CustomDataSources.Count(t => t.Name.Trim() == ds.Name.Trim()) == 0)
             {
                 CustomDataSource cds = new CustomDataSource()
                 {
                     CreatedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name),
                     DateCreated = DateTime.Now,
-                    HtmlTemplate = HtmlTemplate,
-                    Name = Name,
-                    Query = Query
+                    HtmlTemplate = ds.HtmlTemplate,
+                    Name = ds.Name,
+                    Query = ds.Query
                 };
                 db.CustomDataSources.Add(cds);
                 db.SaveChanges();
