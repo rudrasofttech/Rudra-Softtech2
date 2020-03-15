@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-
+import { Table } from 'react-bootstrap';
 export class CustomDataSourceList extends Component {
     displayName = CustomDataSourceList.name
 
@@ -81,7 +81,7 @@ export class CustomDataSourceList extends Component {
 
     renderDataSourcesTable(ds) {
         return (
-            <table className='table'>
+            <Table responsive striped bordered condensed hover>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -90,6 +90,7 @@ export class CustomDataSourceList extends Component {
                         <th>Created By</th>
                         <th>Date Modified</th>
                         <th>Modified By</th>
+                        <th><Link to={'/datasourcemanage/0'} className="btn btn-link">Create New</Link></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,7 +107,7 @@ export class CustomDataSourceList extends Component {
                         </tr>
                     )}
                 </tbody>
-            </table>
+            </Table>
         );
     }
 
@@ -121,7 +122,7 @@ export class CustomDataSourceList extends Component {
             return (
                 <div>
                     <h1>Data Sources</h1>
-                    <Link to={'/datasourcemanage/0'} className="pull-right btn btn-primary">Create New</Link>
+                    
                     {contents}
                 </div>
             );

@@ -1,7 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import Moment from 'react-moment';
-import { DataTable } from 'react-data-components';
+import { Table } from 'react-bootstrap';
 
 export class ArticleList extends Component {
     displayName = ArticleList.name
@@ -90,7 +90,7 @@ export class ArticleList extends Component {
     ];
     renderTable(ds, columns) {
         return (
-            <table className='table'>
+            <Table responsive striped bordered condensed hover>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -100,6 +100,7 @@ export class ArticleList extends Component {
                         <th>Date Modified</th>
                         <th>Modified By</th>
                         <th>Status</th>
+                        <th><Link to={'/articlemanage/0'} className="btn btn-link">Create New</Link></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,7 +119,7 @@ export class ArticleList extends Component {
                         </tr>
                     )}
                 </tbody>
-            </table>
+            </Table>
         );
     }
 
@@ -133,7 +134,6 @@ export class ArticleList extends Component {
             return (
                 <div>
                     <h1>Articles</h1>
-                    <Link to={'/articlemanage/0'} className="pull-right btn btn-primary">Create New</Link>
                     {contents}
                 </div>
             );

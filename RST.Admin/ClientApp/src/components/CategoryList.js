@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-
+import { Table } from 'react-bootstrap';
 export class CategoryList extends Component {
     displayName = CategoryList.name;
     constructor(props) {
@@ -43,7 +43,7 @@ export class CategoryList extends Component {
 
     renderTable(ds) {
         return (
-            <table className='table'>
+            <Table responsive striped bordered condensed hover>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -63,7 +63,7 @@ export class CategoryList extends Component {
                         </tr>
                     )}
                 </tbody>
-            </table>
+            </Table>
         );
     }
 

@@ -149,7 +149,7 @@ export class CustomPageManage extends Component {
                         <td colSpan="3">
                             <FormGroup controlId="PageMeta">
                                 <ControlLabel>Page Meta(optional)</ControlLabel>
-                                <FormControl name="PageMeta" componentClass="textarea" rows="4" placeholder="textarea" value={page.PageMeta} onChange={this.handleChange} />
+                                <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
                     </tr>
@@ -157,7 +157,7 @@ export class CustomPageManage extends Component {
                         <td colSpan="3">
                             <FormGroup controlId="Head">
                                 <ControlLabel>Page Head(optional)</ControlLabel>
-                                <FormControl name="Head" componentClass="textarea" rows="6" placeholder="textarea" value={page.Head} onChange={this.handleChange} />
+                                <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
                     </tr>
@@ -166,7 +166,7 @@ export class CustomPageManage extends Component {
                         <td colSpan="3">
                             <FormGroup controlId="Body">
                                 <ControlLabel>Body (Required)</ControlLabel>
-                                <FormControl name="Body" componentClass="textarea" rows="20" placeholder="textarea" value={page.Body} onChange={this.handleChange} />
+                                <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
                             </FormGroup>
                         </td>
                     </tr>

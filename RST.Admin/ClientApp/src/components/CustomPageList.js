@@ -1,7 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import Moment from 'react-moment';
-//import DataTable from 'react-data-components';
+import { Table } from 'react-bootstrap';
 
 export class CustomPageList extends Component {
     displayName = CustomPageList.name
@@ -94,7 +94,7 @@ export class CustomPageList extends Component {
     ];
     renderCustomPagesTable(custompages, columns) {
         return (
-            <table className='table'>
+            <Table responsive striped bordered condensed hover>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -105,7 +105,7 @@ export class CustomPageList extends Component {
                         <th>Modified By</th>
                         <th>Status</th>
                         <th>Sitemap</th>
-
+                        <th><Link to={'/custompagemanage/0'} className="btn btn-link">Create New</Link></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,7 +131,7 @@ export class CustomPageList extends Component {
                         </tr>
                     )}
                 </tbody>
-            </table>
+            </Table>
         );
     }
 
@@ -146,7 +146,7 @@ export class CustomPageList extends Component {
             return (
                 <div>
                     <h1>Custom Pages</h1>
-                    <Link to={'/custompagemanage/0'} className="pull-right btn btn-primary">Create New</Link>
+                    
                     {contents}
                 </div>
             );

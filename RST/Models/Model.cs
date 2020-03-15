@@ -202,6 +202,18 @@ namespace RST.Models
         }
     }
 
+    public class MemberListDTO
+    {
+        public List<Member> Members { get; set; }
+        public int TotalPages { get; set; }
+        public int Page { get; set; }
+
+        public MemberListDTO()
+        {
+            Members = new List<Member>();
+        }
+    }
+
     public class Post
     {
         [Key]

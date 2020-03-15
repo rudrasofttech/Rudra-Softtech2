@@ -19,13 +19,18 @@ namespace RST.Controllers
         private RSTContext db = new RSTContext();
 
         // GET: api/Members
-        public List<Member> GetMembers()
+        public MemberListDTO GetMembers([FromUri]int page = 0,[FromUri] int psize = 20)
         {
-            List<Member> result = db.Members.ToList();
-            foreach(Member m in result)
+            var query = db.Members.OrderBy(t => t.ID).Skip(page * psize).Take(psize);
+            MemberListDTO result = new MemberListDTO();
+            foreach (Member m in query.ToList())
             {
                 m.Password = "";
+                result.Members.Add(m);
             }
+            result.Page = page;
+            result.TotalPages = (db.Members.Count() / psize);
+
             return result;
         }
 
