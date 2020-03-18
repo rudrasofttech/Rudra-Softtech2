@@ -13,25 +13,58 @@ using RST.Models;
 
 namespace RST.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Demo")]
     public class MembersController : ApiController
     {
         private RSTContext db = new RSTContext();
 
         // GET: api/Members
-        public MemberListDTO GetMembers([FromUri]int page = 0,[FromUri] int psize = 20)
+        public MemberListDTO GetMembers([FromUri]int page = 1,[FromUri] int psize = 20)
         {
-            var query = db.Members.OrderBy(t => t.ID).Skip(page * psize).Take(psize);
+            int count = db.Members.Count();
             MemberListDTO result = new MemberListDTO();
+            result.TotalPages = count > psize ?  (db.Members.Count() / psize) : 1;
+            if (page > result.TotalPages)
+            {
+                page = result.TotalPages;
+            }
+            else if (page < 1)
+            {
+                page = 1;
+            }
+            var query = db.Members.OrderBy(t => t.ID).Skip((page - 1) * psize).Take(psize);
+            
             foreach (Member m in query.ToList())
             {
                 m.Password = "";
                 result.Members.Add(m);
             }
             result.Page = page;
-            result.TotalPages = (db.Members.Count() / psize);
-
+            
             return result;
+        }
+
+        [Route("api/Members/ChangePassword/{id}")]
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public IHttpActionResult ChangePassword(int id, ChangePasswordDTO data)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            Member member = db.Members.FirstOrDefault(m => m.ID == id);
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            member.Password = data.NewPassword;
+            member.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+            member.ModifyDate = DateTime.Now;
+            db.SaveChanges();
+
+            return Ok();
         }
 
         // GET: api/Members/5
@@ -43,12 +76,13 @@ namespace RST.Controllers
             {
                 return NotFound();
             }
-
+            member.Password = "";
             return Ok(member);
         }
 
         // PUT: api/Members/5
         [ResponseType(typeof(void))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PutMember(int id, Member member)
         {
             if (!ModelState.IsValid)
@@ -84,6 +118,7 @@ namespace RST.Controllers
 
         // POST: api/Members
         [ResponseType(typeof(Member))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PostMember(Member member)
         {
             if (!ModelState.IsValid)
@@ -104,6 +139,7 @@ namespace RST.Controllers
 
         // DELETE: api/Members/5
         [ResponseType(typeof(Member))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult DeleteMember(int id)
         {
             Member member = db.Members.Find(id);

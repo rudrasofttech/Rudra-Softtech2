@@ -39,7 +39,7 @@ export class ArticleList extends Component {
             });
     }
     handleDeleteArticle(e) {
-        if (window.confirm("Are you sure you want to delete this particle?")) {
+        if (window.confirm("Are you sure you want to delete this article?")) {
             fetch('http://localhost:59709/api/posts/' + e.target.name,
                 {
                     method: 'delete',
@@ -79,16 +79,8 @@ export class ArticleList extends Component {
         }
     }
 
-    columns = [
-        { title: 'ID', prop: 'ID' },
-        { title: 'Title', prop: 'Title' },
-        { title: 'Date Created', prop: 'DateCreated' },
-        { title: 'Created By', prop: 'CreatedByName' },
-        { title: 'Date Modified', prop: 'DateModified' },
-        { title: 'Modified By', prop: 'ModifiedByName' },
-        { title: 'Status', prop: 'Status' }
-    ];
-    renderTable(ds, columns) {
+    
+    renderTable(ds) {
         return (
             <Table responsive striped bordered condensed hover>
                 <thead>
@@ -130,7 +122,7 @@ export class ArticleList extends Component {
         } else {
             let contents = this.state.loading
                 ? <p><em>Loading...</em></p>
-                : this.renderTable(this.state.articles, this.columns);
+                : this.renderTable(this.state.articles);
             return (
                 <div>
                     <h1>Articles</h1>

@@ -57,6 +57,7 @@ namespace RST.Controllers
 
         // PUT: api/CustomDataSources/5
         [ResponseType(typeof(void))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PutCustomDataSource(int id, [FromBody]CustomDataSource ds)
         {
             if (!ModelState.IsValid)
@@ -104,6 +105,7 @@ namespace RST.Controllers
 
         // POST: api/CustomDataSources
         [ResponseType(typeof(CustomDataSource))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PostCustomDataSource([FromBody]CustomDataSource ds)
         {
             if (!ModelState.IsValid)
@@ -132,6 +134,7 @@ namespace RST.Controllers
 
         // DELETE: api/CustomDataSources/5
         [ResponseType(typeof(CustomDataSource))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult DeleteCustomDataSource(int id)
         {
             CustomDataSource customDataSource = db.CustomDataSources.Find(id);

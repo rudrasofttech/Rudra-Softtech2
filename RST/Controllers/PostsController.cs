@@ -57,6 +57,7 @@ namespace RST.Controllers
 
         // PUT: api/Posts/5
         [ResponseType(typeof(void))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PutPost(int id, [FromBody]Post post)
         {
             if (!ModelState.IsValid)
@@ -118,6 +119,7 @@ namespace RST.Controllers
 
         // POST: api/Posts
         [ResponseType(typeof(Post))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PostPost([FromBody]Post post)
         {
             if (!ModelState.IsValid)
@@ -162,6 +164,7 @@ namespace RST.Controllers
 
         // DELETE: api/Posts/5
         [ResponseType(typeof(Post))]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult DeletePost(int id)
         {
             Post post = db.Posts.Find(id);

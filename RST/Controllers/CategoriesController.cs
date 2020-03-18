@@ -28,6 +28,9 @@ namespace RST.Controllers
         [ResponseType(typeof(Category))]
         public IHttpActionResult GetCategory(int id)
         {
+            if (id == 0) {
+                return Ok(new Category() { Name = "", Status = MemberStatus.Active, UrlName = "" });
+            }
             Category category = db.Categories.Find(id);
             if (category == null)
             {
@@ -39,7 +42,7 @@ namespace RST.Controllers
 
         // PUT: api/Categories/5
         [ResponseType(typeof(void))]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PutCategory(int id, Category category)
         {
             if (!ModelState.IsValid)
@@ -70,12 +73,12 @@ namespace RST.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok();
         }
 
         // POST: api/Categories
         [ResponseType(typeof(Category))]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult PostCategory(Category category)
         {
             if (!ModelState.IsValid)
@@ -91,7 +94,7 @@ namespace RST.Controllers
 
         // DELETE: api/Categories/5
         [ResponseType(typeof(Category))]
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public IHttpActionResult DeleteCategory(int id)
         {
             Category category = db.Categories.Find(id);
@@ -99,9 +102,14 @@ namespace RST.Controllers
             {
                 return NotFound();
             }
-            category.Status = MemberStatus.Deleted;
+            if (db.Posts.Count(c => c.Category.ID == id) == 0) {
+                db.Categories.Remove(category);
+            }
+            else
+            {
+                category.Status = MemberStatus.Deleted;
+            }
             db.SaveChanges();
-
             return Ok(category);
         }
 

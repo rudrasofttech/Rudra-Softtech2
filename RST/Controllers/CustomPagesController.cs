@@ -81,6 +81,7 @@ namespace RST.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         // PUT: api/CustomPages/5
         [ResponseType(typeof(void))]
         public IHttpActionResult PutCustomPage(int id, [FromBody] CustomPageDTO page)
@@ -126,6 +127,7 @@ namespace RST.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
         // POST: api/CustomPages
         [ResponseType(typeof(CustomPage))]
         public IHttpActionResult PostCustomPage([FromBody] CustomPageDTO page)
@@ -164,6 +166,7 @@ namespace RST.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
         // DELETE: api/CustomPages/5
         [ResponseType(typeof(CustomPage))]
         public IHttpActionResult DeleteCustomPage(int id)

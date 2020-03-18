@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
+
 export class CategoryList extends Component {
     displayName = CategoryList.name;
     constructor(props) {
@@ -11,36 +12,24 @@ export class CategoryList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { datasources: [], loading: true, loggedin: loggedin };
+        this.state = { categories: [], loading: true, loggedin: loggedin };
+        this.handleDeleteCategory = this.handleDeleteCategory.bind(this);
         if (loggedin) {
-            fetch('http://localhost:59709/api/Categories', {
-                method: 'get',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            })
-                .then(response => {
-                    if (response.status === 401) {
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    for (var k in data) {
-                        if (data[k].Status === 0) {
-                            data[k].StatusName = "Active";
-                        } else if (data[k].Status === 1) {
-                            data[k].StatusName = "InActive";
-                        } else if (data[k].Status === 2) {
-                            data[k].StatusName = "Deleted";
-                        }
-                    }
-                    this.setState({ datasources: data, loading: false });
-                });
+            this.fetchData(token);
         }
     }
-
+    renderMemberStatus(param) {
+        switch (param) {
+            case 0:
+                return 'Active';
+            case 1:
+                return 'InActive';
+            case 2:
+                return 'Deleted';
+            default:
+                return '';
+        }
+    }
     renderTable(ds) {
         return (
             <Table responsive striped bordered condensed hover>
@@ -50,7 +39,7 @@ export class CategoryList extends Component {
                         <th>Name</th>
                         <th>Url Name</th>
                         <th>Status</th>
-                        
+                        <th><Link to={'/categorymanage/0'} className="btn btn-link">Create New</Link></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,12 +48,73 @@ export class CategoryList extends Component {
                             <td>{cp.ID}</td>
                             <td>{cp.Name}</td>
                             <td>{cp.UrlName}</td>
-                            <td>{cp.StatusName}</td>
+                            <td>{this.renderMemberStatus(cp.Status)}</td>
+                            <td><Link className='btn btn-link btn-md' to={'/categorymanage/' + cp.ID}>Edit</Link>
+                                <button type='button' name={cp.ID} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>Delete</button></td>
                         </tr>
                     )}
                 </tbody>
             </Table>
         );
+    }
+    fetchData(t) {
+        fetch('http://localhost:59709/api/Categories', {
+            method: 'get',
+            headers: {
+                'Authorization': 'Bearer ' + t
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                }
+                return response.json();
+            })
+            .then(data => {
+
+                this.setState({ categories: data, loading: false });
+            });
+    }
+    handleDeleteCategory(e) {
+        if (window.confirm("Are you sure you want to delete this category?")) {
+            fetch('http://localhost:59709/api/Categories/' + e.target.name,
+                {
+                    method: 'delete',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    console.log(response.status);
+                    if (response.status === 200) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let list = this.state.categories;
+                            for (var k in list) {
+                                if (list[k].ID === data.ID) {
+                                    list.splice(k, 1);
+                                    this.setState({ categories: list });
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                    else if (response.status === 401) {
+
+                        localStorage.removeItem("token");
+                        this.setState({ error: true, message: "Authorization has been denied for this request." });
+
+                    }
+                    else {
+                        response.json().then(data => {
+                            console.log(data);
+                            this.setState({ error: false, loggedin: false });
+                        });
+                    }
+                });
+        }
     }
 
     render() {
@@ -74,7 +124,7 @@ export class CategoryList extends Component {
         } else {
             let contents = this.state.loading
                 ? <p><em>Loading...</em></p>
-                : this.renderTable(this.state.datasources);
+                : this.renderTable(this.state.categories);
             return (
                 <div>
                     <h1>Categories</h1>

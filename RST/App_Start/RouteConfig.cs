@@ -13,9 +13,17 @@ namespace RST
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            
-            
+            routes.MapRoute(
+                name: "GenerateSitemap",
+                url: "generatesitemap",
+                defaults: new { controller = "Home", action = "GenerateSitemap" }
+            );
 
+            routes.MapRoute(
+                name: "Routine",
+                url: "routine",
+                defaults: new { controller = "Home", action = "Routine"}
+            );
             routes.MapRoute(
                 name: "BlogCatList",
                 url: "blog/{category}/index",

@@ -31,7 +31,7 @@ export class NavMenu extends Component {
             <Navbar inverse fixedTop fluid collapseOnSelect>
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <Link to={'/'}>Rudra Sofftech Admin</Link>
+                        <Link to={'/'}>Rudra Softtech Admin</Link>
                     </Navbar.Brand>
                     <Navbar.Toggle />
                 </Navbar.Header>
@@ -39,7 +39,7 @@ export class NavMenu extends Component {
                     <Nav>
                         <LinkContainer to={'/custompagelist'}>
                             <NavItem>
-                                Custom Pages
+                                Pages
               </NavItem>
                         </LinkContainer>
                         <LinkContainer to={'/articlelist'}>
@@ -64,10 +64,23 @@ export class NavMenu extends Component {
                         </LinkContainer>
                         <LinkContainer to={'/WebsiteSettings'}>
                             <NavItem>
-                                Website Settings
+                                Settings
               </NavItem>
                         </LinkContainer>
-
+                        <LinkContainer to={'/EmailList'}>
+                            <NavItem>
+                                Emails
+              </NavItem>
+                        </LinkContainer>
+                        <LinkContainer to={'/NewsletterDesign'}>
+                            <NavItem>Newsletter</NavItem>
+                        </LinkContainer>
+                        <li role="presentation">
+                            <a href="https://www.rudrasofttech.com/generatesitemap" target="_blank">Build Sitemap</a>
+                        </li>
+                        <li role="presentation">
+                            <a target="_blank" href="http://rudrasofttech.com/vtracker/report/websitepublicstats/3?range=Last30Days">Visits</a>
+                        </li>
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>

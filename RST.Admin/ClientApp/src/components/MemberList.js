@@ -13,11 +13,12 @@ export class MemberList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { data: [], pagesize: 20, loading: true, loggedin: loggedin };
+        this.state = {
+            data: { Members: [], TotalPages: 0, Page : 0}, pagesize: 20, loading: true, loggedin: loggedin, showchangepasswordmodal : false };
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
         if (loggedin) {
-            this.fetchData(token, 0, this.state.pagesize);
+            this.fetchData(token, 1, this.state.pagesize);
         }
     }
 
@@ -36,18 +37,12 @@ export class MemberList extends Component {
                 return response.json();
             })
             .then(data => {
+                console.log(data);
                 this.setState({ data: data, loading: false });
             });
     }
 
-    columns = [
-        { title: 'ID', prop: 'ID' },
-        { title: 'Email', prop: 'Email' },
-        { title: 'Name', prop: 'FirstName' },
-        { title: 'Date Created', prop: 'CreateDate', format: 'd/MMM/yy' },
-        { title: 'Date Modified', prop: 'ModifyDate' },
-        { title: 'Status', prop: 'StatusName' }
-    ];
+    
     renderMemberStatus(param) {
         switch (param) {
             case 0:
@@ -81,41 +76,48 @@ export class MemberList extends Component {
     }
 
     handlePageChange(e) {
-        this.fetchData(localStorage.getItem("token"), e.target.value, this.state.pagesize);
+        if (e.target.value !== '') {
+            this.fetchData(localStorage.getItem("token"), parseInt(e.target.value, 10), this.state.pagesize);
+        }
     }
 
     handlePageSizeChange(e) {
         this.setState({ pagesize: e.target.value });
-        this.fetchData(localStorage.getItem("token"), 0, e.target.value);
+        this.fetchData(localStorage.getItem("token"), 1, e.target.value);
     }
 
-    renderTable(ds, columns) {
+    
+
+    renderTable(ds) {
+        let paging = <span />;
+        if (this.state.data.TotalPages > 0) {
+            paging = <Row>
+                <Col smOffset={8} sm={2}>
+                    <FormGroup controlId="formControlsSelect">
+                        <FormControl componentClass="select" value={this.state.pagesize} onChange={this.handlePageSizeChange} placeholder="select" title="Page Size">
+                            <option value="10">10 Per Page</option>
+                            <option value="20">20 Per Page</option>
+                            <option value="30">30 Per Page</option>
+                            <option value="50">50 Per Page</option>
+                            <option value="100">100 Per Page</option>
+                        </FormControl>
+                    </FormGroup>
+
+                </Col>
+                <Col sm={2}>
+                    <FormGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>Go To</InputGroup.Addon>
+                            <FormControl min="1" max={this.state.data.TotalPages} type="number" value={this.state.data.Page} onChange={this.handlePageChange} />
+                            <InputGroup.Addon> / {this.state.data.TotalPages}</InputGroup.Addon>
+                        </InputGroup>
+                    </FormGroup>
+                </Col>
+            </Row>;
+        }
         return (
             <Grid fluid="true">
-                <Row>
-                    
-                    <Col smOffset={8} sm={2}>
-                        <FormGroup controlId="formControlsSelect">
-                            <FormControl componentClass="select" value={this.state.pagesize} onChange={this.handlePageSizeChange} placeholder="select" title="Page Size">
-                                <option value="10">10 Per Page</option>
-                                <option value="20">20 Per Page</option>
-                                <option value="30">30 Per Page</option>
-                                <option value="50">50 Per Page</option>
-                                <option value="100">100 Per Page</option>
-                            </FormControl>
-                        </FormGroup>
-
-                    </Col>
-                    <Col sm={2}>
-                        <FormGroup>
-                            <InputGroup>
-                                <InputGroup.Addon>Go To</InputGroup.Addon>
-                                <FormControl min="0" max={this.state.data.TotalPages} type="number" value={this.state.data.Page} onChange={this.handlePageChange} />
-                                <InputGroup.Addon> / {this.state.data.TotalPages}</InputGroup.Addon>
-                            </InputGroup>
-                        </FormGroup>
-                    </Col>
-                </Row>
+                {paging}
                 <Row>
                     <Col sm={12}>
                         <Table responsive striped bordered condensed hover>
@@ -128,6 +130,7 @@ export class MemberList extends Component {
                                     <th>Date Modified</th>
                                     <th>Status</th>
                                     <th>Type</th>
+                                    <th />
                                 </tr>
                             </thead>
                             <tbody>
@@ -140,6 +143,7 @@ export class MemberList extends Component {
                                         <td>{cp.ModifyDate}</td>
                                         <td>{this.renderMemberStatus(cp.Status)}</td>
                                         <td>{this.renderMemberType(cp.UserType)}</td>
+                                        <td><Link className='btn btn-link' to={'/changepassword/' + cp.ID}>Change Password</Link></td>
                                     </tr>
                                 )}
                             </tbody>

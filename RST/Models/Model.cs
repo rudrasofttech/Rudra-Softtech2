@@ -194,12 +194,18 @@ namespace RST.Models
     {
         public List<EmailMessage> Messages { get; set; }
         public int TotalPages { get; set; }
-        public int CurrentPage { get; set; }
+        public int Page { get; set; }
 
         public EmailMessageListDTO()
         {
             Messages = new List<EmailMessage>();
         }
+    }
+
+    public class SendNewsletterDTO
+    {
+        public string EmailGroup { get; set; }
+        public string Subject { get; set; }
     }
 
     public class MemberListDTO
@@ -254,20 +260,6 @@ namespace RST.Models
         public bool Sitemap { get; set; }
     }
 
-    public class PostDTO
-    {
-        public int ID { get; set; }
-        public DateTime DateCreated { get; set; }
-        public int CreatedBy { get; set; }
-        public string CreatedByName { get; set; }
-        public DateTime? DateModified { get; set; }
-        public int ModifiedBy { get; set; }
-        public string ModifiedByName { get; set; }
-        public String Status { get; set; }
-        public bool Sitemap { get; set; }
-        public string Title { get; set; }
-    }
-
     public class TopStory
     {
         [Key]
@@ -287,5 +279,28 @@ namespace RST.Models
         public string KeyName { get; set; }
         public string KeyValue { get; set; }
         public string Description { get; set; }
+    }
+
+    public class PostDTO
+    {
+        public int ID { get; set; }
+        public DateTime DateCreated { get; set; }
+        public int CreatedBy { get; set; }
+        public string CreatedByName { get; set; }
+        public DateTime? DateModified { get; set; }
+        public int ModifiedBy { get; set; }
+        public string ModifiedByName { get; set; }
+        public String Status { get; set; }
+        public bool Sitemap { get; set; }
+        public string Title { get; set; }
+    }
+
+    public class ChangePasswordDTO
+    {
+        [Required]
+        public int MemberID { get; set; }
+        [Required]
+        [MinLength(8)]
+        public string NewPassword { get; set; }
     }
 }
