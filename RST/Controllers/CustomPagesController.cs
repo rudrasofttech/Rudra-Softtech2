@@ -29,7 +29,7 @@ namespace RST.Controllers
                 Body = m.Body,
                 CreatedBy = m.CreatedBy.ID,
                 Title = m.Title,
-                Status = m.Status.ToString(),
+                Status = m.Status,
                 CreatedByName = m.CreatedBy.FirstName,
                 DateCreated = m.DateCreated,
                 DateModified = m.DateModified,
@@ -46,7 +46,7 @@ namespace RST.Controllers
         }
 
         // GET: api/CustomPages/5
-        [ResponseType(typeof(CustomPageDTO))]
+        [ResponseType(typeof(CustomPage))]
         public IHttpActionResult GetCustomPage(int id)
         {
             if(id == 0)
@@ -58,27 +58,27 @@ namespace RST.Controllers
             {
                 return NotFound();
             }
-            CustomPageDTO result = new CustomPageDTO()
-            {
-                ID = m.ID,
-                Body = m.Body,
-                CreatedBy = (m.CreatedBy == null) ? 0 : m.CreatedBy.ID,
-                Title = m.Title,
-                Status = m.Status.ToString(),
-                CreatedByName = (m.CreatedBy == null) ? "" : m.CreatedBy.FirstName,
-                DateCreated = m.DateCreated,
-                DateModified = m.DateModified,
-                Head = m.Head,
-                ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
-                Name = m.Name,
-                NoTemplate = m.NoTemplate,
-                PageMeta = m.PageMeta,
-                Sitemap = m.Sitemap,
-                ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
-            };
+            //CustomPageDTO result = new CustomPageDTO()
+            //{
+            //    ID = m.ID,
+            //    Body = m.Body,
+            //    CreatedBy = (m.CreatedBy == null) ? 0 : m.CreatedBy.ID,
+            //    Title = m.Title,
+            //    Status = m.Status,
+            //    CreatedByName = (m.CreatedBy == null) ? "" : m.CreatedBy.FirstName,
+            //    DateCreated = m.DateCreated,
+            //    DateModified = m.DateModified,
+            //    Head = m.Head,
+            //    ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
+            //    Name = m.Name,
+            //    NoTemplate = m.NoTemplate,
+            //    PageMeta = m.PageMeta,
+            //    Sitemap = m.Sitemap,
+            //    ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
+            //};
 
 
-            return Ok(result);
+            return Ok(m);
         }
 
         [Authorize(Roles = "Admin")]
@@ -104,7 +104,7 @@ namespace RST.Controllers
                 cp.NoTemplate = page.NoTemplate;
                 cp.PageMeta = page.PageMeta;
                 cp.Sitemap = page.Sitemap;
-                cp.Status = (PostStatus)Enum.Parse(typeof(PostStatus), page.Status);
+                cp.Status = page.Status;
                 cp.Title = page.Title;
                 cp.Body = page.Body;
                 cp.DateModified = DateTime.Now;
@@ -153,7 +153,7 @@ namespace RST.Controllers
                     NoTemplate = page.NoTemplate,
                     PageMeta = page.PageMeta,
                     Sitemap = page.Sitemap,
-                    Status = (PostStatus)Enum.Parse(typeof(PostStatus), page.Status),
+                    Status =  page.Status,
                     Title = page.Title
                 };
                 db.CustomPages.Add(cp);

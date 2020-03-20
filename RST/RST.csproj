@@ -193,6 +193,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helper_Code\DataSourceManager.cs" />
+    <Compile Include="Helper_Code\DriveManager.cs" />
     <Compile Include="Helper_Code\OAuth2\AppOAuthProvider.cs" />
     <Compile Include="Helper_Code\Utility.cs" />
     <Compile Include="Migrations\202002220413102_First.cs" />

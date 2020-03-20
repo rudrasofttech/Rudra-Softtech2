@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FormGroup, FormControl, Button, ControlLabel, ProgressBar } from 'react-bootstrap';
+import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Table } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class CategoryManage extends Component {
     displayName = CategoryManage.name;
@@ -16,7 +17,7 @@ export class CategoryManage extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
         this.state = {
-            datasource: null, loading: true, loggedin: loggedin, reload: false
+            datasource: null, loading: true, loggedin: loggedin, bsstyle: '', message: ''
         };
         if (loggedin) {
             this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
@@ -32,14 +33,13 @@ export class CategoryManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                this.setState({ category: data, loading: false });
+                return response.json()
+                    .then(data => {
+                        console.log(data);
+                        this.setState({ category: data, loading: false, bsstyle: '', message: '' });
+                    });
             });
     }
 
@@ -61,22 +61,23 @@ export class CategoryManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ loading: false, bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Saved", error: false });
+                    this.setState({ loading: false, message: "Category Saved", bsstyle: 'success' });
                     console.log("Category Saved");
                 } else if (response.status === 201) {
-                    this.setState({ loading: false, message: "Saved", error: false });
-                    console.log("Category Created");
+                    this.setState({ loading: false, message: "Category Created.", bsstyle: 'success' });
                     response.json().then(data => {
                         this.fetchData(localStorage.getItem("token"), data.ID);
                     });
                 } else {
-                    this.setState({ loading: false, message: "Category cannot be saved.", error: false });
-                    alert("Unable to save page.");
+                    response.json().then(data => {
+                        this.setState({ loading: false, message: "Category cannot be saved. " + data.Message, bsstyle: 'danger' });
+                    });
                 }
             });
     }
+
     handleChange(e) {
         var temp = this.state.category;
         switch (e.target.name) {
@@ -96,54 +97,56 @@ export class CategoryManage extends Component {
     }
     renderTable(page) {
         return (
-            <table className='table'>
-                <tbody>
+            <div>
+                <div className="fixedBottom">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Table>
+                    <tbody>
 
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Name" >
-                                <ControlLabel>Name (Required)</ControlLabel>
-                                <FormControl name="Name" maxLength="50" type="text" value={page.Name} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Name" >
+                                    <ControlLabel>Name (Required)</ControlLabel>
+                                    <FormControl name="Name" maxLength="50" type="text" value={page.Name} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td>
-                            <FormGroup controlId="UrlName" >
-                                <ControlLabel>Url Name (Required)</ControlLabel>
-                                <FormControl name="UrlName" maxLength="50" type="text" value={page.UrlName} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Status">
-                                <ControlLabel>Status (Required)</ControlLabel>
-                                <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
-                                    <option value="0">Active</option>
-                                    <option value="1">Inactive</option>
-                                    <option value="2">Deleted</option>
-                                </FormControl>
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Button type="button" onClick={this.saveData}>Save</Button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="UrlName" >
+                                    <ControlLabel>Url Name (Required)</ControlLabel>
+                                    <FormControl name="UrlName" maxLength="50" type="text" value={page.UrlName} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Status">
+                                    <ControlLabel>Status (Required)</ControlLabel>
+                                    <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
+                                        <option value="0">Active</option>
+                                        <option value="1">Inactive</option>
+                                        <option value="2">Deleted</option>
+                                    </FormControl>
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <Button type="button" onClick={this.saveData}>Save</Button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </div>
         );
     }
 
     render() {
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
-        }
-        else if (this.state.reload) {
-            return <Redirect to={'/customdatasourcelist'} />;
         }
         else {
             let contents = this.state.loading

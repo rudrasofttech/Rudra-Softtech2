@@ -1,8 +1,10 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
+
 export class CustomDataSourceList extends Component {
-    displayName = CustomDataSourceList.name
+    //displayName = CustomDataSourceList.name
 
     constructor(props) {
         super(props);
@@ -12,12 +14,12 @@ export class CustomDataSourceList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { datasources: [], loading: true, loggedin: loggedin };
+        this.state = { datasources: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         if (loggedin) {
             this.fetchData(token);
         }
     }
-   
+
     fetchData(t) {
         fetch('http://localhost:59709/api/CustomDataSources', {
             method: 'get',
@@ -27,14 +29,14 @@ export class CustomDataSourceList extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else {
+                    response.json()
+                        .then(data => {
+                            console.log(data);
+                            this.setState({ datasources: data, loading: false, bsstyle: '', message: '' });
+                        });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                this.setState({ datasources: data, loading: false });
             });
     }
 
@@ -64,15 +66,12 @@ export class CustomDataSourceList extends Component {
                         });
                     }
                     else if (response.status === 401) {
-
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request." });
-
+                        this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                     }
                     else {
                         response.json().then(data => {
                             console.log(data);
-                            this.setState({ error: false, loggedin: false });
+                            this.setState({ bsstyle: '', message: '', loading: false });
                         });
                     }
                 });
@@ -81,33 +80,38 @@ export class CustomDataSourceList extends Component {
 
     renderDataSourcesTable(ds) {
         return (
-            <Table responsive striped bordered condensed hover>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Date Created</th>
-                        <th>Created By</th>
-                        <th>Date Modified</th>
-                        <th>Modified By</th>
-                        <th><Link to={'/datasourcemanage/0'} className="btn btn-link">Create New</Link></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ds.map(cp =>
-                        <tr key={cp.ID}>
-                            <td>{cp.ID}</td>
-                            <td>{cp.Name}</td>
-                            <td>{cp.DateCreated}</td>
-                            <td>{cp.CreatedByName}</td>
-                            <td>{cp.DateModified}</td>
-                            <td>{cp.ModifiedByName}</td>
-                            <td><Link className='btn btn-link' to={'/datasourcemanage/' + cp.ID}>Edit</Link>
-                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeleteDS}>Delete</button></td>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Table responsive striped bordered condensed hover>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Date Created</th>
+                            <th>Created By</th>
+                            <th>Date Modified</th>
+                            <th>Modified By</th>
+                            <th><Link to={'/datasourcemanage/0'} className="btn btn-link">Create New</Link></th>
                         </tr>
-                    )}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {ds.map(cp =>
+                            <tr key={cp.ID}>
+                                <td>{cp.ID}</td>
+                                <td>{cp.Name}</td>
+                                <td>{cp.DateCreated}</td>
+                                <td>{cp.CreatedByName}</td>
+                                <td>{cp.DateModified}</td>
+                                <td>{cp.ModifiedByName}</td>
+                                <td><Link className='btn btn-link' to={'/datasourcemanage/' + cp.ID}>Edit</Link>
+                                    <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeleteDS}>Delete</button></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+            </div>
         );
     }
 
@@ -122,7 +126,6 @@ export class CustomDataSourceList extends Component {
             return (
                 <div>
                     <h1>Data Sources</h1>
-                    
                     {contents}
                 </div>
             );

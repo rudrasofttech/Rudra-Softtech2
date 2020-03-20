@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class EmailList extends Component {
     displayName = EmailList.name
@@ -13,7 +14,7 @@ export class EmailList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { data: { Messages: [], TotalPages: 0, Page: 0 }, pagesize: 20, etype: '', group: '', sent: '', read: '', loading: true, loggedin: loggedin, emailgroups:[] };
+        this.state = { data: { Messages: [], TotalPages: 0, Page: 0 }, pagesize: 20, etype: '', group: '', sent: '', read: '', loading: true, loggedin: loggedin, emailgroups: [], bsstyle: '', message: '' };
         this.handleChange = this.handleChange.bind(this);
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
@@ -32,14 +33,15 @@ export class EmailList extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else {
+                    response.json()
+                        .then(data => {
+                            console.log(data);
+                            this.setState({ data: data, loading: false, bsstyle: '', message: '' });
+                        });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                this.setState({ data: data, loading: false });
+
             });
     }
 
@@ -57,7 +59,7 @@ export class EmailList extends Component {
                 }
                 else if (response.status === 401) {
                     console.log("Authorization has been denied for this request for email groups.");
-                } 
+                }
             });
     }
 
@@ -114,7 +116,7 @@ export class EmailList extends Component {
             default:
                 break;
         }
-        
+
     }
     renderTable(ds) {
         let paging = <span />;
@@ -144,84 +146,89 @@ export class EmailList extends Component {
             </Row>;
         }
         return (
-            <Grid fluid="true">
-                <Row>
-                    <Col sm={3}>
-                        <FormGroup controlId="EmailMessageType">
-                            <FormControl componentClass="select" name="EmailMessageType" value={this.state.etype} onChange={this.handleChange} placeholder="select" title="Email Message Type">
-                                <option value="">Email Type</option>
-                                <option value="1">Activation</option>
-                                <option value="2">Unsubscribe</option>
-                                <option value="6">Communication</option>
-                                <option value="3">Newsletter</option>
-                                <option value="4">ChangePassword</option>
-                                <option value="5">Reminder</option>
-                            </FormControl>
-                        </FormGroup>
-                    </Col>
-                    <Col sm={3}>
-                        <FormGroup controlId="EmailGroup">
-                            <FormControl componentClass="select" name="EmailGroup" value={this.state.group} onChange={this.handleChange} placeholder="select" title="Email Message Group">
-                                <option value="">Email Group</option>
-                                {this.state.emailgroups.map(cp =>
-                                    <option key={cp.EmailGroup} value={cp.EmailGroup}>{cp.EmailGroup}</option>
-                                )}
-                            </FormControl>
-                        </FormGroup>
-                    </Col>
-                    <Col sm={3}>
-                        <FormGroup controlId="Sent">
-                            <FormControl componentClass="select" name="Sent" value={this.state.sent} onChange={this.handleChange} placeholder="select" title="Email Sent">
-                                <option value="">Is Sent</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </FormControl>
-                        </FormGroup>
-                    </Col>
-                    <Col sm={3}>
-                        <FormGroup controlId="Read">
-                            <FormControl componentClass="select" name="Read" value={this.state.read} onChange={this.handleChange} placeholder="select" title="Email Read">
-                                <option value="">Is Read</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                            </FormControl>
-                        </FormGroup>
-                    </Col>
-                </Row>
-                {paging}
-                <Row>
-                    <Col sm={12}>
-                        <Table responsive striped bordered condensed hover>
-                            <thead>
-                                <tr>
-                                    <th>To</th>
-                                    <th>Last Attempt</th>
-                                    <th>Read</th>
-                                    <th>Sent</th>
-                                    <th>Email Group</th>
-                                    <th>Create Date</th>
-                                    <th>Sent Date</th>
-                                    <th>Subject</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ds.map(cp =>
-                                    <tr key={cp.ID}>
-                                        <td>{cp.ToAddress} {cp.ToName}</td>
-                                        <td>{cp.LastAttempt}</td>
-                                        <td><input type="checkbox" defaultChecked={cp.IsRead} disabled /></td>
-                                        <td><input type="checkbox" defaultChecked={cp.IsSent} disabled /></td>
-                                        <td>{cp.EmailGroup}</td>
-                                        <td>{cp.CreateDate}</td>
-                                        <td>{cp.SentDate}</td>
-                                        <td>{cp.Subject}</td>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Grid fluid="true">
+                    <Row>
+                        <Col sm={3}>
+                            <FormGroup controlId="EmailMessageType">
+                                <FormControl componentClass="select" name="EmailMessageType" value={this.state.etype} onChange={this.handleChange} placeholder="select" title="Email Message Type">
+                                    <option value="">Email Type</option>
+                                    <option value="1">Activation</option>
+                                    <option value="2">Unsubscribe</option>
+                                    <option value="6">Communication</option>
+                                    <option value="3">Newsletter</option>
+                                    <option value="4">ChangePassword</option>
+                                    <option value="5">Reminder</option>
+                                </FormControl>
+                            </FormGroup>
+                        </Col>
+                        <Col sm={3}>
+                            <FormGroup controlId="EmailGroup">
+                                <FormControl componentClass="select" name="EmailGroup" value={this.state.group} onChange={this.handleChange} placeholder="select" title="Email Message Group">
+                                    <option value="">Email Group</option>
+                                    {this.state.emailgroups.map(cp =>
+                                        <option key={cp.EmailGroup} value={cp.EmailGroup}>{cp.EmailGroup}</option>
+                                    )}
+                                </FormControl>
+                            </FormGroup>
+                        </Col>
+                        <Col sm={3}>
+                            <FormGroup controlId="Sent">
+                                <FormControl componentClass="select" name="Sent" value={this.state.sent} onChange={this.handleChange} placeholder="select" title="Email Sent">
+                                    <option value="">Is Sent</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </FormControl>
+                            </FormGroup>
+                        </Col>
+                        <Col sm={3}>
+                            <FormGroup controlId="Read">
+                                <FormControl componentClass="select" name="Read" value={this.state.read} onChange={this.handleChange} placeholder="select" title="Email Read">
+                                    <option value="">Is Read</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </FormControl>
+                            </FormGroup>
+                        </Col>
+                    </Row>
+                    {paging}
+                    <Row>
+                        <Col sm={12}>
+                            <Table responsive striped bordered condensed hover>
+                                <thead>
+                                    <tr>
+                                        <th>To</th>
+                                        <th>Last Attempt</th>
+                                        <th>Read</th>
+                                        <th>Sent</th>
+                                        <th>Email Group</th>
+                                        <th>Create Date</th>
+                                        <th>Sent Date</th>
+                                        <th>Subject</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </Table>
-                    </Col>
-                </Row>
-            </Grid>
+                                </thead>
+                                <tbody>
+                                    {ds.map(cp =>
+                                        <tr key={cp.ID}>
+                                            <td>{cp.ToAddress} {cp.ToName}</td>
+                                            <td>{cp.LastAttempt}</td>
+                                            <td><input type="checkbox" defaultChecked={cp.IsRead} disabled /></td>
+                                            <td><input type="checkbox" defaultChecked={cp.IsSent} disabled /></td>
+                                            <td>{cp.EmailGroup}</td>
+                                            <td>{cp.CreateDate}</td>
+                                            <td>{cp.SentDate}</td>
+                                            <td>{cp.Subject}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Grid>
+            </div>
 
         );
     }

@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import { Col, Grid, Row, FormGroup, InputGroup, FormControl,Table } from 'react-bootstrap';
+import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class MemberList extends Component {
     displayName = MemberList.name
@@ -14,7 +15,8 @@ export class MemberList extends Component {
             loggedin = false;
         }
         this.state = {
-            data: { Members: [], TotalPages: 0, Page : 0}, pagesize: 20, loading: true, loggedin: loggedin, showchangepasswordmodal : false };
+            data: { Members: [], TotalPages: 0, Page: 0 }, pagesize: 20, loading: true, loggedin: loggedin, showchangepasswordmodal: false, bsstyle: '', message: ''
+        };
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
         if (loggedin) {
@@ -31,18 +33,17 @@ export class MemberList extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else {
+                    response.json()
+                        .then(data => {
+                            console.log(data);
+                            this.setState({ bsstyle: '', message: '', data: data, loading: false });
+                        });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                this.setState({ data: data, loading: false });
             });
     }
 
-    
     renderMemberStatus(param) {
         switch (param) {
             case 0:
@@ -86,8 +87,6 @@ export class MemberList extends Component {
         this.fetchData(localStorage.getItem("token"), 1, e.target.value);
     }
 
-    
-
     renderTable(ds) {
         let paging = <span />;
         if (this.state.data.TotalPages > 0) {
@@ -116,42 +115,46 @@ export class MemberList extends Component {
             </Row>;
         }
         return (
-            <Grid fluid="true">
-                {paging}
-                <Row>
-                    <Col sm={12}>
-                        <Table responsive striped bordered condensed hover>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Email</th>
-                                    <th>Name</th>
-                                    <th>Date Created</th>
-                                    <th>Date Modified</th>
-                                    <th>Status</th>
-                                    <th>Type</th>
-                                    <th />
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ds.map(cp =>
-                                    <tr key={cp.ID}>
-                                        <td>{cp.ID}</td>
-                                        <td>{cp.Email}</td>
-                                        <td>{cp.FirstName}</td>
-                                        <td>{cp.CreateDate}</td>
-                                        <td>{cp.ModifyDate}</td>
-                                        <td>{this.renderMemberStatus(cp.Status)}</td>
-                                        <td>{this.renderMemberType(cp.UserType)}</td>
-                                        <td><Link className='btn btn-link' to={'/changepassword/' + cp.ID}>Change Password</Link></td>
+            <div>
+                <div className="fixedBottom">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Grid fluid="true">
+                    {paging}
+                    <Row>
+                        <Col sm={12}>
+                            <Table responsive striped bordered condensed hover>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Email</th>
+                                        <th>Name</th>
+                                        <th>Date Created</th>
+                                        <th>Date Modified</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                        <th />
                                     </tr>
-                                )}
-                            </tbody>
-                        </Table>
-                    </Col>
-                </Row>
-            </Grid>
-
+                                </thead>
+                                <tbody>
+                                    {ds.map(cp =>
+                                        <tr key={cp.ID}>
+                                            <td>{cp.ID}</td>
+                                            <td>{cp.Email}</td>
+                                            <td>{cp.FirstName}</td>
+                                            <td>{cp.CreateDate}</td>
+                                            <td>{cp.ModifyDate}</td>
+                                            <td>{this.renderMemberStatus(cp.Status)}</td>
+                                            <td>{this.renderMemberType(cp.UserType)}</td>
+                                            <td><Link className='btn btn-link' to={'/changepassword/' + cp.ID}>Change Password</Link></td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Grid>
+            </div>
         );
     }
 

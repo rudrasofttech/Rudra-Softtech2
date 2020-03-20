@@ -1,7 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Modal, Checkbox } from 'react-bootstrap';
-
+import { MessageStrip } from './MessageStrip';
 export class ArticleManage extends Component {
     displayName = ArticleManage.name;
 
@@ -15,10 +15,12 @@ export class ArticleManage extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
+        this.handleBlur = this.handleBlur.bind(this);
         this.state = {
-            article: null, categories: [], blogtemplates: [], loading: true, loggedin: loggedin, reload: false };
+            article: null, categories: [], blogtemplates: [], loading: true, loggedin: loggedin, bsstyle: '', message: ''
+        };
         if (loggedin) {
-            
+
             this.fetchCategory(token);
             this.fetchBlogTemplates(token);
             this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
@@ -33,14 +35,13 @@ export class ArticleManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request." });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 }
                 return response.json();
             })
             .then(data => {
                 console.log(data);
-                this.setState({ categories: data });
+                this.setState({ categories: data, message: '', bsstyle: '' });
             });
     }
     fetchBlogTemplates(t) {
@@ -52,8 +53,7 @@ export class ArticleManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request." });
+                    this.setState({ bsstyle: 'danger', message: "Unable to fetch blog templates. Authorization has been denied for this request." });
                 }
                 return response.json();
             })
@@ -70,19 +70,15 @@ export class ArticleManage extends Component {
     }
 
     slugify() {
-        //fetch('http://localhost:59709/Utility/Slugify/123', { method: 'get', data: { t: this.state.article.URL} })
-        //    .then(response => {
-        //        if (response.status === 401) {
-        //            localStorage.removeItem("token");
-        //            this.setState({ error: true, message: "Authorization has been denied for this request." });
-        //        }
-        //        return response.json();
-        //    })
-        //    .then(data => {
-        //        let a = this.state.article;
-        //        a.URL = data.d;
-        //        this.setState({ article: a });
-        //    });
+        fetch('http://localhost:59709/api/Utility/Slugify?t=' + this.state.article.URL)
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                let a = this.state.article;
+                a.URL = data;
+                this.setState({ article: a });
+            });
     }
 
     fetchData(t, id) {
@@ -94,8 +90,7 @@ export class ArticleManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Unable to fetch article information. Authorization has been denied for this request.", loggedin: false });
                 }
                 return response.json();
             })
@@ -130,21 +125,28 @@ export class ArticleManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ loading: false, bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Page saved.", error: false });
-                    console.log("Page Saved");
+                    this.setState({ loading: false, message: "Article saved.", bsstyle: 'success' });
                 } else if (response.status === 201) {
-                    this.setState({ loading: false, message: "Page saved.", error: false });
-                    console.log("Article Created");
+                    this.setState({ loading: false, message: "Article created and your can keep editing.", bsstyle: 'success' });
                     response.json().then(data => {
                         this.fetchData(localStorage.getItem("token"), data.ID);
                     });
                 } else {
-                    this.setState({ loading: false, message: "Page cannot be saved.", error: false });
-                    alert("Unable to save page.");
+                    response.json().then(data => {
+                        this.setState({ loading: false, message: "Page cannot be saved. " + data.Message, bsstyle: 'danger' });
+                    });
                 }
             });
+    }
+
+    handleBlur(e) {
+        switch (e.target.name) {
+            case 'URL':
+                this.slugify();
+                break;
+        }
     }
     handleChange(e) {
         var temp = this.state.article;
@@ -195,147 +197,150 @@ export class ArticleManage extends Component {
                 break;
         }
         this.setState({ article: temp });
-        if (e.target.name === "URL") {
-            this.slugify();
-        }
+       
     }
     renderTable(page) {
         return (
-            <table className='table'>
-                <tbody>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Status">
-                                <ControlLabel>Status (Required)</ControlLabel>
-                                <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
-                                    <option value="1">Draft</option>
-                                    <option value="2">Publish</option>
-                                    <option value="3">Inactive</option>
-                                </FormControl>
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Title" >
-                                <ControlLabel>Title (Required)</ControlLabel>
-                                <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <table className='table'>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Status">
+                                    <ControlLabel>Status (Required)</ControlLabel>
+                                    <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
+                                        <option value="1">Draft</option>
+                                        <option value="2">Publish</option>
+                                        <option value="3">Inactive</option>
+                                    </FormControl>
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Title" >
+                                    <ControlLabel>Title (Required)</ControlLabel>
+                                    <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td>
-                            <FormGroup controlId="MetaTitle">
-                                <ControlLabel>Meta Title</ControlLabel>
-                                <FormControl name="MetaTitle" type="text" maxLength="100" value={page.MetaTitle} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="URL">
-                                <ControlLabel>URL (Required)</ControlLabel>
-                                <FormControl name="URL" type="text" maxLength="200" value={page.URL} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Tag">
-                                <ControlLabel>Tag (Required)</ControlLabel>
-                                <FormControl name="Tag" type="text" maxLength="200" value={page.Tag} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Add to Sitemap</Checkbox>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="WriterName">
-                                <ControlLabel>Writer Name (Required)</ControlLabel>
-                                <FormControl name="WriterName" type="text" maxLength="100" value={page.WriterName} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="WriterEmail">
-                                <ControlLabel>Writer Email</ControlLabel>
-                                <FormControl name="WriterEmail" type="email" value={page.WriterEmail} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Category">
-                                <ControlLabel>Category (Required)</ControlLabel>
-                                <FormControl name="Category" componentClass="select" placeholder="select" value={page.Category.ID} onChange={this.handleChange}>
-                                    <option value="select">select</option>
-                                    {this.state.categories.map(cp =>
-                                        <option key={cp.ID} value={cp.ID}>{cp.Name}</option>
-                                    )}
-                                    
-                                </FormControl>
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Template">
-                                <ControlLabel>Template (Required)</ControlLabel>
-                                <FormControl name="TemplateName" componentClass="select" placeholder="select" value={page.Category.TemplateName} onChange={this.handleChange}>
-                                    <option value="">select</option>
-                                    {this.state.blogtemplates.map(cp =>
-                                        <option key={cp.Name} value={cp.Name}>{cp.Name}</option>
-                                    )}
+                        <tr>
+                            <td>
+                                <FormGroup controlId="MetaTitle">
+                                    <ControlLabel>Meta Title</ControlLabel>
+                                    <FormControl name="MetaTitle" type="text" maxLength="100" value={page.MetaTitle} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="URL">
+                                    <ControlLabel>URL (Required)</ControlLabel>
+                                    <FormControl name="URL" type="text" maxLength="200" value={page.URL} onBlur={this.handleBlur} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Tag">
+                                    <ControlLabel>Tag (Required)</ControlLabel>
+                                    <FormControl name="Tag" type="text" maxLength="200" value={page.Tag} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Add to Sitemap</Checkbox>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="WriterName">
+                                    <ControlLabel>Writer Name (Required)</ControlLabel>
+                                    <FormControl name="WriterName" type="text" maxLength="100" value={page.WriterName} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="WriterEmail">
+                                    <ControlLabel>Writer Email</ControlLabel>
+                                    <FormControl name="WriterEmail" type="email" value={page.WriterEmail} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Category">
+                                    <ControlLabel>Category (Required)</ControlLabel>
+                                    <FormControl name="Category" componentClass="select" placeholder="select" value={page.Category.ID} onChange={this.handleChange}>
+                                        <option value="select">select</option>
+                                        {this.state.categories.map(cp =>
+                                            <option key={cp.ID} value={cp.ID}>{cp.Name}</option>
+                                        )}
 
-                                </FormControl>
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="OGImage">
-                                <ControlLabel>Facebook Image (Required)</ControlLabel>
-                                <FormControl name="OGImage" type="text" value={page.OGImage} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="OGDescription">
-                                <ControlLabel>Facebook Description (Required)</ControlLabel>
-                                <FormControl name="OGDescription" type="text" maxLength="500" value={page.OGDescription} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Description">
-                                <ControlLabel>Description (Required)</ControlLabel>
-                                <FormControl name="Description" componentClass="textarea" rows="5" maxLength="1000" placeholder="textarea" value={page.Description} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Body">
-                                <ControlLabel>Text (Required)</ControlLabel>
-                                <FormControl name="Article" componentClass="textarea" rows="20" placeholder="textarea" value={page.Article} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <Button type="button" onClick={this.saveData}>Save</Button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                    </FormControl>
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Template">
+                                    <ControlLabel>Template (Required)</ControlLabel>
+                                    <FormControl name="TemplateName" componentClass="select" placeholder="select" value={page.Category.TemplateName} onChange={this.handleChange}>
+                                        <option value="">select</option>
+                                        {this.state.blogtemplates.map(cp =>
+                                            <option key={cp.Name} value={cp.Name}>{cp.Name}</option>
+                                        )}
+
+                                    </FormControl>
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="OGImage">
+                                    <ControlLabel>Facebook Image (Required)</ControlLabel>
+                                    <FormControl name="OGImage" type="text" value={page.OGImage} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="OGDescription">
+                                    <ControlLabel>Facebook Description (Required)</ControlLabel>
+                                    <FormControl name="OGDescription" type="text" maxLength="500" value={page.OGDescription} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Description">
+                                    <ControlLabel>Description (Required)</ControlLabel>
+                                    <FormControl name="Description" componentClass="textarea" rows="5" maxLength="1000" placeholder="textarea" value={page.Description} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Body">
+                                    <ControlLabel>Text (Required)</ControlLabel>
+                                    <FormControl name="Article" componentClass="textarea" rows="20" placeholder="textarea" value={page.Article} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colSpan="3">
+                                <Button type="button" onClick={this.saveData}>Save</Button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         );
     }
 
@@ -343,16 +348,14 @@ export class ArticleManage extends Component {
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
         }
-        else if (this.state.reload) {
-            return <Redirect to={'/custompagelist'} />;
-        }
         else {
             let contents = this.state.loading
                 ? <ProgressBar active now={100} />
                 : this.renderTable(this.state.article);
             return (
                 <div>
-                    <h1>Web Page</h1>
+                    <h1>Article</h1>
+
                     {contents}
                 </div>
             );

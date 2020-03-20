@@ -23,26 +23,11 @@
     <title>RST.Admin</title>
     <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/carlosrocha/react-data-components@master/css/table-twbs.css" />-->
-    <style>
-        .fixedBottom{
-            position:fixed;
-            top:auto;
-            bottom:0px;
-            left:0px;
-        }
-
-        .noMargin{
-            margin:0px;
-        }
-
-        .noRadius{
-            border-radius:0px;
-        }
-    </style>
+    
 </head>
-  <body style="margin-top:60px;">
+<body style="margin-top:60px;">
     <noscript>
-      You need to enable JavaScript to run this app.
+        You need to enable JavaScript to run this app.
     </noscript>
     <div id="root"></div>
     <!--
@@ -55,5 +40,23 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-  </body>
+    <style>
+        .fixedBottom {
+            position: fixed;
+            top: auto;
+            bottom: 0px;
+            left: auto;
+            right: 0px;
+            z-index: 5000;
+        }
+
+        .noMargin {
+            margin: 0px;
+        }
+
+        .noRadius {
+            border-radius: 0px;
+        }
+    </style>
+</body>
 </html>

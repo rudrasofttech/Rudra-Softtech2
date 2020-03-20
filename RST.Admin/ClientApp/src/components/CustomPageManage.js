@@ -1,7 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Modal, Checkbox } from 'react-bootstrap';
-
+import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Checkbox, Table, Alert, Grid, Row, Col } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 export class CustomPageManage extends Component {
     displayName = CustomPageManage.name;
 
@@ -15,7 +15,7 @@ export class CustomPageManage extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
-        this.state = { custompage: null, loading: true, loggedin: loggedin, reload: false };
+        this.state = { custompage: null, loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         if (loggedin) {
             this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
         }
@@ -30,16 +30,20 @@ export class CustomPageManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else if (response.status === 200) {
+                    response.json().then(data => {
+                        console.log(data);
+                        data.CreatedBy = { ID: 0, Email: '' };
+                        this.setState({ custompage: data, bsstyle: '', message: '', loading: false });
+                    });
+                } else {
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.Message, loading: false });
+                    });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                data.CreatedBy = { ID: 0, Email: '' };
-                this.setState({ custompage: data, loading: false });
             });
+
     }
 
     saveData(e) {
@@ -64,22 +68,40 @@ export class CustomPageManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ loading: false,bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Page saved.", error: false });
-                    console.log("Page Saved");
+                    this.setState({ loading: false, message: "Page saved.", bsstyle: 'success' });
                 } else if (response.status === 201) {
-                    this.setState({ loading: false, message: "Page saved.", error: false });
-                    console.log("Page Created");
+                    this.setState({ loading: false, message: "Page created, you keeping the page here.", bsstyle: 'success' });
                     response.json().then(data => {
                         this.fetchData(localStorage.getItem("token"), data.ID);
                     });
                 } else {
-                    this.setState({ loading: false, message: "Page cannot be saved.", error: false });
-                    alert("Unable to save page.");
+                    this.setState({ loading: false, message: "Page cannot be saved.", bsstyle: 'danger' });
                 }
             });
     }
+
+    slugify() {
+        fetch('http://localhost:59709/api/Utility/Slugify?t=' + this.state.article.URL)
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                let a = this.state.custompage;
+                a.Name = data;
+                this.setState({ custompage: a });
+            });
+    }
+
+    handleBlur(e) {
+        switch (e.target.name) {
+            case 'Name':
+                this.slugify();
+                break;
+        }
+    }
+
     handleChange(e) {
         var temp = this.state.custompage;
         switch (e.target.name) {
@@ -110,82 +132,91 @@ export class CustomPageManage extends Component {
         }
         this.setState({ custompage: temp });
     }
+
     renderTable(page) {
         return (
-            <table className='table'>
-                <tbody>
-                    <tr>
-                        <td><FormGroup controlId="Status">
-                            <ControlLabel>Status (Required)</ControlLabel>
-                            <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
-                                <option value="1">Draft</option>
-                                <option value="2">Publish</option>
-                                <option value="3">Inactive</option>
-                            </FormControl>
-                        </FormGroup></td>
-                        <td>
-                            <Checkbox name="NoTemplate" checked={page.NoTemplate} onChange={this.handleChange}>Empty Page</Checkbox> <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Sitemap</Checkbox>
-                        </td>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Grid fluid>
+                    <Row>
+                        <Col sm={12}>
+                            <Table>
+                                <tbody>
+                                    <tr>
+                                        <td><FormGroup controlId="Status">
+                                            <ControlLabel>Status (Required)</ControlLabel>
+                                            <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
+                                                <option value="1">Draft</option>
+                                                <option value="2">Publish</option>
+                                                <option value="3">Inactive</option>
+                                            </FormControl>
+                                        </FormGroup></td>
+                                        <td>
+                                            <Checkbox name="NoTemplate" checked={page.NoTemplate} onChange={this.handleChange}>Empty Page</Checkbox> <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Sitemap</Checkbox>
+                                        </td>
 
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="Name" >
-                                <ControlLabel>Page Name (Required)</ControlLabel>
-                                <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="Title" >
-                                <ControlLabel>Page Title (Required)</ControlLabel>
-                                <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <FormGroup controlId="Name" >
+                                                <ControlLabel>Page Name (Required)</ControlLabel>
+                                                <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} onBlur={this.handleBlur} />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <FormGroup controlId="Title" >
+                                                <ControlLabel>Page Title (Required)</ControlLabel>
+                                                <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
 
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="PageMeta">
-                                <ControlLabel>Page Meta(optional)</ControlLabel>
-                                <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="Head">
-                                <ControlLabel>Page Head(optional)</ControlLabel>
-                                <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <FormGroup controlId="PageMeta">
+                                                <ControlLabel>Page Meta(optional)</ControlLabel>
+                                                <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <FormGroup controlId="Head">
+                                                <ControlLabel>Page Head(optional)</ControlLabel>
+                                                <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
 
-                    <tr>
-                        <td colSpan="3">
-                            <FormGroup controlId="Body">
-                                <ControlLabel>Body (Required)</ControlLabel>
-                                <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <Button type="button" onClick={this.saveData}>Save</Button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <FormGroup controlId="Body">
+                                                <ControlLabel>Body (Required)</ControlLabel>
+                                                <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
+                                            </FormGroup>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="3">
+                                            <Button type="button" onClick={this.saveData}>Save</Button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Grid>
+            </div>
         );
     }
 
     render() {
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
-        }
-        else if (this.state.reload) {
-            return <Redirect to={'/custompagelist'} />;
         }
         else {
             let contents = this.state.loading

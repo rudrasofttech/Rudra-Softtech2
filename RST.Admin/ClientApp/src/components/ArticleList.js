@@ -1,8 +1,8 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import Moment from 'react-moment';
-import { Table } from 'react-bootstrap';
-
+import { Table, Alert, Grid, Row, Col } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 export class ArticleList extends Component {
     displayName = ArticleList.name
 
@@ -14,7 +14,7 @@ export class ArticleList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { articles: [], loading: true, loggedin: loggedin };
+        this.state = { articles: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         this.handleDeleteArticle = this.handleDeleteArticle.bind(this);
         if (loggedin) {
             this.fetchData(token);
@@ -30,7 +30,7 @@ export class ArticleList extends Component {
             .then(response => {
                 if (response.status === 401) {
                     localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 }
                 return response.json();
             })
@@ -64,15 +64,13 @@ export class ArticleList extends Component {
                         });
                     }
                     else if (response.status === 401) {
-
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request." });
+                        this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
 
                     }
                     else {
                         response.json().then(data => {
                             console.log(data);
-                            this.setState({ error: false, loggedin: false });
+                            this.setState({ message: 'Article deleted', bsstyle :'success', loggedin: false });
                         });
                     }
                 });
@@ -126,6 +124,9 @@ export class ArticleList extends Component {
             return (
                 <div>
                     <h1>Articles</h1>
+                    <div className="fixedBottom ">
+                        <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                    </div>
                     {contents}
                 </div>
             );

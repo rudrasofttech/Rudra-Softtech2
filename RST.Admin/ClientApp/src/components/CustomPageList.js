@@ -1,7 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import Moment from 'react-moment';
-import { Table } from 'react-bootstrap';
+import { Table, ProgressBar, Alert, Grid, Row, Col, Button } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class CustomPageList extends Component {
     displayName = CustomPageList.name
@@ -14,7 +14,7 @@ export class CustomPageList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { custompages: [], loading: true, loggedin: loggedin };
+        this.state = { custompages: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         this.handleDeletePage = this.handleDeletePage.bind(this);
 
         if (loggedin) {
@@ -30,15 +30,19 @@ export class CustomPageList extends Component {
             }
         })
             .then(response => {
+                this.setState({ loading: false });
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
+                } else if (response.status === 200) {
+                    response.json().then(data => {
+                        console.log(data);
+                        this.setState({ custompages: data, loading: false, bsstyle: '', message: '' });
+                    });
+                } else {
+                    response.json().then(data => {
+                        this.setState({bsstyle: 'danger', message: data.Message });
+                    });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                this.setState({ custompages: data, loading: false });
             });
     }
 
@@ -68,70 +72,82 @@ export class CustomPageList extends Component {
                         });
                     }
                     else if (response.status === 401) {
-
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request." });
-
+                        this.setState({ bsstyle: "danger", message: "Authorization has been denied for this request." });
                     }
                     else {
                         response.json().then(data => {
                             console.log(data);
-                            this.setState({ error: false, loggedin: false });
+                            this.setState({ bsstyle: 'danger', message: data.Message });
                         });
                     }
                 });
         }
     }
-    columns = [
-        { title: 'ID', prop: 'ID' },
-        { title: 'Name', prop: 'Name' },
-        { title: 'Date Created', prop: 'DateCreated' },
-        { title: 'Created By', prop: 'CreatedByName' },
-        { title: 'Date Modified', prop: 'DateModified' },
-        { title: 'Modified By', prop: 'ModifiedByName' },
-        { title: 'Status', prop: 'Status' },
-        { title: 'Sitemap', prop: 'Sitemap' }
-    ];
-    renderCustomPagesTable(custompages, columns) {
+
+    renderPostStatus(param) {
+        switch (param) {
+            
+            case 1:
+                return 'Draft';
+            case 2:
+                return 'Publish';
+            case 3:
+                return 'Inactive';
+            default:
+                return '';
+        }
+    }
+
+    renderCustomPagesTable(custompages) {
+        
         return (
-            <Table responsive striped bordered condensed hover>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Date Created</th>
-                        <th>Created By</th>
-                        <th>Date Modified</th>
-                        <th>Modified By</th>
-                        <th>Status</th>
-                        <th>Sitemap</th>
-                        <th><Link to={'/custompagemanage/0'} className="btn btn-link">Create New</Link></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {custompages.map(cp =>
-                        <tr key={cp.ID}>
-                            <td>{cp.ID}</td>
-                            <td>{cp.Name}</td>
-                            <td>
-                                <Moment format="MM/DD/YYYY">
-                                    {cp.DateCreated}
-                                </Moment>
-                            </td>
-                            <td>{cp.CreatedByName}</td>
-                            <td><Moment format="YYYY/MM/DD">
-                                {cp.DateModified}</Moment> </td>
-                            <td>{cp.ModifiedByName}</td>
-                            <td>{cp.Status}</td>
-                            <td>
-                                <input type="checkbox" defaultChecked={cp.Sitemap} disabled />
-                            </td>
-                            <td><Link className='btn btn-link' to={'/custompagemanage/' + cp.ID}>Edit</Link>
-                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeletePage}>Delete</button></td>
-                        </tr>
-                    )}
-                </tbody>
-            </Table>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Grid fluid>
+                    <Row>
+                        <Col sm={12}>
+                            <Table responsive striped bordered condensed hover>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Date Created</th>
+                                        <th>Created By</th>
+                                        <th>Date Modified</th>
+                                        <th>Modified By</th>
+                                        <th>Status</th>
+                                        <th>Sitemap</th>
+                                        <th><Link to={'/custompagemanage/0'} className="btn btn-link">Create New</Link></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {custompages.map(cp =>
+                                        <tr key={cp.ID}>
+                                            <td>{cp.ID}</td>
+                                            <td>{cp.Name}</td>
+                                            <td>
+                                                    {cp.DateCreated}
+                                            </td>
+                                            <td>{cp.CreatedByName}</td>
+                                            <td>
+                                                {cp.DateModified}</td>
+                                            <td>{cp.ModifiedByName}</td>
+                                            <td>{this.renderPostStatus(cp.Status)}</td>
+                                            <td>
+                                                <input type="checkbox" defaultChecked={cp.Sitemap} disabled />
+                                            </td>
+                                            <td><Link className='btn btn-link' to={'/custompagemanage/' + cp.ID}>Edit</Link>
+                                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeletePage}>Delete</button></td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                </Grid>
+            </div>
         );
     }
 
@@ -145,8 +161,7 @@ export class CustomPageList extends Component {
                 : this.renderCustomPagesTable(this.state.custompages, this.columns);
             return (
                 <div>
-                    <h1>Custom Pages</h1>
-                    
+                    <h1>Web Pages</h1>
                     {contents}
                 </div>
             );

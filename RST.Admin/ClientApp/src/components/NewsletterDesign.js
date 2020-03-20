@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { Table, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class NewsletterDesign extends Component {
     displayName = NewsletterDesign.name
@@ -14,7 +15,7 @@ export class NewsletterDesign extends Component {
             loggedin = false;
         }
         this.state = {
-            NewsletterDesign: "", loading: true, loggedin: loggedin, EmailGroup: "", Subject: ""
+            NewsletterDesign: "", loading: true, loggedin: loggedin, EmailGroup: "", Subject: "", bsstyle: '', message: ''
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -33,22 +34,22 @@ export class NewsletterDesign extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else {
+                    response.json()
+                        .then(data => {
+                            this.setState({ loading: false, NewsletterDesign: data.KeyValue, bsstyle: '', message: '' });
+                        });
                 }
-                return response.json();
-            })
-            .then(data => {
-                this.setState({ loading: false });
-                this.setState({ NewsletterDesign: data.KeyValue });
             });
     }
 
     handleChange(e) {
         switch (e.target.name) {
             case 'NewsletterDesign':
-                this.setState({ NewsletterDesign: e.target.value });
+                
                 this.saveWebsiteSetting(e.target.value);
+                this.setState({ NewsletterDesign: e.target.value });
                 break;
             case 'EmailGroup':
                 this.setState({ EmailGroup: e.target.value });
@@ -57,7 +58,7 @@ export class NewsletterDesign extends Component {
                 this.setState({ Subject: e.target.value });
                 break;
         }
-        
+
     }
 
     saveWebsiteSetting(keyvalue) {
@@ -71,16 +72,15 @@ export class NewsletterDesign extends Component {
                 }
             })
             .then(response => {
-
-                this.setState({ loading: false });
                 if (response.status === 200 || response.status === 204) {
-                    console.log(response.status);
+                    this.setState({ bsstyle: 'success', message: "Saved" });
                 }
                 else if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request." });
-                    alert("Authorization has been denied for this request.");
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 } else {
-                    alert("Unable to save newsletter.");
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.Message });
+                    });
                 }
             });
     }
@@ -90,62 +90,68 @@ export class NewsletterDesign extends Component {
         fetch('http://localhost:59709/api/EmailMessages/SendNewsletter',
             {
                 method: 'Post',
-                body: JSON.stringify({ EmailGroup: this.state.EmailGroup, Subject: this.state.Subject}),
+                body: JSON.stringify({ EmailGroup: this.state.EmailGroup, Subject: this.state.Subject }),
                 headers: {
                     'Authorization': 'Bearer ' + localStorage.getItem("token"),
                     'Content-Type': 'application/json'
                 }
             })
             .then(response => {
-
-                this.setState({ loading: false });
                 if (response.status === 200 || response.status === 204) {
                     console.log(response.status);
-                    response.json().then(data => { alert(data + " Newsletter Sent."); });
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'success', message: data + " Newsletter Sent.", loading: false });
+                    });
                 }
                 else if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request." });
-                    alert("Authorization has been denied for this request.");
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 } else {
-                    alert("Unable to send newsletter.");
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.Message, loading: false });
+                    });
                 }
             });
     }
 
     renderTable() {
         return (
-            <Table striped bordered>
-                <tbody>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="NewsletterDesign">
-                                <FormControl name="NewsletterDesign" onChange={this.handleChange} componentClass="textarea" value={this.state.NewsletterDesign} placeholder="" rows="20" />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="EmailGroup">
-                                <ControlLabel>Email Group</ControlLabel>
-                                <FormControl name="EmailGroup" onChange={this.handleChange} value={this.state.EmailGroup} placeholder="" />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Subject">
-                                <ControlLabel>Subject (Required)</ControlLabel>
-                                <FormControl name="Subject" onChange={this.handleChange} value={this.state.Subject} placeholder="" />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <button type="button" onClick={this.sendNewsLetter} className="btn btn-primary">Send</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </Table>
+            <div>
+                <div className="fixedBottom">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Table striped bordered>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="NewsletterDesign">
+                                    <FormControl name="NewsletterDesign" onChange={this.handleChange} componentClass="textarea" value={this.state.NewsletterDesign} placeholder="" rows="20" />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="EmailGroup">
+                                    <ControlLabel>Email Group</ControlLabel>
+                                    <FormControl name="EmailGroup" onChange={this.handleChange} value={this.state.EmailGroup} placeholder="" />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Subject">
+                                    <ControlLabel>Subject (Required)</ControlLabel>
+                                    <FormControl name="Subject" onChange={this.handleChange} value={this.state.Subject} placeholder="" />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button type="button" onClick={this.sendNewsLetter} className="btn btn-primary">Send</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </Table>
+            </div>
         );
     }
 

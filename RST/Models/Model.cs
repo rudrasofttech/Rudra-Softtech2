@@ -136,7 +136,7 @@ namespace RST.Models
         public DateTime? DateModified { get; set; }
         public int ModifiedBy { get; set; }
         public string ModifiedByName { get; set; }
-        public String Status { get; set; }
+        public PostStatus Status { get; set; }
         public bool Sitemap { get; set; }
         public string Body { get; set; }
         public string Head { get; set; }
@@ -146,7 +146,7 @@ namespace RST.Models
 
         public CustomPageDTO()
         {
-            Status = PostStatus.Draft.ToString();
+            Status = PostStatus.Draft;
             CreatedByName = "";
             ModifiedByName = "";
         }

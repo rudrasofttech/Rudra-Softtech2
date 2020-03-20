@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Alert, Grid, Row, Table, Col } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class ChangePassword extends Component {
     displayName = ChangePassword.name;
@@ -15,8 +16,7 @@ export class ChangePassword extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
-        this.handleDismiss = this.handleDismiss.bind(this);
-
+       
         this.state = {
             cpdata: { MemberID: 0, NewPassword: '' }, loading: true, loggedin: loggedin, reload: false, bsstyle: '', message: ''
         };
@@ -34,8 +34,7 @@ export class ChangePassword extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ bsstyle: 'danger', message: "Can't get member details. Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Can't get member details. Authorization has been denied for this request." });
                 }
                 return response.json();
             })
@@ -59,9 +58,9 @@ export class ChangePassword extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Password for " + this.state.member.Email + " changed.", bsstyle: 'success' });
+                    this.setState({ loading: false, message: "Password for " + this.state.member.Email + " changed.", bsstyle: 'success'});
                 } else {
                     this.setState({ loading: false, message: "Password cannot be saved.", bsstyle: 'danger' });
                 }
@@ -77,25 +76,12 @@ export class ChangePassword extends Component {
         this.setState({ cpdata: temp });
     }
 
-    handleDismiss(e) {
-        this.setState({ message: '', bsstyle: '' });
-    }
+    
     renderTable(page) {
-        let messagehtml = <span />;
-        if (this.state.message !== '') {
-            messagehtml = <Alert className="noMargin noRadius" bsStyle={this.state.bsstyle}>
-                <p>
-                    {this.state.message}
-                </p>
-                <p>
-                    <Button className="btn btn-sm" onClick={this.handleDismiss}>Hide</Button>
-                </p>
-            </Alert>;
-        }
         return (
             <div>
                 <div className="fixedBottom ">
-                    {messagehtml}
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
                 </div>
                 <Grid fluid>
                     <Row>
@@ -137,9 +123,7 @@ export class ChangePassword extends Component {
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
         }
-        else if (this.state.reload) {
-            return <Redirect to={'/customdatasourcelist'} />;
-        }
+        
         else {
             let contents = this.state.loading
                 ? <ProgressBar active now={100} />

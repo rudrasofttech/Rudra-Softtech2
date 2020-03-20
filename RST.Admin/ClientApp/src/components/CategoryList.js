@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class CategoryList extends Component {
     displayName = CategoryList.name;
@@ -12,7 +13,7 @@ export class CategoryList extends Component {
         if (token === null) {
             loggedin = false;
         }
-        this.state = { categories: [], loading: true, loggedin: loggedin };
+        this.state = { categories: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         this.handleDeleteCategory = this.handleDeleteCategory.bind(this);
         if (loggedin) {
             this.fetchData(token);
@@ -32,29 +33,34 @@ export class CategoryList extends Component {
     }
     renderTable(ds) {
         return (
-            <Table responsive striped bordered condensed hover>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Url Name</th>
-                        <th>Status</th>
-                        <th><Link to={'/categorymanage/0'} className="btn btn-link">Create New</Link></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ds.map(cp =>
-                        <tr key={cp.ID}>
-                            <td>{cp.ID}</td>
-                            <td>{cp.Name}</td>
-                            <td>{cp.UrlName}</td>
-                            <td>{this.renderMemberStatus(cp.Status)}</td>
-                            <td><Link className='btn btn-link btn-md' to={'/categorymanage/' + cp.ID}>Edit</Link>
-                                <button type='button' name={cp.ID} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>Delete</button></td>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <Table responsive striped bordered condensed hover>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Url Name</th>
+                            <th>Status</th>
+                            <th><Link to={'/categorymanage/0'} className="btn btn-link">Create New</Link></th>
                         </tr>
-                    )}
-                </tbody>
-            </Table>
+                    </thead>
+                    <tbody>
+                        {ds.map(cp =>
+                            <tr key={cp.ID}>
+                                <td>{cp.ID}</td>
+                                <td>{cp.Name}</td>
+                                <td>{cp.UrlName}</td>
+                                <td>{this.renderMemberStatus(cp.Status)}</td>
+                                <td><Link className='btn btn-link btn-md' to={'/categorymanage/' + cp.ID}>Edit</Link>
+                                    <button type='button' name={cp.ID} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>Delete</button></td>
+                            </tr>
+                        )}
+                    </tbody>
+                </Table>
+            </div>
         );
     }
     fetchData(t) {
@@ -66,15 +72,13 @@ export class CategoryList extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 }
-                return response.json();
-            })
-            .then(data => {
-
-                this.setState({ categories: data, loading: false });
+                return response.json().then(data => {
+                    this.setState({ categories: data, loading: false });
+                });
             });
+
     }
     handleDeleteCategory(e) {
         if (window.confirm("Are you sure you want to delete this category?")) {
@@ -102,15 +106,12 @@ export class CategoryList extends Component {
                         });
                     }
                     else if (response.status === 401) {
-
-                        localStorage.removeItem("token");
-                        this.setState({ error: true, message: "Authorization has been denied for this request." });
-
+                        this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
                     }
                     else {
                         response.json().then(data => {
                             console.log(data);
-                            this.setState({ error: false, loggedin: false });
+                            this.setState({ bsstyle: '', message: '', loggedin: false });
                         });
                     }
                 });

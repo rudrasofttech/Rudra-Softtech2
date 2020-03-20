@@ -1,9 +1,10 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar } from 'react-bootstrap';
+import { MessageStrip } from './MessageStrip';
 
 export class DataSourceManage extends Component {
-    displayName = DataSourceManage.name;
+    //displayName = DataSourceManage.name;
 
     constructor(props) {
         super(props);
@@ -16,7 +17,7 @@ export class DataSourceManage extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
         this.state = {
-            datasource: null, loading: true, loggedin: loggedin, reload: false
+            datasource: null, loading: true, loggedin: loggedin, bsstyle: '', message: ''
         };
         if (loggedin) {
             this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
@@ -32,15 +33,15 @@ export class DataSourceManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                } else {
+                    response.json()
+                        .then(data => {
+                            console.log(data);
+                            data.CreatedBy = { ID: 0, Email: 'demo@demo.com', Password: 'xxxxxxx' };
+                            this.setState({ datasource: data, loading: false, bsstyle: '', message: '' });
+                        });
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-                data.CreatedBy = { ID: 0, Email: 'demo@demo.com', Password : 'xxxxxxx' };
-                this.setState({ datasource: data, loading: false });
             });
     }
 
@@ -62,19 +63,19 @@ export class DataSourceManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ error: true, message: "Authorization has been denied for this request.", loggedin: false });
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Saved", error: false });
+                    this.setState({ loading: false, message: "Data Source Saved", bsstyle: 'success' });
                     console.log("Page Saved");
                 } else if (response.status === 201) {
-                    this.setState({ loading: false, message: "Saved", error: false });
-                    console.log("Data Source Created");
+                    this.setState({ loading: false, message: "Data Source Created", bsstyle: 'success' });
                     response.json().then(data => {
                         this.fetchData(localStorage.getItem("token"), data.ID);
                     });
                 } else {
-                    this.setState({ loading: false, message: "Page cannot be saved.", error: false });
-                    alert("Unable to save page.");
+                    response.json().then(data => {
+                        this.setState({ loading: false, message: "Data cannot be saved. " + data.Message, bsstyle: 'danger' });
+                    });
                 }
             });
     }
@@ -97,41 +98,46 @@ export class DataSourceManage extends Component {
     }
     renderTable(page) {
         return (
-            <table className='table'>
-                <tbody>
+            <div>
+                <div className="fixedBottom ">
+                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                </div>
+                <table className='table'>
+                    <tbody>
 
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Name" >
-                                <ControlLabel>Name (Required)</ControlLabel>
-                                <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Name" >
+                                    <ControlLabel>Name (Required)</ControlLabel>
+                                    <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
 
-                    <tr>
-                        <td>
-                            <FormGroup controlId="Query">
-                                <ControlLabel>Query</ControlLabel>
-                                <FormControl name="Query" componentClass="textarea" rows="10" placeholder="textarea" value={page.Query} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <FormGroup controlId="HtmlTemplate">
-                                <ControlLabel>HTML / XSL Template (Required)</ControlLabel>
-                                <FormControl name="HtmlTemplate" componentClass="textarea" rows="10" placeholder="textarea" value={page.HtmlTemplate} onChange={this.handleChange} />
-                            </FormGroup>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colSpan="3">
-                            <Button type="button" onClick={this.saveData}>Save</Button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="Query">
+                                    <ControlLabel>Query</ControlLabel>
+                                    <FormControl name="Query" componentClass="textarea" rows="10" placeholder="textarea" value={page.Query} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <FormGroup controlId="HtmlTemplate">
+                                    <ControlLabel>HTML / XSL Template (Required)</ControlLabel>
+                                    <FormControl name="HtmlTemplate" componentClass="textarea" rows="10" placeholder="textarea" value={page.HtmlTemplate} onChange={this.handleChange} />
+                                </FormGroup>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colSpan="3">
+                                <Button type="button" onClick={this.saveData}>Save</Button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         );
     }
 
