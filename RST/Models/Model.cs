@@ -303,4 +303,77 @@ namespace RST.Models
         [MinLength(8)]
         public string NewPassword { get; set; }
     }
+
+    public class DriveDTO
+    {
+        public List<RDirectoryItem> Directories { get; set; }
+        public List<RFileItem> Files { get; set; }
+        public List<RDirectoryItem> Crumbs { get; set; }
+
+        public DriveDTO()
+        {
+            Directories = new List<RDirectoryItem>();
+            Files = new List<RFileItem>();
+            Crumbs = new List<RDirectoryItem>();
+        }
+    }
+
+    
+
+    public class RDirectoryItem
+    {
+        public Guid ID { get; set; }
+        public string Name { get; set; }
+        public string Location { get; set; }
+        public string Contains { get; set; }
+        public string Size { get; set; }
+        public DateTime CreateDate { get; set; }
+        public DateTime ModifyDate { get; set; }
+        public DateTime LastAccessDate { get; set; }
+        public bool Deletable { get; set; }
+        public bool Editable { get; set; }
+        public string ThumbNail { get; set; }
+
+        public RDirectoryItem()
+        {
+            Name = string.Empty;
+            Location = string.Empty;
+            Contains = string.Empty;
+            Size = string.Empty;
+            ThumbNail = string.Empty;
+            
+        }
+    }
+
+    public class RFileItem
+    {
+        public Guid ID { get; set; }
+        public string Name { get; set; }
+        public string Location { get; set; }
+        public string Size { get; set; }
+        public string FileType { get; set; }
+        public DateTime CreateDate { get; set; }
+        public DateTime ModifyDate { get; set; }
+        public DateTime LastAccessDate { get; set; }
+        public bool Deletable { get; set; }
+        public bool Editable { get; set; }
+        public string ThumbNail { get; set; }
+        public DriveItemType ItemType { get; set; }
+        public string WebPath { get; set; }
+    }
+
+    public enum DriveItemType
+    {
+        Folder,
+        File,
+        TextFile,
+        ImageFile,
+        VideoFile,
+        ZipFile
+    }
+
+    public class DriveItemDoesNotExistException : Exception { }
+    public class DriveDoesNotExistException : Exception { }
+    public class DuplicateDriveException : Exception { }
+    public class InvalidDriveIdException : Exception { }
 }

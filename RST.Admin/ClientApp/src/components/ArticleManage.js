@@ -2,6 +2,8 @@
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Modal, Checkbox } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { DrivePop } from './DrivePop';
+
 export class ArticleManage extends Component {
     displayName = ArticleManage.name;
 
@@ -16,8 +18,9 @@ export class ArticleManage extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
         this.handleBlur = this.handleBlur.bind(this);
+        this.handleDriveModal = this.handleDriveModal.bind(this);
         this.state = {
-            article: null, categories: [], blogtemplates: [], loading: true, loggedin: loggedin, bsstyle: '', message: ''
+            article: null, categories: [], blogtemplates: [], loading: true, loggedin: loggedin, bsstyle: '', message: '', showdrivemodal : false
         };
         if (loggedin) {
 
@@ -79,6 +82,10 @@ export class ArticleManage extends Component {
                 a.URL = data;
                 this.setState({ article: a });
             });
+    }
+
+    handleDriveModal() {
+        this.setState({ showdrivemodal: !this.state.showdrivemodal });
     }
 
     fetchData(t, id) {
@@ -340,6 +347,14 @@ export class ArticleManage extends Component {
                         </tr>
                     </tbody>
                 </table>
+                <Modal show={this.state.showdrivemodal} onHide={this.handleDriveModal}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Drive</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <DrivePop />
+                    </Modal.Body>
+                </Modal>
             </div>
         );
     }

@@ -1,7 +1,9 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Checkbox, Table, Alert, Grid, Row, Col } from 'react-bootstrap';
+import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Checkbox, Table, Modal, Grid, Row, Col } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { DrivePop } from './DrivePop';
+
 export class CustomPageManage extends Component {
     displayName = CustomPageManage.name;
 
@@ -15,6 +17,7 @@ export class CustomPageManage extends Component {
         }
         this.handleChange = this.handleChange.bind(this);
         this.saveData = this.saveData.bind(this);
+        this.handleDriveModal = this.handleDriveModal.bind(this);
         this.state = { custompage: null, loading: true, loggedin: loggedin, bsstyle: '', message: '' };
         if (loggedin) {
             this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
@@ -46,6 +49,10 @@ export class CustomPageManage extends Component {
 
     }
 
+    handleDriveModal() {
+        this.setState({ showdrivemodal: !this.state.showdrivemodal });
+    }
+
     saveData(e) {
         let saveurl = 'http://localhost:59709/api/custompages';
         let method = 'post';
@@ -68,7 +75,7 @@ export class CustomPageManage extends Component {
         })
             .then(response => {
                 if (response.status === 401) {
-                    this.setState({ loading: false,bsstyle: 'danger', message: "Authorization has been denied for this request." });
+                    this.setState({ loading: false, bsstyle: 'danger', message: "Authorization has been denied for this request." });
                 } else if (response.status === 200) {
                     this.setState({ loading: false, message: "Page saved.", bsstyle: 'success' });
                 } else if (response.status === 201) {
@@ -134,84 +141,94 @@ export class CustomPageManage extends Component {
     }
 
     renderTable(page) {
-        return (
-            <div>
-                <div className="fixedBottom ">
-                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+        if (page !== null) {
+            return (
+                <div>
+                    
+                    <Grid fluid>
+                        <Row>
+                            <Col sm={12}>
+                                <Table>
+                                    <tbody>
+                                        <tr>
+                                            <td><FormGroup controlId="Status">
+                                                <ControlLabel>Status (Required)</ControlLabel>
+                                                <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
+                                                    <option value="1">Draft</option>
+                                                    <option value="2">Publish</option>
+                                                    <option value="3">Inactive</option>
+                                                </FormControl>
+                                            </FormGroup></td>
+                                            <td>
+                                                <Checkbox name="NoTemplate" checked={page.NoTemplate} onChange={this.handleChange}>Empty Page</Checkbox> <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Sitemap</Checkbox>
+                                            </td>
+
+                                        </tr>
+                                        <tr>
+                                            <td colSpan="3">
+                                                <FormGroup controlId="Name" >
+                                                    <ControlLabel>Page Name (Required)</ControlLabel>
+                                                    <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} onBlur={this.handleBlur} />
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan="3">
+                                                <FormGroup controlId="Title" >
+                                                    <ControlLabel>Page Title (Required)</ControlLabel>
+                                                    <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td colSpan="3">
+                                                <FormGroup controlId="PageMeta">
+                                                    <ControlLabel>Page Meta(optional)</ControlLabel>
+                                                    <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan="3">
+                                                <FormGroup controlId="Head">
+                                                    <ControlLabel>Page Head(optional)</ControlLabel>
+                                                    <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td colSpan="3">
+                                                <FormGroup controlId="Body">
+                                                    <ControlLabel>Body (Required)</ControlLabel> <Button bsStyle="link" onClick={this.handleDriveModal}>Open Drive</Button>
+                                                    <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
+                                                </FormGroup>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colSpan="3">
+                                                <Button type="button" onClick={this.saveData}>Save</Button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            </Col>
+                        </Row>
+                        <Modal show={this.state.showdrivemodal} onHide={this.handleDriveModal}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Drive</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <DrivePop />
+                            </Modal.Body>
+                        </Modal>
+                    </Grid>
                 </div>
-                <Grid fluid>
-                    <Row>
-                        <Col sm={12}>
-                            <Table>
-                                <tbody>
-                                    <tr>
-                                        <td><FormGroup controlId="Status">
-                                            <ControlLabel>Status (Required)</ControlLabel>
-                                            <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
-                                                <option value="1">Draft</option>
-                                                <option value="2">Publish</option>
-                                                <option value="3">Inactive</option>
-                                            </FormControl>
-                                        </FormGroup></td>
-                                        <td>
-                                            <Checkbox name="NoTemplate" checked={page.NoTemplate} onChange={this.handleChange}>Empty Page</Checkbox> <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Sitemap</Checkbox>
-                                        </td>
-
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3">
-                                            <FormGroup controlId="Name" >
-                                                <ControlLabel>Page Name (Required)</ControlLabel>
-                                                <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} onBlur={this.handleBlur} />
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3">
-                                            <FormGroup controlId="Title" >
-                                                <ControlLabel>Page Title (Required)</ControlLabel>
-                                                <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td colSpan="3">
-                                            <FormGroup controlId="PageMeta">
-                                                <ControlLabel>Page Meta(optional)</ControlLabel>
-                                                <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3">
-                                            <FormGroup controlId="Head">
-                                                <ControlLabel>Page Head(optional)</ControlLabel>
-                                                <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td colSpan="3">
-                                            <FormGroup controlId="Body">
-                                                <ControlLabel>Body (Required)</ControlLabel>
-                                                <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
-                                            </FormGroup>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3">
-                                            <Button type="button" onClick={this.saveData}>Save</Button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </Table>
-                        </Col>
-                    </Row>
-                </Grid>
-            </div>
-        );
+            );
+        } else {
+            return <span />;
+        }
     }
 
     render() {
@@ -225,6 +242,9 @@ export class CustomPageManage extends Component {
             return (
                 <div>
                     <h1>Web Page</h1>
+                    <div className="fixedBottom ">
+                        <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                    </div>
                     {contents}
                 </div>
             );

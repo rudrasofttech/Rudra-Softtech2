@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using RudraSofttech;
 using System.IO;
+using RST.Models;
+using System.Text;
 
-namespace RudraSofttech.Models
+namespace RST.Helper_Code
 {
     public class DriveManager
     {
@@ -194,6 +195,33 @@ namespace RudraSofttech.Models
             return list;
         }
 
+        public List<RDirectoryItem> GetCrumbs(string p)
+        {
+            List<RDirectoryItem> list = new List<RDirectoryItem>();
+            List<string> FolderList = p.Split("/".ToCharArray()).ToList();
+
+            StringBuilder temp = new StringBuilder();
+            foreach (string i in FolderList)
+            {
+                if (i != string.Empty)
+                {
+                    temp.Append(i);
+                    temp.Append("/");
+
+                    //< li >< a href = "viewdrive.aspx?folderpath=<%= temp %>" >
+                    //<%= i %></ a > < span class="divider">/</span></li>
+
+                    RDirectoryItem rdi = new RDirectoryItem();
+                    rdi.ID = Guid.NewGuid();
+                    rdi.Location = temp.ToString();
+                    rdi.Name = i;
+                    rdi.ThumbNail = string.Empty;
+                    list.Add(rdi);
+                }
+            }
+            return list;
+        }
+
         public List<RDirectoryItem> GetDirectoryItemList(string folderpath)
         {
             if (!DriveExist)
@@ -228,7 +256,7 @@ namespace RudraSofttech.Models
                     }
                     else { rdi.Deletable = false; }
                     rdi.Editable = true;
-                    rdi.Contains =  string.Format("{0} Folders, {1} Files", i.EnumerateDirectories().Count(), i.EnumerateFiles().Count());
+                    rdi.Contains = string.Format("{0} Folders, {1} Files", i.EnumerateDirectories().Count(), i.EnumerateFiles().Count());
                     rdi.ThumbNail = string.Empty;
                     list.Add(rdi);
                 }
@@ -298,51 +326,4 @@ namespace RudraSofttech.Models
         }
 
     }
-
-    public class RDirectoryItem
-    {
-        public Guid ID { get; set; }
-        public string Name { get; set; }
-        public string Location { get; set; }
-        public string Contains { get; set; }
-        public string Size { get; set; }
-        public DateTime CreateDate { get; set; }
-        public DateTime ModifyDate { get; set; }
-        public DateTime LastAccessDate { get; set; }
-        public bool Deletable { get; set; }
-        public bool Editable { get; set; }
-        public string ThumbNail { get; set; }
-    }
-
-    public class RFileItem
-    {
-        public Guid ID { get; set; }
-        public string Name { get; set; }
-        public string Location { get; set; }
-        public string Size { get; set; }
-        public string FileType { get; set; }
-        public DateTime CreateDate { get; set; }
-        public DateTime ModifyDate { get; set; }
-        public DateTime LastAccessDate { get; set; }
-        public bool Deletable { get; set; }
-        public bool Editable { get; set; }
-        public string ThumbNail { get; set; }
-        public DriveItemType ItemType { get; set; }
-        public string WebPath { get; set; }
-    }
-
-    public enum DriveItemType
-    {
-        Folder,
-        File,
-        TextFile,
-        ImageFile,
-        VideoFile,
-        ZipFile
-    }
-
-    public class DriveItemDoesNotExistException : Exception { }
-    public class DriveDoesNotExistException : Exception { }
-    public class DuplicateDriveException : Exception { }
-    public class InvalidDriveIdException : Exception { }
 }

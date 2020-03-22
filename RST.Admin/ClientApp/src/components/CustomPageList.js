@@ -32,7 +32,8 @@ export class CustomPageList extends Component {
             .then(response => {
                 this.setState({ loading: false });
                 if (response.status === 401) {
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
+                    localStorage.removeItem("token");
+                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin : false });
                 } else if (response.status === 200) {
                     response.json().then(data => {
                         console.log(data);
