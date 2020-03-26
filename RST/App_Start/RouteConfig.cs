@@ -18,12 +18,27 @@ namespace RST
                 url: "generatesitemap",
                 defaults: new { controller = "Home", action = "GenerateSitemap" }
             );
-
+            routes.MapRoute(
+                name: "Subscribe",
+                url: "subscribe",
+                defaults: new { controller = "Home", action = "Subscribe" }
+            );
             routes.MapRoute(
                 name: "Routine",
                 url: "routine",
                 defaults: new { controller = "Home", action = "Routine"}
             );
+            routes.MapRoute(
+                name: "ContactForm",
+                url: "contactform",
+                defaults: new { controller = "Home", action = "ContactForm" }
+            );
+            routes.MapRoute(
+                name: "ActivateEmail",
+                url: "activateemail",
+                defaults: new { controller = "Home", action = "ActivateEmail" }
+            );
+            
             routes.MapRoute(
                 name: "BlogCatList",
                 url: "blog/{category}/index",

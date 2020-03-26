@@ -195,6 +195,7 @@
     </Compile>
     <Compile Include="Helper_Code\DataSourceManager.cs" />
     <Compile Include="Helper_Code\DriveManager.cs" />
+    <Compile Include="Helper_Code\EmailManager.cs" />
     <Compile Include="Helper_Code\OAuth2\AppOAuthProvider.cs" />
     <Compile Include="Helper_Code\Utility.cs" />
     <Compile Include="Migrations\202002220413102_First.cs" />
@@ -212,6 +213,7 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ActivationEmail.html" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
@@ -228,9 +230,14 @@
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="handlers\chat.js" />
+    <Content Include="handlers\utility.js" />
+    <Content Include="handlers\vr.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="drive\ImageBrickWallEffect.zip" />
+    <Content Include="handlers\tools\HTMLEncoder.ashx" />
+    <Content Include="handlers\tools\IpLocator.ashx" />
     <None Include="Scripts\jquery-3.3.1.intellisense.js" />
     <Content Include="Scripts\jquery-3.3.1.js" />
     <Content Include="Scripts\jquery-3.3.1.min.js" />
@@ -242,7 +249,9 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -258,6 +267,7 @@
     <Content Include="Views\Blog\List.cshtml" />
     <Content Include="Views\Blog\CategoryList.cshtml" />
     <Content Include="Views\Blog\Index.cshtml" />
+    <Content Include="Views\Home\Routine.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

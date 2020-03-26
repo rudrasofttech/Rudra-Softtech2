@@ -16,6 +16,7 @@ import { CategoryManage } from './components/CategoryManage';
 import { EmailList } from './components/EmailList';
 import { NewsletterDesign } from './components/NewsletterDesign';
 import { ChangePassword } from './components/ChangePassword';
+import { Logout } from './components/Logout';
 
 export default class App extends Component {
     displayName = App.name
@@ -27,6 +28,7 @@ export default class App extends Component {
                 <Route path='/custompagelist' component={CustomPageList} />
                 <Route path='/LoginForm' component={LoginForm} />
                 <Route path='/articlelist' component={ArticleList} />
+                <Route path='/Logout' component={Logout} />
                 <Route path='/CustomDataSourceList' component={CustomDataSourceList} />
                 <Route path='/CategoryList' component={CategoryList} />
                 <Route path='/EmailList' component={EmailList} />

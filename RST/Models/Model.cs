@@ -318,7 +318,36 @@ namespace RST.Models
         }
     }
 
-    
+    public class ContactFormDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; }
+
+        [MaxLength(20)]
+        [Required]
+        public string Phone { get; set; }
+
+        public string Website { get; set; }
+        [Required]
+        [MaxLength(1000)]
+        public string Message { get; set; }
+
+        [Required]
+        [MaxLength(250)]
+        public string Purpose { get; set; }
+    }
+
+    public class SubscribeDTO
+    {
+        public string Name { get; set; }
+        [Required]
+        public string Email { get; set; }
+    }
 
     public class RDirectoryItem
     {
