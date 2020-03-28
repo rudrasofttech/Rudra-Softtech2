@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Glyphicon, Nav, Navbar, NavItem } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import './NavMenu.css';
+import { API } from './api';
 
 export class NavMenu extends Component {
     displayName = NavMenu.name
@@ -17,7 +18,7 @@ export class NavMenu extends Component {
     }
 
     fetchData(t) {
-        fetch('http://localhost:59709/api/custompages', {
+        fetch(API.GetURL() + 'api/custompages', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t

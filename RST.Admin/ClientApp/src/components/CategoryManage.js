@@ -2,6 +2,7 @@
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class CategoryManage extends Component {
     displayName = CategoryManage.name;
@@ -25,7 +26,7 @@ export class CategoryManage extends Component {
     }
 
     fetchData(t, id) {
-        fetch('http://localhost:59709/api/Categories/' + id, {
+        fetch(API.GetURL() + 'api/Categories/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -44,7 +45,7 @@ export class CategoryManage extends Component {
     }
 
     saveData(e) {
-        let saveurl = 'http://localhost:59709/api/Categories';
+        let saveurl = API.GetURL() + 'api/Categories';
         let method = 'post';
         if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.category.ID !== 0) {
             saveurl = saveurl + '/' + (this.state.category.ID !== 0 ? this.state.category.ID : this.props.match.params.ID);

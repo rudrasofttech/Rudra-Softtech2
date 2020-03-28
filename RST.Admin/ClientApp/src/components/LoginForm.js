@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Alert, Col, Grid, Row } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class LoginForm extends Component {
     constructor(props) {
@@ -21,7 +22,7 @@ export class LoginForm extends Component {
 
     fetchToken() {
         this.setState({ loading: true });
-        fetch('http://localhost:59709/token',
+        fetch(API.GetURL() + 'token',
             {
                 method: 'post',
                 body: 'grant_type=password&password=' + this.state.password + '&username=' + this.state.email,

@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Table, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class NewsletterDesign extends Component {
     displayName = NewsletterDesign.name
@@ -26,7 +27,7 @@ export class NewsletterDesign extends Component {
     }
 
     fetchData(t) {
-        fetch('http://localhost:59709/api/WebsiteSettings/NewsletterDesign', {
+        fetch(API.GetURL() + 'api/WebsiteSettings/NewsletterDesign', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -62,7 +63,7 @@ export class NewsletterDesign extends Component {
     }
 
     saveWebsiteSetting(keyvalue) {
-        fetch('http://localhost:59709/api/websitesettings/NewsletterDesign',
+        fetch(API.GetURL() + 'api/websitesettings/NewsletterDesign',
             {
                 method: 'Put',
                 body: JSON.stringify({ KeyName: 'NewsletterDesign', KeyValue: keyvalue }),
@@ -87,7 +88,7 @@ export class NewsletterDesign extends Component {
 
     sendNewsLetter() {
         this.setState({ loading: true });
-        fetch('http://localhost:59709/api/EmailMessages/SendNewsletter',
+        fetch(API.GetURL() + 'api/EmailMessages/SendNewsletter',
             {
                 method: 'Post',
                 body: JSON.stringify({ EmailGroup: this.state.EmailGroup, Subject: this.state.Subject }),

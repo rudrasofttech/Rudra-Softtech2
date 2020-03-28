@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class CategoryList extends Component {
     displayName = CategoryList.name;
@@ -64,7 +65,7 @@ export class CategoryList extends Component {
         );
     }
     fetchData(t) {
-        fetch('http://localhost:59709/api/Categories', {
+        fetch(API.GetURL() + 'api/Categories', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -82,7 +83,7 @@ export class CategoryList extends Component {
     }
     handleDeleteCategory(e) {
         if (window.confirm("Are you sure you want to delete this category?")) {
-            fetch('http://localhost:59709/api/Categories/' + e.target.name,
+            fetch(API.GetURL() + 'api/Categories/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {

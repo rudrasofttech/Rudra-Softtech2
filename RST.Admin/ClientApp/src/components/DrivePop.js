@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Table, Glyphicon, Button } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class DrivePop extends Component {
     displayName = DrivePop.name
@@ -26,7 +27,7 @@ export class DrivePop extends Component {
 
     fetchData(t, path) {
         this.setState({ loading: true });
-        fetch('http://localhost:59709/api/Drive/?name=' + path, {
+        fetch( API.GetURL() + 'api/Drive/?name=' + path, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t

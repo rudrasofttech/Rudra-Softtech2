@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Table, ProgressBar, Alert, Grid, Row, Col, Button } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class CustomPageList extends Component {
     displayName = CustomPageList.name
@@ -23,7 +24,7 @@ export class CustomPageList extends Component {
     }
 
     fetchData(t) {
-        fetch('http://localhost:59709/api/custompages', {
+        fetch(API.GetURL() + 'api/custompages', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -49,7 +50,7 @@ export class CustomPageList extends Component {
 
     handleDeletePage(e) {
         if (window.confirm("Are you sure you want to delete this page?")) {
-            fetch('http://localhost:59709/api/custompages/' + e.target.name,
+            fetch(API.GetURL() + 'api/custompages/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {

@@ -2,6 +2,7 @@
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class DataSourceManage extends Component {
     //displayName = DataSourceManage.name;
@@ -25,7 +26,7 @@ export class DataSourceManage extends Component {
     }
 
     fetchData(t, id) {
-        fetch('http://localhost:59709/api/CustomDataSources/' + id, {
+        fetch(API.GetURL() + 'api/CustomDataSources/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -46,7 +47,7 @@ export class DataSourceManage extends Component {
     }
 
     saveData(e) {
-        let saveurl = 'http://localhost:59709/api/CustomDataSources';
+        let saveurl = API.GetURL() + 'api/CustomDataSources';
         let method = 'post';
         if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.datasource.ID !== 0) {
             saveurl = saveurl + '/' + (this.state.datasource.ID !== 0 ? this.state.datasource.ID : this.props.match.params.ID);

@@ -3,6 +3,7 @@ import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Modal, Checkbox } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { DrivePop } from './DrivePop';
+import { API } from './api';
 
 export class ArticleManage extends Component {
     displayName = ArticleManage.name;
@@ -30,7 +31,7 @@ export class ArticleManage extends Component {
         }
     }
     fetchCategory(t) {
-        fetch('http://localhost:59709/api/Categories', {
+        fetch(API.GetURL() + 'api/Categories', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -48,7 +49,7 @@ export class ArticleManage extends Component {
             });
     }
     fetchBlogTemplates(t) {
-        fetch('http://localhost:59709/api/CustomDataSources', {
+        fetch(API.GetURL() + 'api/CustomDataSources', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -73,7 +74,7 @@ export class ArticleManage extends Component {
     }
 
     slugify() {
-        fetch('http://localhost:59709/api/Utility/Slugify?t=' + this.state.article.URL)
+        fetch(API.GetURL() + 'api/Utility/Slugify?t=' + this.state.article.URL)
             .then(response => {
                 return response.json();
             })
@@ -89,7 +90,7 @@ export class ArticleManage extends Component {
     }
 
     fetchData(t, id) {
-        fetch('http://localhost:59709/api/posts/' + id, {
+        fetch(API.GetURL() + 'api/posts/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -109,7 +110,7 @@ export class ArticleManage extends Component {
     }
 
     saveData(e) {
-        let saveurl = 'http://localhost:59709/api/posts';
+        let saveurl = API.GetURL() + 'api/posts';
         let method = 'post';
         if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.article.ID !== 0) {
             saveurl = saveurl + '/' + (this.state.article.ID !== 0 ? this.state.article.ID : this.props.match.params.ID);

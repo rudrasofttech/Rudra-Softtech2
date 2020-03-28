@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Table, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class WebsiteSettings extends Component {
     displayName = WebsiteSettings.name
@@ -24,7 +25,7 @@ export class WebsiteSettings extends Component {
         this.handleChange = this.handleChange.bind(this);
 
         if (loggedin) {
-            fetch('http://localhost:59709/api/WebsiteSettings', {
+            fetch(API.GetURL() + 'api/WebsiteSettings', {
                 method: 'get',
                 headers: {
                     'Authorization': 'Bearer ' + token
@@ -102,7 +103,7 @@ export class WebsiteSettings extends Component {
     }
 
     saveWebsiteSetting(keyname, keyvalue) {
-        fetch('http://localhost:59709/api/websitesettings/' + keyname,
+        fetch(API.GetURL() + 'api/websitesettings/' + keyname,
             {
                 method: 'Put',
                 body: JSON.stringify({ KeyName: keyname, KeyValue: keyvalue }),

@@ -3,6 +3,7 @@ import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Checkbox, Table, Modal, Grid, Row, Col } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { DrivePop } from './DrivePop';
+import { API } from './api';
 
 export class CustomPageManage extends Component {
     displayName = CustomPageManage.name;
@@ -25,7 +26,7 @@ export class CustomPageManage extends Component {
     }
 
     fetchData(t, id) {
-        fetch('http://localhost:59709/api/custompages/' + id, {
+        fetch(API.GetURL() + 'api/custompages/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -54,7 +55,7 @@ export class CustomPageManage extends Component {
     }
 
     saveData(e) {
-        let saveurl = 'http://localhost:59709/api/custompages';
+        let saveurl = API.GetURL() + 'api/custompages';
         let method = 'post';
         if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.custompage.ID !== 0) {
             saveurl = saveurl + '/' + ((this.state.custompage.ID !== 0) ? this.state.custompage.ID : this.props.match.params.ID);
@@ -90,7 +91,7 @@ export class CustomPageManage extends Component {
     }
 
     slugify() {
-        fetch('http://localhost:59709/api/Utility/Slugify?t=' + this.state.article.URL)
+        fetch(API.GetURL() + 'api/Utility/Slugify?t=' + this.state.article.URL)
             .then(response => {
                 return response.json();
             })

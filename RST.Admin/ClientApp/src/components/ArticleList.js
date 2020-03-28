@@ -3,6 +3,8 @@ import { Link, Redirect } from 'react-router-dom';
 import Moment from 'react-moment';
 import { Table, Alert, Grid, Row, Col } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
+
 export class ArticleList extends Component {
     displayName = ArticleList.name
 
@@ -20,8 +22,9 @@ export class ArticleList extends Component {
             this.fetchData(token);
         }
     }
+
     fetchData(t) {
-        fetch('http://localhost:59709/api/posts', {
+        fetch(API.GetURL() + 'api/posts', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -38,9 +41,10 @@ export class ArticleList extends Component {
                 this.setState({ articles: data, loading: false });
             });
     }
+
     handleDeleteArticle(e) {
         if (window.confirm("Are you sure you want to delete this article?")) {
-            fetch('http://localhost:59709/api/posts/' + e.target.name,
+            fetch(API.GetURL() + 'api/posts/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {

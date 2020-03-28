@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class MemberList extends Component {
     displayName = MemberList.name
@@ -25,7 +26,7 @@ export class MemberList extends Component {
     }
 
     fetchData(t, page, size) {
-        fetch('http://localhost:59709/api/members?page=' + page + '&psize=' + size, {
+        fetch(API.GetURL() + 'api/members?page=' + page + '&psize=' + size, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t

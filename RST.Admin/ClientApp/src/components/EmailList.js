@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class EmailList extends Component {
     displayName = EmailList.name
@@ -25,7 +26,7 @@ export class EmailList extends Component {
     }
 
     fetchData(t, page, size, etype, group, sent, read) {
-        fetch('http://localhost:59709/api/EmailMessages?page=' + page + '&psize=' + size + '&etype=' + etype + '&group=' + group + '&sent=' + sent + '&read=' + read, {
+        fetch(API.GetURL() + 'api/EmailMessages?page=' + page + '&psize=' + size + '&etype=' + etype + '&group=' + group + '&sent=' + sent + '&read=' + read, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -46,7 +47,7 @@ export class EmailList extends Component {
     }
 
     fetchEmailGroup() {
-        fetch('http://localhost:59709/api/EmailMessages/EmailGroups',
+        fetch(API.GetURL() + 'api/EmailMessages/EmailGroups',
             {
                 method: 'GET',
                 headers: {

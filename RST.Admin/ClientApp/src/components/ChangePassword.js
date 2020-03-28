@@ -2,6 +2,7 @@
 import { Redirect } from 'react-router-dom';
 import { FormGroup, FormControl, Button, ControlLabel, ProgressBar, Alert, Grid, Row, Table, Col } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class ChangePassword extends Component {
     displayName = ChangePassword.name;
@@ -26,7 +27,7 @@ export class ChangePassword extends Component {
     }
 
     fetchData(t, id) {
-        fetch('http://localhost:59709/api/Members/' + id, {
+        fetch(API.GetURL() + 'api/Members/' + id, {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -45,7 +46,7 @@ export class ChangePassword extends Component {
     }
 
     saveData(e) {
-        let saveurl = 'http://localhost:59709/api/Members/ChangePassword/' + this.state.member.ID;
+        let saveurl = API.GetURL() + 'api/Members/ChangePassword/' + this.state.member.ID;
         let method = 'post';
         this.setState({ loading: true });
         fetch(saveurl, {

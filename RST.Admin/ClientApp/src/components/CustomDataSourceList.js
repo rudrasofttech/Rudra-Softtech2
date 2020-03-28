@@ -2,6 +2,7 @@
 import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
+import { API } from './api';
 
 export class CustomDataSourceList extends Component {
     //displayName = CustomDataSourceList.name
@@ -21,7 +22,7 @@ export class CustomDataSourceList extends Component {
     }
 
     fetchData(t) {
-        fetch('http://localhost:59709/api/CustomDataSources', {
+        fetch(API.GetURL() + 'api/CustomDataSources', {
             method: 'get',
             headers: {
                 'Authorization': 'Bearer ' + t
@@ -42,7 +43,7 @@ export class CustomDataSourceList extends Component {
 
     handleDeleteDS(e) {
         if (window.confirm("Are you sure you want to delete this data source?")) {
-            fetch('http://localhost:59709/api/CustomDataSources/' + e.target.name,
+            fetch(API.GetURL() + 'api/CustomDataSources/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {

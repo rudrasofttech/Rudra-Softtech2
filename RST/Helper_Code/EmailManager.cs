@@ -51,7 +51,7 @@ namespace RST.Helper_Code
                 return true;
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 try
                 {
