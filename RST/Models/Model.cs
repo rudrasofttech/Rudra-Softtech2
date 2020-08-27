@@ -79,7 +79,7 @@ namespace RST.Models
         [Required]
         [MaxLength(100)]
         public string Name { get; set; }
-        [Required]
+        
         public string Query { get; set; }
         [Required]
         public DateTime DateCreated { get; set; }

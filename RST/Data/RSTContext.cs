@@ -8,7 +8,7 @@ namespace RST.Data
     {
         public RSTContext() : base("RSTContext")
         {
-            
+            Database.SetInitializer<RSTContext>(null);
         }
 
         public DbSet<Category> Categories { get; set; }

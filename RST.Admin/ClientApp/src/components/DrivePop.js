@@ -53,16 +53,16 @@ export class DrivePop extends Component {
     renderImageType(f) {
         switch (f.ItemType) {
             case 2:
-                return <Glyphicon glyph="file" bsSize="large" />;
+                return <Glyphicon glyph="file" />;
             case 3:
 
                 return <div style={{ width: 100 + 'px', height: 100 + 'px', backgroundImage: 'url(' + f.ThumbNail + ')', backgroundSize: 'cover' }} />;
             case 4:
-                return <Glyphicon glyph="video" bsSize="large" />;
+                return <Glyphicon glyph="video" />;
             case 5:
-                return <Glyphicon glyph="compressed" bsSize="large" />;
+                return <Glyphicon glyph="compressed" />;
             default:
-                return <Glyphicon glyph="file" bsSize="large" />;
+                return <Glyphicon glyph="file" />;
         }
     }
 
@@ -87,8 +87,8 @@ export class DrivePop extends Component {
                     <tbody>
                         {list1.map(cp =>
                             <tr key={cp.ID}>
-                                <td />
-                                <td><button value={cp.Location} className="btn btn-link" onClick={this.selectFolder}>{cp.Name}</button></td>
+                                <td><Glyphicon glyph="folder-close" /></td>
+                                <td><button value={cp.Location} className="btn btn-link"  onClick={this.selectFolder}>{cp.Name}</button></td>
                             </tr>
                         )}
                         {list2.map(cp =>
@@ -106,7 +106,7 @@ export class DrivePop extends Component {
     render() {
 
         if (!this.state.loggedin) {
-            return (<span>No Logged In.</span>);
+            return <span>Not Logged In.</span>;
         } else {
             let contents = this.state.loading
                 ? <p><em>Loading...</em></p>

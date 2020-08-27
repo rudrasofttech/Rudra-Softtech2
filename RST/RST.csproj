@@ -206,6 +206,10 @@
     <Compile Include="Migrations\202003030328504_emailmessageidchange.designer.cs">
       <DependentUpon>202003030328504_emailmessageidchange.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202003281024158_CustomDataSourceQuery.cs" />
+    <Compile Include="Migrations\202003281024158_CustomDataSourceQuery.designer.cs">
+      <DependentUpon>202003281024158_CustomDataSourceQuery.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\DisplayModel.cs" />
     <Compile Include="Models\Model.cs" />
@@ -293,6 +297,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202003030328504_emailmessageidchange.resx">
       <DependentUpon>202003030328504_emailmessageidchange.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202003281024158_CustomDataSourceQuery.resx">
+      <DependentUpon>202003281024158_CustomDataSourceQuery.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
