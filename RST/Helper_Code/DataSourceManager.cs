@@ -27,7 +27,7 @@ namespace RST.Helper_Code
             CustomDataSource cds = GetByName(name);
             if (cds != null)
             {
-                if (cds.Query.Trim() == string.Empty)
+                if (string.IsNullOrEmpty(cds.Query))
                 {
                     return cds.HtmlTemplate;
                 }
@@ -65,6 +65,10 @@ namespace RST.Helper_Code
 
         public string ParseAndPopulate(string input)
         {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
             string output = input;
 
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();

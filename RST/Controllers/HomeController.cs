@@ -25,6 +25,10 @@ namespace RST.Controllers
             model.CommonHeadContent = Utility.GetSiteSetting("CommonHeadContent");
             model.SiteFooter = Utility.GetSiteSetting("SiteFooter");
             model.SiteHeader = Utility.GetSiteSetting("SiteHeader");
+            #region Replace Custom Data Source
+            DataSourceManager dsm = new DataSourceManager(db);
+            model.Page.Body= dsm.ParseAndPopulate(model.Page.Body);
+            #endregion
             return View(model);
         }
 
