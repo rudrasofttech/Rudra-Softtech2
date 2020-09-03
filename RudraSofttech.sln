@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.28307.902
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RST", "RST\RST.csproj", "{51C0FCC0-34A9-4E38-AFEF-ADB1976A0BB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RST.Admin", "RST.Admin\RST.Admin.csproj", "{DBD0C148-FE23-4193-9206-A51C594C27B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RST.Admin", "RST.Admin\RST.Admin.csproj", "{DBD0C148-FE23-4193-9206-A51C594C27B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

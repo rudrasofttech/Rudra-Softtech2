@@ -15,61 +15,40 @@
 
 @if (Model.Count() == 0)
 {
-    <p class="well">
+    <p>
         There are no articles and videos here.
     </p>
 }
 else
 {
-    foreach (var a in Model)
-    {
-        <article class="blog-post">
-            <div class="post-heading">
-                <h3>
-                    <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)">
-                        @a.Title
-                    </a>
-                </h3>
-            </div>
-            <div class="row">
-                <div class="span8">
-                    <div class="post-image">
-                        @if (a.OGImage != string.Empty)
-                        {
-                            <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)">
-                                <img src="@a.OGImage" alt="" />
-                            </a>
-                        }
-                    </div>
-                    <ul class="post-meta">
-                        <li class="first">
-                            <i class="icon-calendar"></i><span>
-                                @a.DateCreated.ToString("MMM dd, yyyy")
-                            </span>
-                        </li>
-                        <li>
-                            <i class="icon-comments"></i><span>
-                                @a.Viewed
-                                Views
-                            </span>
-                        </li>
-                        <li class="last">
-                            <i class="icon-tags"></i>
-                            @a.Tag
-                        </li>
-                    </ul>
-                    <div class="clearfix">
-                    </div>
-                    <p>
-                        @a.OGDescription
-                    </p>
-                    <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)" class="btn btn-small btn-theme">
-                        Read more
-                    </a>
+    <ul>
+        @foreach (var a in Model)
+        {
+            <li class="wow fadeInUp animated">
+                <h2>
+                    @a.Title
+                </h2>
+                <div class="author">
+                    @a.WriterName  |   @a.DateCreated.ToString("MMM dd, yyyy")
                 </div>
-            </div>
-        </article>
-    }
+                @if (a.OGImage != string.Empty)
+                {
+                    <div class="blog-img">
+                        <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)">
+                            <img src="@a.OGImage" alt="" />
+                        </a>
+                        <div class="shape wow slideOutRight" style="visibility: visible; animation-name: slideOutRight;"></div>
+                    </div>
+                }
+                <p>@a.OGDescription</p>
+                <div class="svg-wrapper svg-wrapper2">
+                    <svg height="100%" width="100%">
+                        <rect id="shape" height="100%" width="100%"></rect>
+                    </svg><div id="text"> <a href="@Utility.GenerateBlogArticleURL(a, Utility.SiteURL)"><span class="spot"></span>Read More</a> </div>
+                </div>
+            </li>
+        }
+    </ul>
 }
 
 
