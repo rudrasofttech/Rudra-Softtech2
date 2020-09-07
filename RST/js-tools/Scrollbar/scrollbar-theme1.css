@@ -1,0 +1,73 @@
+﻿.rst-scrollstrip-vertical
+{
+    cursor: pointer;
+    width: 7px;
+    -moz-box-shadow: inset 0 0 10px #C8CACF;
+    -webkit-box-shadow: inset 0 0 10px #C8CACF;
+    box-shadow: inset 0 0 10px #C8CACF;
+    background-color: #141414;
+}
+
+.rst-scrollstrip-horizontal
+{
+    cursor: pointer;
+    height: 7px;
+    -moz-box-shadow: inset 0 0 10px #C8CACF;
+    -webkit-box-shadow: inset 0 0 10px #C8CACF;
+    box-shadow: inset 0 0 10px #C8CACF;
+    background-color: #141414;
+}
+
+.rst-scrollstrip-vertical > .rst-scrollhandle-vertical
+{
+    width: 100%;
+    height: 50px;
+    margin: 0px;
+    padding: 0px;
+    cursor: pointer;
+    border: none;
+    background-color: #DCDCDC;
+}
+
+.rst-scrollstrip-vertical > .rst-scrollhandle-vertical:hover
+{
+    background-color: rgba(120, 121, 124, 0.9);
+}
+
+.rst-scrollstrip-horizontal > .rst-scrollhandle-horizontal
+{
+    width: 40px;
+    height: 100%;
+    margin: 0px;
+    padding: 0px;
+    cursor: pointer;
+    border: none;
+    background-color: #DCDCDC;
+}
+
+.rst-scrollstrip-horizontal > .rst-scrollhandle-horizontal:hover
+{
+    background-color: rgba(120, 121, 124, 0.9);
+}
+
+@media (max-width: 767px)
+{
+    .rst-scrollstrip-vertical
+    {
+        cursor: pointer;
+        width: 2px;
+        -moz-box-shadow: inset 0 0 10px #C8CACF;
+        -webkit-box-shadow: inset 0 0 10px #C8CACF;
+        box-shadow: inset 0 0 10px #C8CACF;
+    }
+
+    .rst-scrollstrip-horizontal
+    {
+        cursor: pointer;
+        height: 2px;
+        -moz-box-shadow: inset 0 0 10px #C8CACF;
+        -webkit-box-shadow: inset 0 0 10px #C8CACF;
+        box-shadow: inset 0 0 10px #C8CACF;
+    }
+
+}

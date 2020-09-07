@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Carousel</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js" type="text/javascript"> </script>
+    <link href="carousel.css" rel="Stylesheet" />
+    <script src="carousel.js" type="text/javascript"></script>
+    <script src="../Swipe/swipe.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(window).load(function () {
+            $("#carousel1").carousel({ Direction: 'h', Step: 180, OnMove: function (d) { } });
+            $("#carousel2").carousel({ Direction: 'v', Step: 60, OnMove: function (d) { } });
+            $("#carousel3").carousel({ Direction: 'h', Step: 100, ShowHandle: false });
+            $("#carousel4").carousel({ Direction: 'h', Step: 90, ShowHandle: false });
+        });
+
+        function movep() { $("#carousel3").carousel("moveminus"); }
+        function moven() { $("#carousel3").carousel("moveplus"); }
+        function movep2() { $("#carousel4").carousel("moveminus"); }
+        function moven2() { $("#carousel4").carousel("moveplus"); }
+        function highlight() {
+            $("#carousel1").carousel("addclass", { index: parseInt($("#index").val(), 10), classname: 'highlight' });
+            $("#carousel2").carousel("addclass", { index: parseInt($("#index").val(), 10), classname: 'highlight' });
+            $("#carousel1").carousel("moveto", { index: parseInt($("#index").val(), 10) });
+            $("#carousel2").carousel("moveto", { index: parseInt($("#index").val(), 10) });
+        }
+
+        function undohighlight() {
+            $("#carousel1").carousel("removeclass", { index: -1, classname: 'highlight' });
+            $("#carousel2").carousel("removeclass", { index: -1, classname: 'highlight' });
+        }
+    </script>
+    <style>
+        .thumb2
+        {
+            height: 80px;
+            width: 80px;
+            border: 5px solid #fff;
+        }
+        
+        .thumb1
+        {
+            height: 80px;
+            width: 80px;
+            border: 5px solid #fff;
+        }
+        
+        .highlight
+        {
+            border: 5px solid;
+            border-color: Green;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body style="margin: 100px;">
+    <select id="index">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+    </select>
+    <button onclick="highlight();">
+        Highlight</button>
+    <button onclick="undohighlight();">
+        Undo Highlight</button>
+    <div class="rst-carousel" id="carousel1" style="height: 100px; width: 270px;">
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic1.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic2.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic3.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic4.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic5.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic6.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic7.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic8.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic10.jpg"
+                alt="" /></div>
+    </div>
+    <br />
+    <div class="rst-carousel" id="carousel3" style="height: 85px; width: 360px; border: 5px solid #D4D4D4;
+        border-radius: 5px;">
+        <button onclick="movep();" type="button" style="margin: 0; padding: 0; border-radius: 35px;
+            background-color: #D4D4D4; border: 5px solid #D4D4D4; position: absolute; left: 0px;
+            top: 50%; margin-left: -26.5px; margin-top: -26px; cursor: pointer;">
+            <img src="http://www.rudrasofttech.com/res/img/orange/previous.png" alt="Prev" />
+        </button>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic1.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic2.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic3.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic4.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic5.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic6.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic7.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic8.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic10.jpg"
+                alt="" /></div>
+        <button onclick="moven();" style="margin: 0; padding: 0; background-color: transparent;
+            border: none; position: absolute; border-radius: 35px; background-color: #D4D4D4;
+            border: 5px solid #D4D4D4; left: auto; right: 0px; top: 50%; margin-right: -26.5px;
+            margin-top: -26px;">
+            <img src="http://www.rudrasofttech.com/res/img/orange/next.png" alt="nexy" />
+        </button>
+    </div>
+    <br />
+    <table style="border: 1px solid #000; padding:0px; margin:0px; width:100%;">
+        <tr>
+            <td>
+                <button onclick="movep2();" type="button" style="cursor: pointer; height: 100%; width: 25px;" class="btn">&lsaquo;
+                </button>
+            </td>
+            <td>
+                <div class="rst-carousel" id="carousel4" style="height: 85px; width: 360px;">
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic1.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic2.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic3.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic4.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic5.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic6.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic7.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic8.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                            alt="" /></div>
+                    <div class="rst-carousel-item">
+                        <img class="thumb1" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic10.jpg"
+                            alt="" /></div>
+                </div>
+            </td>
+            <td>
+                <button onclick="moven2();" type="button" style="cursor: pointer; height: 100%; width: 25px;" class="btn">&rsaquo;</button>
+            </td>
+        </tr>
+    </table>
+    <div style="height: 85px; width: 420px;">
+    </div>
+    <br />
+    <div class="rst-carousel" id="carousel2" style="width: 90px; height: 300px;">
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic1.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic2.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic3.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic4.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic5.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic6.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic7.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic8.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" /></div>
+        <div class="rst-carousel-item">
+            <img class="thumb2" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic10.jpg"
+                alt="" /></div>
+    </div>
+</body>
+</html>

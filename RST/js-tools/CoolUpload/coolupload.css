@@ -1,0 +1,114 @@
+﻿.filecontainer {
+    width: 100%;
+}
+
+    .filecontainer .file {
+        height: 55px;
+        width: 55px;
+        float: left;
+        margin: 5px;
+        line-height: 55px;
+        text-align: center;
+        color: #DCDBCF;
+        position: relative;
+        font: bold 1.1em "Century Gothic","Trebuchet MS",Arial,Helvetica,sans-serif;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position: center;
+    }
+
+        .filecontainer .file .loader {
+            font-size: 1em;
+            top: 48%;
+            position:absolute;
+
+        }
+
+        .filecontainer .file img {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            border: 3px solid #DCDBCF;
+            float: left;
+            position: absolute;
+            left: 0px;
+        }
+
+        .filecontainer .file.fileerror {
+            background-color: #FF7F7F;
+            line-height:50px;
+        }
+
+            .filecontainer .file.fileerror::after {
+                content: "Error";
+            }
+
+        .filecontainer .file.filesuccess {
+            color: #000;
+            background-color: #A1F6A1;
+        }
+
+            .filecontainer .file.filesuccess a {
+                top: 50%;
+                margin-top: -11px;
+                position: absolute;
+                left: 50%;
+                margin-left: -12px;
+                font-size:0.6em;
+            }
+
+.coolupload {
+    float: left;
+    height: 50px;
+    width: 50px;
+    margin: 5px;
+    line-height: 50px;
+    text-align: center;
+    overflow: hidden;
+    font-size: 3em;
+    color: #DCDBCF;
+    cursor: pointer;
+    position: relative;
+    border: 3px solid #DCDBCF;
+    font-family: "Century Gothic","Trebuchet MS",Arial,Helvetica,sans-serif;
+}
+
+    .coolupload input {
+        height: 200px;
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+.filecontainer .remove {
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    margin: 0px;
+    -webkit-appearance: none;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    left: auto;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 12px;
+    color: #000;
+    text-shadow: 0px 0px 1px #fff;
+    opacity: .0;
+    filter: alpha(opacity=0);
+    z-index: 10;
+}
+
+    .filecontainer .remove:hover {
+        opacity: 1;
+        filter: alpha(opacity=100);
+    }
+
+.filecontainer .file:hover .remove {
+    opacity: 0.3;
+    filter: alpha(opacity=30);
+}

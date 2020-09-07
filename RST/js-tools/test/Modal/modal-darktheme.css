@@ -1,0 +1,205 @@
+﻿/* Decoration CSS */
+#rst-modal
+{
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+#rst-modal > #rst-modal-shadow
+{
+    background-color: transparent;
+}
+
+#rst-modal > #rst-modal-close
+{
+    cursor: pointer;
+    margin: 0px;
+    padding: 0px;
+    background-color: #fff;
+    outline: none;
+    opacity: 0.6;
+    border: none;
+    border-top-left-radius: 5px;
+    color: #000;
+    font-size: 40px;
+    min-height: 40px;
+    min-width: 50px;
+    line-height: 40px;
+    font-family: "Helvetica Neue" , Arial, sans-serif;
+}
+
+#rst-modal > #rst-modal-nav-next
+{
+    cursor: pointer;
+    padding: 0px;
+    background-color: #fff;
+    outline: none;
+    opacity: 0.5;
+    border: none;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    color: #000;
+    font-size: 40px;
+    line-height: 40px;
+    font-family: "Helvetica Neue" , Arial, sans-serif;
+}
+
+#rst-modal > #rst-modal-nav-prev
+{
+    cursor: pointer;
+    padding: 0px;
+    background-color: #fff;
+    outline: none;
+    opacity: 0.5;
+    border: none;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    color: #000;
+    font-size: 40px;
+    line-height: 40px;
+    font-family: "Helvetica Neue" , Arial, sans-serif;
+}
+
+#rst-modal > #rst-modal-close:hover, #rst-modal > #rst-modal-nav-next:hover, #rst-modal > #rst-modal-nav-prev:hover
+{
+    background-color: #F03C02;
+    color: #fff;
+    opacity: 1;
+}
+
+#rst-modal > #rst-modal-title
+{
+    font-family: Arial;
+    font-size: 12px;
+    color: #fff;
+    padding: 2px;
+    text-transform: capitalize;
+    margin:2px;
+}
+
+@media (min-width: 1200px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 10px solid #fff;
+        border-radius: 5px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        border-radius : 5px;
+        background-color: #fff;
+    }
+}
+@media (min-width: 980px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 10px solid #fff;
+        border-radius: 5px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        border-radius : 5px;
+        background-color: #fff;
+    }
+}
+@media (min-width: 768px) and (max-width: 979px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 10px solid #fff;
+        border-radius: 5px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        border-radius : 5px;
+        background-color: #fff;
+    }
+}
+
+@media (max-width: 767px)
+{
+    #rst-modal > #rst-modal-nav-panel
+    {
+        padding-left: 0px;
+        padding-right: 0px;
+        width: 100%;
+        background-color: transparent;
+    }
+    #rst-modal > #rst-modal-nav-panel > #rst-modal-nav-prev
+    {
+        margin-left: 5px;
+    }
+    #rst-modal > #rst-modal-nav-panel > #rst-modal-nav-next, #rst-modal > #rst-modal-nav-panel > #rst-modal-close
+    {
+        float: right;
+    }
+
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        border-radius : 5px;
+        background-color: #fff;
+    }
+
+    #rst-modal > #rst-modal-close
+    {
+        opacity: 1;
+    }
+
+    #rst-modal
+    {
+        background-color: rgba(0, 0, 0, 0.9);
+    }
+}
+
+@media (max-width: 600px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        background-color: #fff;
+    }
+
+    #rst-modal > #rst-modal-title
+    {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 480px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent, .rst-modal-inlinecontent
+    {
+        border: 1px solid #A3A3A3;
+        background-color: #fff;
+    }
+}
+
+#rst-modal > #rst-modal-loadimg
+{
+    background-color: #fff;
+    border-radius: 3px;
+}
+
+#rst-modal > #rst-modal-loadimg > img
+{
+    border: none;
+}

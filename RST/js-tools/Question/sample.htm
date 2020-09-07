@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Question</title>
+    <script src="http://code.jquery.com/jquery-1.9.1.js" type="text/javascript"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js" type="text/javascript"></script>
+    <link href="question.css" rel="stylesheet" type="text/css" />
+    <script src="question.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".rstquestion").question({ Attempts: 1, OnAttempt: function (i, attemptcount, status) { } });
+        });
+    </script>
+</head>
+<body>
+    <div class="rstquestion">
+        <p>
+            Name the tallest building on the earth.</p>
+        <ul>
+            <li>My Home</li>
+            <li data-anwser="correct">Qutub Minar</li>
+            <li>Your Home</li>
+        </ul>
+    </div>
+    <div class="rstquestion">
+        <p>
+            Name the tallest building on the earth.</p>
+        <ul class="rst-options">
+            <li>My Home</li>
+            <li data-anwser="correct">Qutub Minar</li>
+            <li>Your Home</li>
+        </ul>
+    </div>
+    <div class="rstquestion">
+        <p>
+            Name the tallest building on the earth.</p>
+        <ul class="rst-options">
+            <li>My Home</li>
+            <li data-anwser="correct">Qutub Minar</li>
+            <li>Your Home</li>
+        </ul>
+    </div>
+    <div class="rstquestion">
+        <p>
+            Name the tallest building on the earth.</p>
+        <ul class="rst-options">
+            <li>My Home</li>
+            <li data-anwser="correct">Qutub Minar</li>
+            <li>Your Home</li>
+        </ul>
+    </div>
+</body>
+</html>
