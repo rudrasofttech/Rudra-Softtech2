@@ -168,7 +168,7 @@ namespace RST.Controllers
 
         public ActionResult CategoryList(string category)
         {
-            Category c = db.Categories.FirstOrDefault(t => t.Name.ToLower() == category.ToLower());
+            Category c = db.Categories.FirstOrDefault(t => t.UrlName.ToLower() == category.ToLower());
             if(c != null)
             {
                 return View(db.Posts.Where(t => t.Category.ID == c.ID).ToList());
