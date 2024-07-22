@@ -222,7 +222,6 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
-    <Content Include="drive\Carsprite.png" />
     <Content Include="drive\v3\css\animate.css" />
     <Content Include="drive\v3\css\owl.carousel.min.css" />
     <Content Include="drive\v3\css\owl.theme.default.min.css" />
@@ -357,12 +356,6 @@
     <Content Include="drive\v3\js\lightbox.js" />
     <Content Include="drive\v3\js\owl.carousel.js" />
     <Content Include="drive\v3\js\wow.js" />
-    <Content Include="drive\website-images\colourful-web-design-.jpg" />
-    <Content Include="drive\website-images\digital-Marketing.png" />
-    <Content Include="drive\website-images\Web-Application-Development.png" />
-    <Content Include="drive\website-images\web-banner.jpg" />
-    <Content Include="drive\website-images\web-designing.png" />
-    <Content Include="drive\website-images\web-development.jpg" />
     <Content Include="EmailWrapper.html" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
@@ -436,7 +429,6 @@
     <Content Include="js-tools\Zoom\sample.htm" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="drive\ImageBrickWallEffect.zip" />
     <Content Include="handlers\tools\HTMLEncoder.ashx" />
     <Content Include="handlers\tools\IpLocator.ashx" />
     <Content Include="drive\v3\fonts\Butler-ExtraBold.eot" />
@@ -480,6 +472,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="drive\website-images\" />
     <Folder Include="js-tools\CoolUpload\sampleupload\" />
     <Folder Include="Views\Utility\" />
   </ItemGroup>
