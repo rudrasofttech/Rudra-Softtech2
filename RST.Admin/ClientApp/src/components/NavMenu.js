@@ -80,7 +80,7 @@ export class NavMenu extends Component {
                             <a href="https://www.rudrasofttech.com/generatesitemap" target="_blank">Build Sitemap</a>
                         </li>
                         <li role="presentation">
-                            <a target="_blank" href="http://rudrasofttech.com/vtracker/report/websitepublicstats/3?range=Last30Days">Visits</a>
+                            <a target="_blank" href="https://rudrasofttech.com/vtracker/report?id=3&range=Last30Days">Visits</a>
                         </li>
                         {loginlink}
                     </Nav>
