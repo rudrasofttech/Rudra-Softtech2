@@ -44,7 +44,9 @@ builder.Services.AddAuthentication(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(180);
 });
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options => {
+    options.Conventions.AddPageRoute("/Blog/Detail", "blog/{url}");
+});
 builder.Services.AddControllersWithViews();
 builder.Services.AddServerSideBlazor();
 

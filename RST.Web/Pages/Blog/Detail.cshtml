@@ -1,0 +1,65 @@
+﻿@page "{url}"
+
+@model RST.Web.Pages.Blog.DetailModel
+@inject RST.Web.Service.WebsiteSettingsService wsService;
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+@if (Model.PPM != null)
+{
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <title>@(string.IsNullOrEmpty(Model.PPM.MetaTitle) ? Model.PPM.Title : Model.PPM.MetaTitle)</title>
+        <meta name="description" content="@Model.PPM.OGDescription" />
+        <meta name="keywords" content="@Model.PPM.Tag" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="@Utility.GenerateBlogArticleURL(Model.PPM, wsService.SiteURL)" />
+        <meta property="og:site_name" content="@wsService.SiteName" />
+        <meta property="og:title" content="@(string.IsNullOrEmpty(Model.PPM.MetaTitle) ? Model.PPM.Title : Model.PPM.MetaTitle)" />
+        <meta property="og:description" content="@Model.PPM.OGDescription" />
+        <meta property="og:image" content="@Model.PPM.OGImage" />
+        @Html.Raw(wsService.GetSiteSetting("CommonHeadContent"))
+        <link href="//www.rudrasofttech.com/js-tools/SlideShow/slides.css" rel="stylesheet"
+        type="text/css" />
+        <script src="//www.rudrasofttech.com/js-tools/SlideShow/slides.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            $(window).load(function () {
+            $(".rst-slides").slides({ Circular: true, HoverPause: true, ScrollInterval: 10000 });
+            });
+        </script>
+        <link href="//www.rudrasofttech.com/js-tools/Question/question.css" rel="stylesheet"
+        type="text/css" />
+        <script src="//www.rudrasofttech.com/js-tools/Question/question.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+            $(".rstquestion").question({ Attempts: 1, OnAttempt: function (i, attemptcount) { } });
+            });
+        </script>
+    </head>
+    <body>
+        @Html.Raw(wsService.GetSiteSetting("SiteHeader"))
+        @Html.Raw(Model.PPM.Article)
+        @Html.Raw(wsService.GetSiteSetting("SiteFooter"))
+    </body>
+    </html>
+}
+else
+{
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <title>Page Not Found</title>
+        @Html.Raw(wsService.GetSiteSetting("CommonHeadContent"))
+    </head>
+    <body>
+        @Html.Raw(wsService.GetSiteSetting("SiteHeader"))
+        <div>
+            <h1 style="text-align:center;margin-bottom:5rem; margin-top:5rem">Page not found</h1>
+        </div>
+        @Html.Raw(wsService.GetSiteSetting("SiteFooter"))
+    </body>
+    </html>
+}
