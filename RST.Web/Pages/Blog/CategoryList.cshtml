@@ -1,0 +1,146 @@
+﻿@page "/blog/{category}/index"
+
+@model RST.Web.Pages.Blog.CategoryListModel
+@using RST.Model;
+@inject RST.Web.Service.WebsiteSettingsService websiteSettingsService;
+@{
+    Layout = null;
+    string SiteURL = websiteSettingsService.SiteURL;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Blogs</title>
+    @Html.Raw(Model.CommonHeadContent)
+</head>
+<body>
+    @Html.Raw(Model.SiteHeader)
+    <section id="subintro">
+        <div class="container">
+            <div class="row">
+                <div class="span8">
+                    <ul class="breadcrumb">
+                        <li>
+                            <a href="~/"><i class="icon-home"></i></a><i class="icon-angle-right">
+                            </i>
+                        </li>
+                        <li class="active">Blog</li>
+                    </ul>
+                </div>
+                <div class="span4">
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="Section1">
+        <div class="container">
+            <div class="row">
+                <div class="span4">
+                    <aside>
+                        <div class="widget">
+                            <h4 class="rheading">
+                                Categories<span></span>
+                            </h4>
+                            <ul class="cat">
+                                @foreach (Category c in Model.Categories)
+                                {
+                                    if (c.Status == MemberStatus.Active)
+                                    {
+                                        <li>
+                                            <a href="@Url.Content(string.Format("~/blog/{0}/index", c.UrlName))">
+                                                @c.Name
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                        <div class="widget">
+                            <h4 class="rheading">
+                                Responsive jQuery Plugins<span></span>
+                            </h4>
+                            <ul class="cat">
+                                <li><a href="~/modalbox">ModalBox</a> </li>
+                                <li><a href="~/photozoom">PhotoZoom</a> </li>
+                                <li><a href="~/slideshow">SlideShow</a> </li>
+                                <li><a href="~/scrollbar">scrollbar</a></li>
+                                <li><a href="~/bubble">Bubble</a></li>
+                                <li><a href="~/tooltip">Tooltip</a></li>
+                                <li><a href="~/dragable">Dragable</a></li>
+                                <li><a href="~/swipe">Swipe</a></li>
+                            </ul>
+                        </div>
+                        <div class="widget hidden-phone">
+                            <p>
+                                Keep track of our BLOG UPDATES via our facebook page.
+                            </p>
+                            <iframe src="//www.facebook.com/plugins/likebox.php?href=http%3A%2F%2Fwww.facebook.com%2Frudrasofttech&amp;width=250&amp;height=290&amp;show_faces=true&amp;colorscheme=light&amp;stream=false&amp;border_color&amp;header=true&amp;appId=490407121012387"
+                                    scrolling="no" frameborder="0" style="border: none; overflow: hidden; width: 250px;
+                                height: 290px;" allowtransparency="true"></iframe>
+                        </div>
+                    </aside>
+                </div>
+                <div class="span8">
+                    @if (Model.Posts.Count() == 0)
+                    {
+                        <p class="well">
+                            There are no articles and videos here.
+                        </p>
+                    }
+                    @foreach (Post a in Model.Posts)
+                    {
+                        <article class="blog-post">
+                            <div class="post-heading">
+                                <h3>
+                                    <a href="@Utility.GenerateBlogArticleURL(a, SiteURL)">
+                                        @a.Title
+                                    </a>
+                                </h3>
+                            </div>
+                            <div class="row">
+                                <div class="span8">
+                                    <div class="post-image">
+                                        <a href="@Utility.GenerateBlogArticleURL(a, SiteURL)">
+                                            <img src="@a.OGImage" alt="" />
+                                        </a>
+                                    </div>
+                                    <ul class="post-meta">
+                                        <li class="first">
+                                            <i class="icon-calendar"></i><span>
+                                                @a.DateCreated.ToString("MMM dd, yyyy")
+                                            </span>
+                                        </li>
+                                        <li>
+                                            <i class="icon-comments"></i><span>
+                                                @a.Viewed
+                                                Views
+                                            </span>
+                                        </li>
+                                        <li class="last">
+                                            <i class="icon-tags"></i>
+                                            Modalbox jquery plugin, Rudrasofttech, Best development services
+                                        </li>
+                                    </ul>
+                                    <div class="clearfix">
+                                    </div>
+                                    <p>
+                                        @a.Description
+                                    </p>
+                                    <a href="@Utility.GenerateBlogArticleURL(a, SiteURL)" class="btn btn-small btn-theme">
+                                        Read more
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @Html.Raw(Model.SiteFooter)
+</body>
+</html>

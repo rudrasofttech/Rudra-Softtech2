@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Tooltip Example 1</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js" type="text/javascript"> </script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <link href="tooltip.css" rel="Stylesheet" type="text/css" />
+    <script src="tooltip.js" type="text/javascript"> </script>
+    <script type="text/javascript">
+        $(window).ready(
+        function () {
+            $(".Button1").tooltip({ Position: 'top' });
+            $(".Button2").tooltip({ Position: 'right', Action : 'scrollbottom' });
+        }
+    );
+    </script>
+</head>
+<body>
+    <input class="Button1" data-tooltip="some test will come here" type="button" value="button"
+        style="position: absolute; top: 300px; left: 500px;" />
+    <p>
+        <ul>
+            <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</li>
+            <li>Fusce ut quam facilisis, pharetra purus vel, luctus diam.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Donec id nisl sit amet orci rhoncus eleifend.</li>
+            <li>Suspendisse tempor felis sed enim imperdiet, ultrices elementum est congue.</li>
+            <li>Vivamus dapibus velit vel ligula commodo, ut laoreet arcu suscipit.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Vestibulum cursus arcu vel leo pulvinar, non vestibulum risus laoreet.</li>
+            <li>Nunc porta enim vel purus accumsan faucibus.</li>
+            <li>Quisque pulvinar leo sollicitudin faucibus convallis.</li>
+            <li>Nunc placerat ante eget elit placerat venenatis.</li>
+            <li>Maecenas fermentum arcu nec lacus posuere, vel sagittis urna feugiat.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Quisque semper magna nec commodo pretium.</li>
+            <li>Praesent in tellus sit amet turpis suscipit ornare ut vel est.</li>
+            <li>Proin convallis sapien non sem lobortis, at laoreet elit tincidunt.</li>
+            <li>Sed vel eros eget libero semper volutpat at a diam.</li>
+            <li>Ut luctus nunc vel urna mattis, vitae porta diam pretium.</li>
+            <li>Nunc vel sem mollis, rhoncus mauris et, semper purus.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Nullam pellentesque enim et dui dignissim dapibus.</li>
+            <li>Morbi venenatis purus sit amet mi pharetra porttitor.</li>
+            <li>Ut pretium ipsum quis urna tincidunt, gravida rhoncus risus facilisis.</li>
+            <li>Nullam ornare ante at risus mollis, nec viverra est consequat.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Aliquam ac leo et enim tincidunt malesuada.</li>
+            <li>Vestibulum vestibulum ante et dolor sollicitudin, sit amet porttitor nisl porta.</li>
+            <li>Donec at magna vitae libero semper rutrum in eu lorem.</li>
+            <li>Quisque auctor nunc id erat ultrices vulputate.</li>
+            <li>Suspendisse in ante vehicula, ornare nibh ut, varius ligula.</li>
+            <li>Donec vel dui imperdiet, rutrum neque id, tincidunt ante.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Donec a nibh eu nulla commodo facilisis ut a justo.</li>
+            <li>Aenean semper orci id odio varius placerat.</li>
+            <li>Ut placerat nunc a feugiat aliquet.</li>
+            <li>Integer bibendum lacus vitae ultrices pulvinar.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Integer vel diam et tellus malesuada laoreet.</li>
+            <li>Etiam a metus cursus, tristique erat sit amet, consectetur turpis.</li>
+            <li>Cras laoreet enim nec nibh hendrerit mollis.</li>
+            <li>Nunc gravida sem id augue iaculis venenatis.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Integer quis arcu ac nulla cursus dapibus.</li>
+            <li>Morbi malesuada massa sit amet magna scelerisque, quis ornare risus scelerisque.</li>
+            <li>Pellentesque vestibulum dolor et feugiat semper.</li>
+            <li>Mauris id tellus rhoncus, lacinia felis vel, euismod justo.</li>
+            <li>Duis pretium dolor a lacus tempor scelerisque.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Fusce in est laoreet, bibendum tortor quis, malesuada eros.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Quisque adipiscing dui volutpat turpis aliquet, eget luctus eros interdum.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Nulla vel nisl facilisis, vulputate dolor sed, dictum nibh.</li>
+            <li>Sed pellentesque urna et turpis interdum sollicitudin.</li>
+            <li>Aliquam ullamcorper nisl at ligula eleifend fringilla.</li>
+            <li>Curabitur cursus sem id magna semper tempor.</li>
+            <li>Etiam venenatis dolor non ultricies tincidunt.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Nulla et massa eget arcu vehicula euismod ut at dui.</li>
+            <li>In mollis nibh et mauris posuere, elementum sagittis mi imperdiet.</li>
+            <li>Pellentesque facilisis odio eu leo tincidunt tempus.</li>
+            <li>Mauris nec mauris dictum nunc pellentesque posuere in eu purus. <a href="http://www.google.com"
+                target="_blank" class="Button2" data-tooltip="popover2">Click Here</a></li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Proin sed neque a elit tempus ultricies quis et nisl.</li>
+            <li>Etiam vitae neque a erat ultricies tincidunt.</li>
+            <li>Duis a nisi id lacus dictum ultrices in sed eros.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Aliquam vestibulum ligula et mi semper pulvinar.</li>
+            <li>Sed et arcu eget tortor tempor interdum vel vitae lectus.</li>
+            <li>Quisque ut justo porta, hendrerit libero lacinia, suscipit urna.</li>
+            <li>Ut eleifend libero ut risus ullamcorper, vitae imperdiet arcu sodales.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Ut eu nibh id quam dapibus bibendum.</li>
+            <li>Aliquam pellentesque elit non tempor consequat.</li>
+            <li>Curabitur quis erat nec augue rutrum vestibulum ac vel magna.</li>
+            <li>Sed tempor enim quis tortor pharetra, quis blandit quam ullamcorper.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Proin eu diam id ligula viverra volutpat.</li>
+            <li>Suspendisse vitae ante quis eros scelerisque congue.</li>
+            <li>Fusce euismod nunc ac imperdiet sagittis.</li>
+            <li>Proin eu nibh et lorem bibendum faucibus.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Quisque lacinia orci a consectetur elementum.</li>
+            <li>Aenean et diam fermentum, porttitor lacus id, lobortis nibh.</li>
+            <li>Aenean at nisi eget libero convallis dapibus vel eget sapien.</li>
+            <li>Aliquam dignissim eros sed leo accumsan, non sagittis orci imperdiet.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Vivamus quis enim eget lectus accumsan ultricies.</li>
+            <li>Aliquam sit amet est pharetra nunc condimentum sagittis.</li>
+            <li>Quisque a sem interdum, sagittis augue sit amet, ultrices massa.</li>
+            <li>Praesent lobortis est elementum, euismod sapien nec, porta erat.</li>
+        </ul>
+    </p>
+    <p>
+        <ul>
+            <li>Nullam rutrum urna ac nisl porta, ut venenatis libero scelerisque.</li>
+            <li>Integer elementum ante sit amet dui rhoncus, sit amet dignissim orci molestie.</li>
+        </ul>
+    </p>
+</body>
+</html>

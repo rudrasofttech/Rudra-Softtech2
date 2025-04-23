@@ -1,0 +1,164 @@
+﻿/* Positioning CSS */
+.rst-bubble
+{
+    display: none;
+    position: absolute;
+    z-index: 2000;
+}
+.rst-bubble.top
+{
+    margin-top: -10px;
+}
+
+.rst-bubble.right
+{
+    margin-left: 10px;
+}
+
+.rst-bubble.bottom
+{
+    margin-top: 10px;
+}
+
+.rst-bubble.left
+{
+    margin-left: -10px;
+}
+
+/* Decoration CSS */
+.rst-bubble
+{
+    max-width: 400px;
+    text-align: left;
+    white-space: normal;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding;
+    background-clip: padding-box;
+}
+
+/* Positioning CSS */
+.rst-bubble > .rst-arrow
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+/* Decoration CSS */
+.rst-bubble > .rst-arrow
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+/* Decoration CSS */
+.rst-bubble > .rst-bubble-body
+{
+    padding: 10px;
+    min-width: 70px;
+    min-height: 20px;
+}
+
+
+/* Decoration CSS */
+.rst-bubble > .rst-arrow, .rst-bubble > .rst-arrow:after
+{
+    position: absolute;
+    display: block;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+}
+
+.rst-bubble > .rst-arrow
+{
+    border-width: 11px;
+}
+.rst-bubble > .rst-arrow:after
+{
+    border-width: 10px;
+    content: "";
+}
+
+.rst-bubble > .rst-arrow-top
+{
+    bottom: -11px;
+    left: 50%;
+    margin-left: -11px;
+    border-top-color: #999;
+    border-top-color: rgba(0, 0, 0, 0.25);
+    border-bottom-width: 0;
+}
+
+.rst-bubble > .rst-arrow-top:after
+{
+    bottom: 1px;
+    margin-left: -10px;
+    border-top-color: #ffffff;
+    border-bottom-width: 0;
+}
+
+.rst-bubble > .rst-arrow-bottom
+{
+    top: -11px;
+    left: 50%;
+    margin-left: -11px;
+    border-bottom-color: #999;
+    border-bottom-color: rgba(0, 0, 0, 0.25);
+    border-top-width: 0;
+}
+
+.rst-bubble > .rst-arrow-bottom:after
+{
+    top: 1px;
+    margin-left: -10px;
+    border-bottom-color: #ffffff;
+    border-top-width: 0;
+}
+
+.rst-bubble > .rst-arrow-left
+{
+    top: 50%;
+    right: -11px;
+    margin-top: -11px;
+    border-left-color: #999;
+    border-left-color: rgba(0, 0, 0, 0.25);
+    border-right-width: 0;
+}
+
+.rst-bubble > .rst-arrow-left:after
+{
+    right: 1px;
+    bottom: -10px;
+    border-left-color: #ffffff;
+    border-right-width: 0;
+}
+
+.rst-bubble > .rst-arrow-right
+{
+    top: 50%;
+    left: -11px;
+    margin-top: -11px;
+    border-right-color: #999;
+    border-right-color: rgba(0, 0, 0, 0.25);
+    border-left-width: 0;
+}
+
+.rst-bubble > .rst-arrow-right:after
+{
+    bottom: -10px;
+    left: 1px;
+    border-right-color: #ffffff;
+    border-left-width: 0;
+}

@@ -1,0 +1,230 @@
+﻿#rst-modal
+{
+    
+}
+
+#rst-modal > #rst-modal-shadow
+{
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+#rst-modal > #rst-modal-shadow > #rst-modal-content
+{
+}
+
+#rst-modal > #rst-modal-nav-panel
+{
+    padding: 2px;
+    border-radius: 0px;
+    border-top: 0px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+    -webkit-box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    -moz-box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    background: rgb(50,50,50);
+    background: -moz-linear-gradient(top, rgb(68,68,68) 0%, rgb(52,52,52) 50%, rgb(41,41,41) 50%, rgb(51,51,51) 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgb(68,68,68)), color-stop(50%,rgb(52,52,52)), color-stop(50%,rgb(41,41,41)), color-stop(100%,rgb(51,51,51)));
+    background: -webkit-linear-gradient(top, rgb(68,68,68) 0%,rgb(52,52,52) 50%,rgb(41,41,41) 50%,rgb(51,51,51) 100%);
+    background: -o-linear-gradient(top, rgb(68,68,68) 0%,rgb(52,52,52) 50%,rgb(41,41,41) 50%,rgb(51,51,51) 100%);
+    background: -ms-linear-gradient(top, rgb(68,68,68) 0%,rgb(52,52,52) 50%,rgb(41,41,41) 50%,rgb(51,51,51) 100%);
+    background: linear-gradient(top, rgb(68,68,68) 0%,rgb(52,52,52) 50%,rgb(41,41,41) 50%,rgb(51,51,51) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#444444', endColorstr='#222222',GradientType=0 );
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-close
+{
+    height: 30px;
+    text-indent: -9999px;
+    margin: 0px;
+    background-color: transparent;
+    background-image: url('http://www.rudrasofttech.com/res/img/navigation_buttons.png');
+    background-repeat: no-repeat;
+    outline: none;
+    opacity: 0.8;
+    border: none;
+    width: 40px;
+    border-left: 1px solid #111;
+    background-position: -58px 0px;
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-nav-next
+{
+    width: 40px;
+    height: 30px;
+    padding-right: 0px;
+    margin: 0px;
+    text-indent: -9999px;
+    background-color: transparent;
+    background-image: url('http://www.rudrasofttech.com/res/img/navigation_buttons.png');
+    background-repeat: no-repeat;
+    outline: none;
+    opacity: 0.8;
+    background-position: -25px 0;
+    border: none;
+    border-left: 1px solid #111;
+    background-color: transparent;
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-nav-prev
+{
+    width: 40px;
+    height: 30px;
+    padding-right: 0px;
+    margin: 0px;
+    text-indent: -9999px;
+    background-color: transparent;
+    background-image: url('http://www.rudrasofttech.com/res/img/navigation_buttons.png');
+    background-repeat: no-repeat;
+    outline: none;
+    opacity: 0.8;
+    border: none;
+    background-position: 5px 0;
+    background-color: transparent;
+    border-right: 1px solid #111;
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-title
+{
+    font-family: Arial;
+    font-size: 12px;
+    padding: 5px;
+    color: #fff;
+}
+@media (min-width: 1200px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 1px solid #ccc;
+        padding: 4px;
+        background-color: #fff;
+    }
+
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+        border: 5px solid #fff;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        background-color: #fff;
+        -moz-box-shadow: 0 0 10px #fff;
+        -webkit-box-shadow: 0 0 10px #fff;
+        box-shadow: 0 0 10px #fff;
+    }
+}
+@media (min-width: 980px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 1px solid #ccc;
+        padding: 4px;
+        background-color: #fff;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+        border: 5px solid #fff;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        background-color: #fff;
+        -moz-box-shadow: 0 0 10px #fff;
+        -webkit-box-shadow: 0 0 10px #fff;
+        box-shadow: 0 0 10px #fff;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 979px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 1px solid #ccc;
+        padding: 4px;
+        background-color: #fff;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+        border: 5px solid #fff;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        background-color: #fff;
+        -moz-box-shadow: 0 0 10px #fff;
+        -webkit-box-shadow: 0 0 10px #fff;
+        box-shadow: 0 0 10px #fff;
+    }
+}
+
+@media (max-width: 767px)
+{
+    #rst-modal > #rst-modal-nav-panel
+    {
+        padding-left: 0px;
+        padding-right: 0px;
+        width: 100%;
+        background-color: transparent;
+    }
+    #rst-modal > #rst-modal-nav-panel > #rst-modal-nav-prev
+    {
+        margin-left: 5px;
+    }
+    #rst-modal > #rst-modal-nav-panel > #rst-modal-nav-next, #rst-modal > #rst-modal-nav-panel > #rst-modal-close
+    {
+        float: right;
+    }
+
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+    }
+}
+
+@media (max-width: 600px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+    }
+}
+
+@media (max-width: 480px)
+{
+    .rst-modal-imagecontent
+    {
+        border: 0px;
+        padding: 0px;
+    }
+    .rst-modal-iframecontent, .rst-modal-ajaxcontent
+    {
+    }
+}
+#rst-modal > #rst-modal-nav-panel > #rst-modal-close
+{
+    font-size: 12px;
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-nav-next
+{
+}
+
+#rst-modal > #rst-modal-nav-panel > #rst-modal-nav-prev
+{
+}
+
+#rst-modal > #rst-modal-loadimage
+{
+    background-color: #fff;
+    border-radius: 3px;
+}
+
+#rst-modal > #rst-modal-loadimage > img
+{
+    border: none;
+}

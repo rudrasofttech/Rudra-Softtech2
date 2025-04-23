@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Modal Sample</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js" type="text/javascript"></script>
+    <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js" type="text/javascript"></script>
+    <link href="modal.css" rel="Stylesheet" />
+    <link href="modal-darktheme.css" id="modaltheme" rel="Stylesheet" />
+    <script src="modal.js" type="text/javascript"></script>
+    <link href="../Scrollbar/scrollbar-theme1.css" rel="stylesheet" type="text/css" />
+    <link href="../Scrollbar/scrollbar.css" rel="stylesheet" type="text/css" />
+    <script src="../Scrollbar/scrollbar.js" type="text/javascript"></script>
+    <script src="../Swipe/swipe.js" type="text/javascript"></script>
+    <script src="../Dragable/dragable.js" type="text/javascript"></script>
+    <link href="../Tooltip/tooltip.css" rel="stylesheet" type="text/css" />
+    <script src="../Tooltip/tooltip.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".rst-modal").modalbox({ Type: 'image', OnShow: function (ind) { } });
+            $("#youtube").modalbox({ Position: 'center', Type: 'iframe', Width: 560, Height: 315, Modal: true, OnClose: function () { } });
+            $("#googlemap").modalbox({ Position: 'center', Type: 'iframe', Width: 600, Height: 400, OnClose: function () { } });
+            $("#inline").modalbox({ Position: 'center', Type: 'inline', Width: 400, Height: 300, CloseOnEsc: false, OnClose: function () { }, OnShow: function () {
+                $(".tt").tooltip({ Position: 'bottom' });
+            } });
+            $("#ajax").modalbox({ Position: 'center', Type: 'ajax', Width: 600, ShowClose: false, OnClose: function () { } });
+
+        });
+
+        function clickhere() {
+            $.fn.modalbox("prompt", { Message: "Hello World!!", Action: function (val) { alert(val); } });
+            //$.fn.modalbox("confirm", { Message: "Choose your answer carefully.", Action: function (val) { alert(val); } });
+        }
+    </script>
+    <style>
+        .thumb
+        {
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <a href="http://www.rudrasofttech.com/res/img/sample/pic11.jpg" class="rst-modal"
+            rel="group1" title="sample title for the image 1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic1.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic2.jpg" class="rst-modal"
+            title="sample title for the image 2" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic2.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic3.jpg" class="rst-modal"
+            title="sample title for the image 3" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic3.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic4.jpg" class="rst-modal"
+            title="sample title for the image 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic4.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic5.jpg" class="rst-modal"
+            title="sample title for theas fsf ds image 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic5.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic6.jpg" class="rst-modal"
+            title="sample title for the asdfdf  image 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic6.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic7.jpg" class="rst-modal"
+            title="sample title for the isa df mage 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic7.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic8.jpg" class="rst-modal"
+            title="sample title for the ima ads ge 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic8.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic9.jpg" class="rst-modal"
+            title="sample title for the ima sfasd ge 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic9.jpg"
+                alt="" />
+        </a><a href="http://www.rudrasofttech.com/res/img/sample/pic10.jpg" class="rst-modal"
+            title="sample title for the im ds fage 4" rel="group1">
+            <img class="thumb" src="http://www.rudrasofttech.com/res/img/sample/vsmall/pic10.jpg"
+                alt="" />
+        </a>
+    </div>
+    <a href="http://www.youtube-nocookie.com/embed/F983K9pFk9s?rel=0" id="youtube">Youtube
+        Iframe</a><br />
+    <a href="http://maps.google.com/?output=embed&f=q&source=s_q&hl=en&geocode=&q=London+Eye,+County+Hall,+Westminster+Bridge+Road,+London,+United+Kingdom&hl=lv&ll=51.504155,-0.117749&spn=0.00571,0.016512&sll=56.879635,24.603189&sspn=10.280244,33.815918&vpsrc=6&hq=London+Eye&radius=15000&t=h&z=17"
+        id="googlemap">Google Map</a><br />
+    <a href="#modal1" id="inline">Inline</a>
+    <br />
+    <a href="sample.txt" id="ajax">Ajax</a>
+    <div id="modal1" style="display: none;">
+        Some more text here to put in modal
+        <img class="thumb tt" data-tooltip="Pretty Tooltip" src="http://www.hdwallpapers.in/walls/dark_3d_abstract-HD.jpg"
+            alt="" />
+        Some more text here to put in modal Some more text here to put in modal Some more
+        text here to put in modal Some more text here to put in modal Some more text here
+        to put in modal Some more text here to put in modal Some more text here to put in
+        modal Some more text here to put in modal
+    </div>
+    <button  onclick="clickhere()">Prompt</button>
+</body>
+</html>

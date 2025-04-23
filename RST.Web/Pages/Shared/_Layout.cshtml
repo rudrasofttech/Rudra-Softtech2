@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>@ViewData["Title"]</title>
+    @await RenderSectionAsync("Meta", required: false)
+    <meta name="generator" content="Rudra Softtech LLP" />
+    <meta name="google-site-verification" content="dZm1XmYPn6SxodhckSwwjZKh_GGmdLn882BpEUt26Zg" />
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="~/css/style.css" rel="stylesheet" />
+    <link href="~/css/color/005551.css" rel="stylesheet" />
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!-- fav and touch icons -->
+    <link rel="shortcut icon" href="~/ico/favicon.jpg" />
+    @await RenderSectionAsync("Style", required: false)
+</head>
+<body>
+    <div id="fb-root"></div>
+    <script>
+        (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=490407121012387";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));</script>
+    <div class="container-lg my-lg-3">
+        <div class="row  header">
+            <div class="col-md-3">
+                <div class="logo text-center text-md-start mb-2 mb-md-0">
+                    <a href="~/">
+                        <img src="~/img/rst-logo-small.png" alt="Rudra Softtech LLP" style="max-height:80px;" />
+                    </a>
+                </div>
+            </div>
+            <div class="col-md navbar justify-content-end">
+                <ul class="nav nav-pills nav-fill">
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="~/"><i class="icon-home"></i>Home</a>
+                    </li>
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="~/jquery-plugins" >
+                            <i class="icon-cog"></i>
+                            jQuery Plugins 
+                        </a>
+                        @* <ul class="dropdown-menu">
+                            <li><a href="//www.rudrasofttech.com/modalbox">ModalBox</a></li>
+                            <li><a href="//www.rudrasofttech.com/photozoom">PhotoZoom</a></li>
+                            <li><a href="//www.rudrasofttech.com/slideshow">SlideShow</a></li>
+                            <li><a href="//www.rudrasofttech.com/scrollbar">Scrollbar</a></li>
+                            <li><a href="//www.rudrasofttech.com/Bubble">Bubble</a></li>
+                            <li><a href="//www.rudrasofttech.com/tooltip">Tooltip</a></li>
+                            <li><a href="//www.rudrasofttech.com/dragable">Dragable</a></li>
+                            <li><a href="//www.rudrasofttech.com/swipe">Swipe</a></li>
+                            <li><a href="//www.rudrasofttech.com/question">Question</a></li>
+                            <li><a href="//www.rudrasofttech.com/scroller">Scroller</a></li>
+                        </ul> *@
+                    </li>
+                    <li class="nav-item dropdown me-lg-3">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                            Projects
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="https://yocail.com" target="_blank">Yocail</a></li>
+                            <li><a href="https://rockying.com" target="_blank">Rockying</a></li>
+                            <li><a href="https://www.indiabobbles.com" target="_blank">India Bobbles</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown me-lg-3">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                            Games 
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="~/meteortreasure/index.html" target="_blank">Meteor Treasure Game</a></li>
+                            <li><a href="~/agni/index.html">Agni Game</a></li>
+                        </ul>
+                    </li>
+                    <!--<li class="nav-item dropdown me-lg-3">
+                        <a class="nav-link dropdown-toggle" href="//www.rudrasofttech.com/services" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                            <i class="icon-wrench"></i>
+                            Services 
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="//www.rudrasofttech.com/web-development">Web Development</a></li>
+                            <li><a href="//www.rudrasofttech.com/web-designing">Web Designing</a></li>
+
+                        </ul>
+                    </li>-->
+                    <!--<li class="nav-item me-lg-3"><a class="nav-link" href="//www.rudrasofttech.com/engagement-model"><i class="icon-leaf"></i>Engagement Model</a> </li>-->
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="~/blog"><i class="icon-book"></i>Blog</a>
+                    </li>
+                    <li class="nav-item me-lg-3">
+                        <a class="nav-link" href="~/contact"><i class="icon-envelope-alt"></i>Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    @RenderBody()
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - RST.Web - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/animate.js"></script>
+    <script src="~/js/custom.js"></script>
+</body>
+</html>

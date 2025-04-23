@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <link href="coolupload.css" rel="stylesheet" />
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="coolupload.js"></script>
+</head>
+<body>
+    <div id="filecontainer" class="filecontainer">
+    </div>
+    <div class="coolupload" data-multiple="true"
+         data-uploadpath="~/js-tools/CoolUpload/sampleupload/"
+         data-uploadhandler="coolupload.ashx"
+         data-generatename="true"
+         data-previewid="filecontainer"
+         data-filesizelimit="2"
+         data-validtype="image/png,image/jpeg,image/gif"
+         data-onfileuploadsuccess="fileUploadSuccess"
+         data-onfileuploadremove="deleteUploadFile"
+         data-fileremoveallowed="true">
+        +<input type="file" />
+    </div>
+    <div style="clear:both;">
+        <div id="filecontainer2" class="filecontainer">
+        </div>
+        <div class="coolupload" data-multiple="true"
+             data-uploadpath="~/drive/uploadtest/"
+             data-uploadhandler="coolupload.ashx"
+             data-generatename="true"
+             data-previewid="filecontainer2"
+             data-filesizelimit="1"
+             data-validtype=""
+             data-onfileuploadsuccess="fileUploadSuccess"
+             data-onfileuploadremove="deleteUploadFile"
+             data-fileremoveallowed="true">
+            +<input type="file" />
+        </div>
+    </div>
+    <button onclick="getUploadStatus()"> Get status</button>
+    <script>
+        $(document).ready(function () {
+            $(".coolupload").coolupload("fullupload", null);
+        });
+        function deleteUploadFile(d) {
+        }
+
+        function fileUploadSuccess(item, d) {
+        }
+
+        function getUploadStatus() {
+            //alert($(".coolupload").data("uploadstatus"));
+        }
+    </script>
+</body>
+</html>

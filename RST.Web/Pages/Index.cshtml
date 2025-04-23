@@ -1,0 +1,30 @@
+﻿@page "{pagename?}"
+@model IndexModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>@Model.CustomPage.Title</title>
+    @Html.Raw(Model.CustomPage.PageMeta)
+    @if (!Model.CustomPage.NoTemplate)
+    {
+        @Html.Raw(Model.CommonHeadContent)
+    }
+    @Html.Raw(Model.CustomPage.Head)
+</head>
+<body>
+    @if (!Model.CustomPage.NoTemplate)
+    {
+        @Html.Raw(Model.SiteHeader)
+    }
+    @Html.Raw(Model.CustomPage.Body)
+    @if (!Model.CustomPage.NoTemplate)
+    {
+        @Html.Raw(Model.SiteFooter)
+    }
+</body>
+</html>

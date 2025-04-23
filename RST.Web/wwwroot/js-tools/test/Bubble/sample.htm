@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Popover Example 1</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js" type="text/javascript"> </script>
+    <link href="bubble.css" rel="Stylesheet" type="text/css" />
+    <script src="bubble.js" type="text/javascript"> </script>
+    <script type="text/javascript">
+        $(document).ready(
+        function () {
+            $("#Button1").bubble({ Position: 'bottom', PointerColor: '#D4D4D4', OnShow: function () { console && console.log("Show"); }, OnClose: function () { $.fn.bubble('open', { bubbleid: 'popover2' }); } });
+            $("#Button2").bubble();
+        }
+    );
+    </script>
+</head>
+<body>
+    <div class="rst-bubble" id="popover1">
+        <div class="rst-bubble-body">
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+        </div>
+    </div>
+    <div class="rst-bubble" id="popover2">
+        <div class="rst-bubble-body">
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+            some test will come here
+            <br />
+        </div>
+    </div>
+    <input id="Button1" data-bubbleid="popover1" type="button" value="button" style="position: absolute;
+        top: 300px; left: 500px;" />
+    <a href="http://www.google.com" target="_blank" id="Button2" data-bubbleid="popover2">
+        Click Here</a>
+</body>
+</html>

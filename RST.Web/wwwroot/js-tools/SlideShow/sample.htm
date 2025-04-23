@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Photo Reel</title>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" />
+    <link href="../../bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="../../bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css" />
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js" type="text/javascript"> </script>
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" type="text/javascript"></script>
+    <link href="slides.css" rel="Stylesheet" />
+    <script src="slides.js" type="text/javascript"></script>
+    <script src="../Swipe/swipe.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(window).load(function () {
+            $(".rst-slides").slides({ AdjustHeight: true, Circular: false, AutoPlay: true,
+                NextHandle: $(".icon-chevron-right"),
+                PrevHandle: $(".icon-chevron-left"),
+                PlayHandle: $(".icon-play"),
+                PauseHandle: $(".icon-pause")
+            });
+        });
+        function mnext() { $(".rst-slides").slides('next'); }
+        function mprev() { $(".rst-slides").slides('prev'); }
+        function moveto() { $(".rst-slides").slides('moveto', { index: parseInt($("#slideindex").val()) }); }
+    </script>
+    <style>
+        .slide
+        {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <button id="play">
+        Play</button>
+    <button id="pause">
+        Pause</button>
+    <button id="prev" onclick="mprev();">
+        Prev</button>
+    <button id="next" onclick="mnext();">
+        Next</button>
+    <input type="text" id="slideindex" />
+    <button onclick="moveto();">
+        Move To</button><div id="Text1" />
+    <div style="width: 100%; height: 400px;">
+        <div class="rst-slides" style="width: 100%;">
+            <div class="rst-slide" style="background-image: url(http://rst.com/l/img/slides/iview/slide1/img1.jpg);
+                height: 400px;">
+                <div class="row-fluid">
+                    <div class="span1">
+                    </div>
+                    <div class="span5">
+                        <div>
+                            <h1 style="font-size: 60px; line-height: 1; letter-spacing: -1px; margin-top: 40px;
+                                text-align: center;">
+                                ModalBox</h1>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4>
+                                Works on iPhone, iPad, Android, PC</h4>
+                        </div>
+                        <div>
+                            <p style="text-align: center; font-style: italic; font-size: 15px;">
+                                Photos, Albums, Videos, Maps or HTML</p>
+                        </div>
+                        <div style="text-align: center; margin: 20px;">
+                            <a href="http://www.rudrasofttech.com/modalbox#example" class="btn btn-large btn theme"
+                                style="margin: 20px;">Examples</a> <a href="http://www.rudrasofttech.com/pricing"
+                                    class="btn btn-large btn-warning"><i class="icon-cloud-download"></i>Buy Now
+                            </a>
+                        </div>
+                    </div>
+                    <div class="span5" style="text-align: center;">
+                        <div class="iview-caption image">
+                            <img src="http://rst.com/l/img/slides/iview/slide1/sub-1.png" alt="" />
+                        </div>
+                    </div>
+                    <div class="span1">
+                    </div>
+                </div>
+            </div>
+            <div class="rst-slide" style="background-image: url(http://rst.com/l/img/slides/iview/slide1/img1.jpg);
+                height: 400px;">
+                <div class="row-fluid">
+                    <div class="span1">
+                    </div>
+                    <div class="span5" style="text-align: center;">
+                        <div class="iview-caption image">
+                            <img src="http://rst.com/l/img/slides/iview/slide1/sub-1.png" alt="" />
+                        </div>
+                    </div>
+                    <div class="span5">
+                        <div>
+                            <h1 style="font-size: 60px; line-height: 1; letter-spacing: -1px; margin-top: 40px;
+                                text-align: center;">
+                                PhotoZoom</h1>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4>
+                                Zoom Product Photos</h4>
+                        </div>
+                        <div>
+                            <p style="text-align: center; font-style: italic; font-size: 15px;">
+                                Responsive & Works Everywhere & Uses CSS3</p>
+                        </div>
+                        <div style="text-align: center; margin: 20px;">
+                            <a href="http://www.rudrasofttech.com/photozoom#example" class="btn btn-large btn theme"
+                                style="margin: 20px;">Examples</a> <a href="http://www.rudrasofttech.com/pricing"
+                                    class="btn btn-large btn-warning"><i class="icon-cloud-download"></i>Buy Now
+                            </a>
+                        </div>
+                    </div>
+                    <div class="span1">
+                    </div>
+                </div>
+            </div>
+            <div class="rst-slide" style="background-image: url(http://rst.com/l/img/slides/iview/slide1/img1.jpg);
+                height: 400px;">
+                <div class="row-fluid">
+                    <div class="span1">
+                    </div>
+                    <div class="span5" style="text-align: center;">
+                        <div class="iview-caption image">
+                            <img src="http://rst.com/l/img/slides/iview/slide1/sub-1.png" alt="" />
+                        </div>
+                    </div>
+                    <div class="span5">
+                        <div>
+                            <h1 style="font-size: 60px; line-height: 1; letter-spacing: -1px; margin-top: 40px;
+                                text-align: center;">
+                                SlideShow</h1>
+                        </div>
+                        <div style="text-align: center;">
+                            <h4>
+                                Responsive & Works Everywhere & Uses CSS3</h4>
+                        </div>
+                        <div>
+                            <p style="text-align: center; font-style: italic; font-size: 15px;">
+                                Callback API, Works with other plugins</p>
+                        </div>
+                        <div style="text-align: center; margin: 20px;">
+                            <a href="http://www.rudrasofttech.com/slideshow#example" class="btn btn-large btn theme"
+                                style="margin: 20px;">Examples</a> <a href="http://www.rudrasofttech.com/pricing"
+                                    class="btn btn-large btn-warning"><i class="icon-cloud-download"></i>Buy Now
+                            </a>
+                        </div>
+                    </div>
+                    <div class="span1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div style="">
+        <!--<div class="rst-slides" style="width: 100%; min-height: 400px;">
+            <div class="rst-slide" style="width: 100%; -webkit-box-shadow: inset 0px 0px 500px 0px rgba(0, 0, 0, 1);
+                box-shadow: inset 0px 0px 500px 0px rgba(0, 0, 0, 1); background-color: #696969;">
+                <img src="http://www.rudrasofttech.com/res/img/wallpapers/rect-1.jpg" alt="" />
+                <h2 data-animate="true" data-animate-finalprops='{"left": 50 }' data-animate-initprops='{"left": -400 }'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="color: #fff;
+                    font-size: 35px; background: #2AAAFF; font-family: Century Gothic; font-weight: normal;
+                    letter-spacing: 2px; width: 300px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 40px; left: 50px;">
+                    OUR PRODUCTS
+                </h2>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 150px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 120px; left: 50px; height: 30;">
+                    MODALBOX
+                </h4>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 160px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 120px; left: 250px; height: 30;">
+                    PHOTOZOOM
+                </h4>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 160px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 120px; left: 450px; height: 30px;">
+                    SLIDESHOW
+                </h4>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 150px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 200px; left: 50px; height: 30px;">
+                    CAROUSEL
+                </h4>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 160px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 200px; left: 250px; height: 30px;">
+                    SCROLLBAR
+                </h4>
+                <h4 data-animate="true" data-animate-finalprops='{"height": 30, "opacity" : 1}' data-animate-initprops='{"height": 0, "opacity" : 0}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 160px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 200px; left: 450px; height: 30px;">
+                    BUBBLE
+                </h4>
+            </div>
+            <div class="rst-slide" style="height: 400px; width: 100%; background-color: #657932;">
+                <img src="http://www.rudrasofttech.com/res/img/wallpapers/rect-2.jpg" alt="" />
+                <h2 data-animate="true" data-animate-finalprops='{"left": 50 }' data-animate-initprops='{"left": -400 }'
+                    data-animate-options='{"duration": 2000,
+    "easing": "easeOutElastic"}' style="background: #2AAAFF; color: #fff; font-family: Century Gothic;
+                    font-weight: normal; font-size: 35px; letter-spacing: 2px; width: 300px; padding: 5px 10px 5px 10px;
+                    position: absolute; top: 40px; left: 50px;">
+                    OUR SERVICES
+                </h2>
+                <h4 data-animate="true" data-animate-initprops='{"height": 0, "opacity" : 0}' data-animate-finalprops='{"height": 30, "opacity" : 1}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 350px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 150px; left: 50px; height: 30;">
+                    WEBSITE DEVELOPMENT
+                </h4>
+                <h4 data-animate="true" data-animate-initprops='{"height": 0, "opacity" : 0}' data-animate-finalprops='{"height": 30, "opacity" : 1}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 260px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 230px; left: 50px; height: 30;">
+                    APP DEVELOPMENT
+                </h4>
+            </div>
+            <div class="rst-slide" style="height: 400px; width: 100%; background-color: #E13C38;">
+                <img src="http://www.rudrasofttech.com/res/img/wallpapers/rect-3.jpg" alt="" />
+                <h2 data-effect="true" data-effect-showoptions='{"effect": "bounce", "easing" : "swing" }'
+                    data-effect-hideoptions='{"effect": "crop", "easing" : "swing" }' style="background: #2AAAFF;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 35px;
+                    letter-spacing: 2px; width: 300px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 40px; left: 50px;">
+                    CONTACT NOW
+                </h2>
+                <h4 data-animate="true" data-animate-initprops='{"height": 0, "opacity" : 0}' data-animate-finalprops='{"height": 30, "opacity" : 1}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 350px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 150px; left: 50px; height: 30;">
+                    SKYPE: rajkiran.singh
+                </h4>
+                <h4 data-animate="true" data-animate-initprops='{"height": 0, "opacity" : 0}' data-animate-finalprops='{"height": 30, "opacity" : 1}'
+                    data-animate-options='{"duration": 2000, "easing": "easeOutElastic"}' style="background: #0072C6;
+                    color: #fff; font-family: Century Gothic; font-weight: normal; font-size: 22px;
+                    letter-spacing: 2px; width: 550px; padding: 5px 10px 5px 10px; position: absolute;
+                    top: 230px; left: 50px; height: 30;">
+                    EMAIL: rajkiran.singh@rudrasofttech.com
+                </h4>
+            </div>
+        </div>-->
+        <i class="icon-chevron-left"></i><i class="icon-play"></i><i class="icon-pause">
+        </i><i class="icon-chevron-right"></i>
+        <div class="rst-slides" style="width: 100%; height: 100%; border: 5px solid #D4D4D4;">
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic1.jpg" alt="" data-animate="{ effect : 'slide', direction: 'top-right', index : 1, position : { top: 200 , left : 300 } }" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic2.jpg" alt="" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic3.jpg" alt="" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic4.jpg" alt="" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic5.jpg" alt="" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic6.jpg" alt="" />
+            </div>
+            <div class="rst-slide">
+                <img src="http://www.rudrasofttech.com/res/img/sample/pic7.jpg" alt="" />
+            </div>
+            <img class="rst-slide" src="http://www.rudrasofttech.com/res/img/sample/pic8.jpg"
+                alt="" />
+            <img class="rst-slide" src="http://www.rudrasofttech.com/res/img/sample/pic9.jpg"
+                alt="" />
+            <img class="rst-slide" src="http://www.rudrasofttech.com/res/img/sample/pic10.jpg"
+                alt="" />
+        </div>
+    </div>
+</body>
+</html>

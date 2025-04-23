@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Pages\Jquery-Plugins.cshtml.cs" />
+    <Compile Remove="Pages\Modalbox.cshtml.cs" />
+    <Compile Remove="Pages\Photozoom.cshtml.cs" />
+    <Compile Remove="Pages\Web-Designing.cshtml.cs" />
+    <Compile Remove="Pages\Web-Development.cshtml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Pages\Jquery-Plugins.cshtml" />
+    <Content Remove="Pages\Modalbox.cshtml" />
+    <Content Remove="Pages\Photozoom.cshtml" />
+    <Content Remove="Pages\Web-Designing.cshtml" />
+    <Content Remove="Pages\Web-Development.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RST.Context\RST.Context.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\drive\website-images\" />
+    <Folder Include="wwwroot\js-tools\CoolUpload\sampleupload\" />
+  </ItemGroup>
+
+</Project>
