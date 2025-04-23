@@ -270,3 +270,5 @@ __pycache__/
 /RST/drive/website-images
 /RST/drive/ImageBrickWallEffect.zip
 /RST/drive/Carsprite.png
+/RST.Web/appsettings.Development.json
+/RST.Web/wwwroot/logs
