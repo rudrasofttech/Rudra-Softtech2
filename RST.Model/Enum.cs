@@ -4,7 +4,8 @@
     {
         Active = 0,
         Inactive = 1,
-        Deleted = 2
+        Deleted = 2,
+        Unverified = 3
     }
 
     public enum PostStatus
@@ -20,7 +21,6 @@
         Editor = 2,
         Author = 3,
         Member = 4,
-        Reader = 5,
         Demo = 6
     }
 

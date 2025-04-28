@@ -31,6 +31,8 @@ namespace RST.Model
         public DateTime? LastLogon { get; set; }
         public DateTime? ModifyDate { get; set; }
         public Member? ModifiedBy { get; set; }
+        public DateTime? LastLoginAttempt { get; set; }
+        public int InvalidAttemptCount { get; set; }
         public bool IsAdmin
         {
             get

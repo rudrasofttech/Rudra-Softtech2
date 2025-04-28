@@ -32,7 +32,7 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"].ToString()))
     };
 }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -54,6 +54,7 @@ builder.Services.AddDbContext<RSTContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("RSTContext")));
 builder.Services.AddScoped<WebsiteSettingsService>();
 builder.Services.AddScoped<DataSourceService>();
+builder.Services.AddScoped<RSTAuthenticationService>();
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
@@ -94,5 +95,7 @@ app.MapControllerRoute(
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();

@@ -128,9 +128,7 @@
                                         </ul>
                                         <div class="clearfix">
                                         </div>
-                                        <p>
-                                            @a.Description
-                                        </p>
+                                            @Html.Raw(a.Description)
                                         <a href="@Utility.GenerateBlogArticleURL(a, SiteURL)" class="btn btn-small btn-theme">
                                             Read more
                                         </a>

@@ -8,8 +8,8 @@ namespace RST.Model
 {
     public class ResetPasswordLink
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public long MemberId { get; set; }
+        public Guid ID { get; set; } = Guid.NewGuid();
+        public Member Member { get; set; }
         public DateTime CreateDate { get; set; } = DateTime.UtcNow;
     }
 }

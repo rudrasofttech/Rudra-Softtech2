@@ -1,0 +1,9 @@
+﻿@page "/blazor"
+
+@{
+    Layout = null;
+}
+
+<app>
+    @(await Html.RenderComponentAsync<App>(RenderMode.Server))
+</app>
