@@ -55,6 +55,7 @@ builder.Services.AddDbContext<RSTContext>(options =>
 builder.Services.AddScoped<WebsiteSettingsService>();
 builder.Services.AddScoped<DataSourceService>();
 builder.Services.AddScoped<RSTAuthenticationService>();
+builder.Services.AddScoped<EmailService>();
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));

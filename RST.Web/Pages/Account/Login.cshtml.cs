@@ -18,7 +18,6 @@ namespace RST.Web.Pages.Account
         private readonly IConfiguration _config = config;
         private readonly RSTAuthenticationService authService = _authService;
         public List<string> Errors { get; set; } = [];
-        [EmailAddress]
         [Required]
         [MaxLength(150)]
         [BindProperty]
@@ -32,7 +31,7 @@ namespace RST.Web.Pages.Account
         public string Error { get; set; }
 
         public LoginReturnDTO LoginReturn {  get; set; }
-        public Member CurrentMember { get; set; }
+        public Member? CurrentMember { get; set; }
 
         public void OnGet()
         {

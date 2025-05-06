@@ -1,4 +1,5 @@
-﻿using RST.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using RST.Context;
 using RST.Model;
 
 namespace RST.Web.Service
@@ -56,17 +57,6 @@ namespace RST.Web.Service
             return m;
         }
 
-        public Member? UpdateLastLogon(string username)
-        {
-            var m = dc.Members.FirstOrDefault(t => t.Email == username);
-            if (m != null)
-            {
-                m.LastLogon = DateTime.UtcNow;
-                dc.SaveChanges();
-            }
-            return m;
-        }
-
         public void Delete(int id)
         {
             var m = dc.Members.FirstOrDefault(t => t.ID == id);
@@ -86,9 +76,9 @@ namespace RST.Web.Service
         }
 
 
-        public Member GetUser(string username)
+        public Member? GetUser(string username)
         {
-            return dc.Members.Single(t => (t.Email == username ) && t.Status != MemberStatus.Deleted);
+            return dc.Members.SingleOrDefault(t => (t.Email == username ) && t.Status != MemberStatus.Deleted);
         }
 
         public bool AnyLoginAttempteRemain(string email)
@@ -140,7 +130,7 @@ namespace RST.Web.Service
 
         public ResetPasswordLink? GetResetPasswordLink(Guid id)
         {
-            return dc.ResetPasswordLinks.SingleOrDefault(t => t.ID == id);
+            return dc.ResetPasswordLinks.Include(t => t.Member).SingleOrDefault(t => t.ID == id);
         }
 
         public void RemoveResetPasswordLink(Guid id)
