@@ -20,6 +20,8 @@ namespace RST.Web.Controllers
         private readonly RSTAuthenticationService _authenticationService = authService;
         private readonly IConfiguration _config = config;
 
+        [HttpPost]
+        [Route("login")]
         public IActionResult Login([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid) { 
@@ -50,13 +52,13 @@ namespace RST.Web.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("UpdatePassword")]
-        public IActionResult UpdatePassword()
-        {
-            _authenticationService.UpdateEncryptedPassword();
-            return Ok();
-        }
+        //[HttpGet]
+        //[Route("UpdatePassword")]
+        //public IActionResult UpdatePassword()
+        //{
+        //    _authenticationService.UpdateEncryptedPassword();
+        //    return Ok();
+        //}
 
         private string GenerateJSONWebToken(Member m)
         {

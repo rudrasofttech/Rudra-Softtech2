@@ -43,6 +43,16 @@ builder.Services.AddAuthentication(options =>
     options.LogoutPath = new PathString("/account/logout");
     options.ExpireTimeSpan = TimeSpan.FromDays(180);
 });
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+         policy => policy.AllowAnyOrigin()
+                         .AllowAnyMethod()
+                         .AllowAnyHeader());
+
+});
 // Add services to the container.
 builder.Services.AddRazorPages(options => {
     options.Conventions.AddPageRoute("/Blog/Detail", "blog/{url}");
@@ -86,7 +96,9 @@ app.UseStaticFiles(new StaticFileOptions
 });
 //Add support to logging request with SERILOG
 app.UseSerilogRequestLogging();
+app.UseCors("AllowAll");
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllerRoute(
