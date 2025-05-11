@@ -9,26 +9,22 @@ export class NavMenu extends Component {
     displayName = NavMenu.name
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-
-        if (token !== null) {
-            this.fetchData(token);
-        }
-
     }
 
-    fetchData(t) {
-        fetch(API.GetURL() + 'api/custompages', {
+    componentDidMount() {
+        this.fetchData();
+    }
+
+    fetchData() {
+        fetch(`${API.GetURL()}/custompages/list`, {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Authorization': `Bearer ${localStorage.getItem("token") }`
             }
         })
             .then(response => {
-                this.setState({ loading: false });
                 if (response.status === 401) {
                     localStorage.removeItem("token");
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
                 }
             });
     }
@@ -46,8 +42,8 @@ export class NavMenu extends Component {
             <li className='nav-item'>
                 <Link className="nav-link" to={'/loginform'}>Login</Link>
             </li>;
-        return <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-            <div class="sidebar-sticky pt-3">
+        return <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sticky-top">
+            <div class="sidebar-sticky pt-3" style={{ height: "100vh" } }>
 
                 <div className='text-start p-2 mb-3 mt-2'>
                     <Link to={'/'}><img src='https://www.rudrasofttech.com/l/img/rst-logo-small.png' style={{ maxHeight: "90px" }} className="img-fluid" /></Link>

@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import { Table, ProgressBar, Alert, Grid, Row, Col, Button } from 'react-bootstrap';
+import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
 import Spinner from './shared/Spinner';
@@ -11,45 +11,49 @@ export class CustomPageList extends Component {
 
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
-
-        if (token === null) {
-            loggedin = false;
-        }
-        this.state = { custompages: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
+        
+        this.state = {
+            custompages: [],
+            token: localStorage.getItem("token"),
+            loading: false , loggedin: localStorage.getItem("token") === null ? false : true, bsstyle: '', message: ''
+        };
         this.handleDeletePage = this.handleDeletePage.bind(this);
 
 
     }
     componentDidMount() {
-        this.fetchData(localStorage.getItem("token"));
+        this.fetchData();
     }
 
-    fetchData(t) {
+    fetchData() {
         this.setState({ loading: true });
         fetch(API.GetURL() + '/custompages/list', {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + t
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
 
                 if (response.status === 401) {
-                    //localStorage.removeItem("token");
+                    localStorage.removeItem("token");
                     this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
                 } else if (response.status === 200) {
                     response.json().then(data => {
-                        console.log(data);
                         this.setState({ custompages: data, loading: false, bsstyle: '', message: '' });
                     });
                 } else {
                     response.json().then(data => {
                         this.setState({ bsstyle: 'danger', message: data.Message });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                     });
                 }
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
     }
 
@@ -67,7 +71,6 @@ export class CustomPageList extends Component {
                     console.log(response.status);
                     if (response.status === 200) {
                         response.json().then(data => {
-                            console.log(data);
                             let list = this.state.custompages;
                             for (var k in list) {
                                 if (list[k].ID === data.ID) {
@@ -123,7 +126,6 @@ export class CustomPageList extends Component {
                     <Table responsive striped bordered condensed hover>
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Name</th>
                                 <th>Date Created</th>
                                 <th>Created By</th>
@@ -137,14 +139,13 @@ export class CustomPageList extends Component {
                         <tbody>
                             {this.state.custompages.map(cp =>
                                 <tr key={cp.id}>
-                                    <td>{cp.id}</td>
                                     <td>{cp.name}</td>
                                     <td>
-                                        {cp.dateCreated}
+                                        {dayjs(cp.dateCreated).format("DD.MMM.YYYY")}
                                     </td>
                                     <td>{cp.createdByName}</td>
                                     <td>
-                                        {cp.dateModified}</td>
+                                        {cp.dateModified !== null ? dayjs(cp.dateModified).format("DD.MMM.YYYY") : null}</td>
                                     <td>{cp.modifiedByName}</td>
                                     <td>{this.renderPostStatus(cp.status)}</td>
                                     <td>

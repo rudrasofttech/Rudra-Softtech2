@@ -1,50 +1,59 @@
 ﻿import React, { Component } from 'react';
 import { Link, Redirect } from 'react-router-dom';
-import Moment from 'react-moment';
-import { Table, Alert, Grid, Row, Col } from 'react-bootstrap';
+import dayjs from 'dayjs';
+import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
+import Spinner from './shared/Spinner';
 
 export class ArticleList extends Component {
     displayName = ArticleList.name
 
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
 
-        if (token === null) {
-            loggedin = false;
-        }
-        this.state = { articles: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
+        this.state = { articles: [], token: localStorage.getItem("token"), loading: false, loggedin: localStorage.getItem("token") !== null, bsstyle: '', message: '' };
         this.handleDeleteArticle = this.handleDeleteArticle.bind(this);
-        if (loggedin) {
-            this.fetchData(token);
-        }
     }
 
-    fetchData(t) {
-        fetch(API.GetURL() + 'api/posts', {
+    componentDidMount() {
+        this.fetchData();
+    }
+
+    fetchData() {
+        this.setState({ loading: true });
+        fetch(API.GetURL() + '/posts', {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
                 if (response.status === 401) {
                     localStorage.removeItem("token");
                     this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
+                } else if (response.status === 200) {
+                    response.json().then(data => {
+                        this.setState({ articles: data });
+                    });
+                } else {
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.Message });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                    });
                 }
-                return response.json();
-            })
-            .then(data => {
-                this.setState({ articles: data, loading: false });
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
     }
 
     handleDeleteArticle(e) {
         if (window.confirm("Are you sure you want to delete this article?")) {
-            fetch(API.GetURL() + 'api/posts/' + e.target.name,
+            fetch(API.GetURL() + '/posts/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {
@@ -74,20 +83,19 @@ export class ArticleList extends Component {
                     else {
                         response.json().then(data => {
                             console.log(data);
-                            this.setState({ message: 'Article deleted', bsstyle :'success', loggedin: false });
+                            this.setState({ message: 'Article deleted', bsstyle: 'success', loggedin: false });
                         });
                     }
                 });
         }
     }
 
-    
+
     renderTable(ds) {
         return (
             <Table responsive striped bordered condensed hover>
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Title</th>
                         <th>Date Created</th>
                         <th>Created By</th>
@@ -99,17 +107,15 @@ export class ArticleList extends Component {
                 </thead>
                 <tbody>
                     {ds.map(cp =>
-                        <tr key={cp.ID}>
-                            <td>{cp.ID}</td>
-                            <td>{cp.Title}</td>
-                            <td><Moment format="MM/DD/YYYY">
-                                {cp.DateCreated}</Moment></td>
-                            <td>{cp.CreatedByName}</td>
-                            <td><Moment format="MM/DD/YYYY">{cp.DateModified}</Moment></td>
-                            <td>{cp.ModifiedByName}</td>
-                            <td>{cp.Status}</td>
-                            <td><Link className='btn btn-link' to={'/articlemanage/' + cp.ID}>Edit</Link>
-                                <button type='button' name={cp.ID} className='btn btn-link' onClick={this.handleDeleteArticle}>Delete</button></td>
+                        <tr key={cp.id}>
+                            <td>{cp.title}</td>
+                            <td>{dayjs(cp.dateCreated).format("DD.MMM.YYYY")}</td>
+                            <td>{cp.createdByName}</td>
+                            <td>{cp.dateModified !== null ? dayjs(cp.dateModified).format("DD.MMM.YYYY") : null}</td>
+                            <td>{cp.modifiedByName}</td>
+                            <td>{cp.status}</td>
+                            <td><Link className='btn btn-link' to={'/articlemanage/' + cp.id}>Edit</Link>
+                                <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeleteArticle}>Delete</button></td>
                         </tr>
                     )}
                 </tbody>
@@ -123,11 +129,13 @@ export class ArticleList extends Component {
             return (<Redirect to="/loginform" />);
         } else {
             let contents = this.state.loading
-                ? <p><em>Loading...</em></p>
+                ? <Spinner />
                 : this.renderTable(this.state.articles);
             return (
                 <div>
-                    <h1>Articles</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 className="h2">Articles</h1>
+                    </div>
                     <div className="fixedBottom ">
                         <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
                     </div>
