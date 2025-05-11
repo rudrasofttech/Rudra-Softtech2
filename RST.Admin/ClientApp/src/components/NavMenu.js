@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Glyphicon, Nav, Navbar, NavItem } from 'react-bootstrap';
+import { Nav, Navbar, NavItem } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import './NavMenu.css';
 import { API } from './api';
@@ -40,52 +40,52 @@ export class NavMenu extends Component {
         if (token === null) {
             loggedin = false;
         }
-        let loginlink = loggedin ? <LinkContainer to={'/logout'}><NavItem>Logout</NavItem></LinkContainer> :
-            <LinkContainer to={'/loginform'}><NavItem>Login</NavItem></LinkContainer>;
-        return (
-            <Navbar inverse fixedTop fluid collapseOnSelect>
-                <Navbar.Header>
-                    <Navbar.Brand>
-                        <Link to={'/'}>RST Admin</Link>
-                    </Navbar.Brand>
-                    <Navbar.Toggle />
-                </Navbar.Header>
-                <Navbar.Collapse>
-                    <Nav>
-                        <LinkContainer to={'/custompagelist'}>
-                            <NavItem>Pages</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/articlelist'}>
-                            <NavItem>Articles</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/CustomDataSourceList'}>
-                            <NavItem>Data Sources</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/CategoryList'}>
-                            <NavItem>Categories</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/MemberList'}>
-                            <NavItem>Members</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/WebsiteSettings'}>
-                            <NavItem>Settings</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/EmailList'}>
-                            <NavItem>Emails</NavItem>
-                        </LinkContainer>
-                        <LinkContainer to={'/NewsletterDesign'}>
-                            <NavItem>Newsletter</NavItem>
-                        </LinkContainer>
-                        <li role="presentation">
-                            <a href="https://www.rudrasofttech.com/generatesitemap" target="_blank">Build Sitemap</a>
-                        </li>
-                        <li role="presentation">
-                            <a target="_blank" href="https://rudrasofttech.com/vtracker/report?id=3&range=Last30Days">Visits</a>
-                        </li>
-                        {loginlink}
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
-        );
+        let loginlink = loggedin ? <li className='nav-item'>
+            <Link className="nav-link" to={'/logout'}>Logout</Link>
+        </li> :
+            <li className='nav-item'>
+                <Link className="nav-link" to={'/loginform'}>Login</Link>
+            </li>;
+        return <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="sidebar-sticky pt-3">
+
+                <div className='text-start p-2 mb-3 mt-2'>
+                    <Link to={'/'}><img src='https://www.rudrasofttech.com/l/img/rst-logo-small.png' style={{ maxHeight: "90px" }} className="img-fluid" /></Link>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/custompagelist'}>Pages</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/articlelist'}>Articles</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/CustomDataSourceList'}>Data Sources</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/CustomDataSourceList'}>Categories</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/MemberList'}>Members</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/WebsiteSettings'}>Settings</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/EmailList'}>Emails</Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link className="nav-link" to={'/NewsletterDesign'}>Newsletter</Link>
+                    </li>
+                    <li class="nav-item">
+                        <a className="nav-link" href="https://www.rudrasofttech.com/generatesitemap" target="_blank">Build Sitemap</a>
+                    </li>
+                    <li class="nav-item">
+                        <a className="nav-link" target="_blank" href="https://rudrasofttech.com/vtracker/report?id=3&range=Last30Days">Visits</a>
+                    </li>
+                    {loginlink}
+                </ul>
+            </div>
+        </nav>;
     }
 }

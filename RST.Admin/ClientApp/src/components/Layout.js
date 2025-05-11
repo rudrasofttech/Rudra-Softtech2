@@ -7,17 +7,12 @@ export class Layout extends Component {
 
     render() {
         return (
-
             <Grid fluid>
                 <Row>
-                    <Col sm={12}>
-                        <NavMenu />
-                    </Col>
-                </Row>
-                <Row>
-                    <Col sm={12}>
+                    <NavMenu />
+                    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
                         {this.props.children}
-                    </Col>
+                    </main>
                 </Row>
             </Grid>
         );

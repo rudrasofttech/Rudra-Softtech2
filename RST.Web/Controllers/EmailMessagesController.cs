@@ -7,16 +7,23 @@ using RST.Model;
 using RST.Model.DTO;
 using RST.Web.Service;
 using System.Net;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class EmailMessagesController(RSTContext context, WebsiteSettingsService wsService, IWebHostEnvironment environment) : ControllerBase
     {
         private readonly IWebHostEnvironment _environment = environment;
         private readonly RSTContext db = context;
         private readonly WebsiteSettingsService _wsService = wsService;
+
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
 
         [Route("emailgroups")]
         [HttpGet]
@@ -32,11 +39,12 @@ namespace RST.Web.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
         [Route("sendnewsletter")]
         [HttpPost]
         public IActionResult SendNewsletter([FromBody] SendNewsletterDTO dto)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
 
             if (string.IsNullOrEmpty(dto.EmailGroup) || string.IsNullOrEmpty(dto.Subject))
             {
@@ -142,7 +150,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load email messages.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
@@ -150,27 +158,31 @@ namespace RST.Web.Controllers
         // GET: api/EmailMessages/5
         public IActionResult Get(int id)
         {
-            try { 
-            var emailMessage = db.EmailMessages.FirstOrDefault(t => t.ID == id);
-            if (emailMessage == null)
+            try
             {
-                return NotFound();
-            }
+                var emailMessage = db.EmailMessages.FirstOrDefault(t => t.ID == id);
+                if (emailMessage == null)
+                {
+                    return NotFound();
+                }
 
-            return Ok(emailMessage);
+                return Ok(emailMessage);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load email message.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
-        
+
         // DELETE: api/EmailMessages/5
         [HttpGet]
         [Route("delete/{id}")]
         public IActionResult Delete(int id)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 var emailMessage = db.EmailMessages.FirstOrDefault(t => t.ID == id);
@@ -186,7 +198,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to delete email message.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
     }

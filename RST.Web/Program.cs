@@ -35,7 +35,8 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"].ToString()))
     };
-}).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.LoginPath = new PathString("/account/login");
     options.AccessDeniedPath = new PathString("/account/login");
@@ -108,7 +109,7 @@ app.MapControllerRoute(
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+//app.MapBlazorHub();
+//app.MapFallbackToPage("/_Host");
 
 app.Run();

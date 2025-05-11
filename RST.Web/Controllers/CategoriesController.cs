@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RST.Context;
 using RST.Model;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
@@ -11,6 +12,11 @@ namespace RST.Web.Controllers
     {
         private readonly RSTContext db = context;
         private readonly ILogger<CategoriesController> _logger = logger;
+
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
 
         // GET: api/Categories
         [HttpGet]
@@ -34,9 +40,12 @@ namespace RST.Web.Controllers
         // PUT: api/Categories/5
         [HttpPost]
         [Route("update")]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public IActionResult Update([FromBody] Category category)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -58,18 +67,20 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // POST: api/Categories
         [HttpPost]
         [Route("add")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] Category category)
         {
             try
             {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
@@ -86,18 +97,20 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // DELETE: api/Categories/5
         [HttpGet]
         [Route("delete/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Delete(int id)
         {
             try
             {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
                 var category = db.Categories.FirstOrDefault(t => t.ID == id);
                 if (category == null)
                 {
@@ -116,7 +129,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
     }

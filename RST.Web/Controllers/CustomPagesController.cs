@@ -5,45 +5,61 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Demo")]
+    [Authorize]
     [ApiController]
     public class CustomPagesController(RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
 
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
+
         [HttpGet]
+        [Route("list")]
         public IActionResult Get()
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
+            var result = new List<CustomPageDTO>();
             try
             {
-                List<CustomPageDTO> result = [.. db.CustomPages.Select(m => new CustomPageDTO()
+
+                foreach (var m in db.CustomPages.Include(t => t.CreatedBy).Include(t => t.ModifiedBy).ToList())
                 {
-                    ID = m.ID,
-                    Body = m.Body,
-                    CreatedBy = m.CreatedBy.ID,
-                    Title = m.Title,
-                    Status = m.Status,
-                    CreatedByName = m.CreatedBy.FirstName,
-                    DateCreated = m.DateCreated,
-                    DateModified = m.DateModified,
-                    Head = m.Head,
-                    ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
-                    Name = m.Name,
-                    NoTemplate = m.NoTemplate,
-                    PageMeta = m.PageMeta,
-                    Sitemap = m.Sitemap,
-                    ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
-                })];
+
+                    result.Add(new CustomPageDTO()
+                    {
+                        ID = m.ID,
+                        Body = m.Body,
+                        CreatedBy = m.CreatedBy == null ? 0 : m.CreatedBy.ID,
+                        Title = m.Title,
+                        Status = m.Status,
+                        CreatedByName = m.CreatedBy == null ? "" : m.CreatedBy.FirstName,
+                        DateCreated = m.DateCreated,
+                        DateModified = m.DateModified,
+                        Head = m.Head,
+                        ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
+                        Name = m.Name,
+                        NoTemplate = m.NoTemplate,
+                        PageMeta = m.PageMeta,
+                        Sitemap = m.Sitemap,
+                        ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
+                    });
+                }
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load pages.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
@@ -51,6 +67,9 @@ namespace RST.Web.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 var m = db.CustomPages.FirstOrDefault(t => t.ID == id);
@@ -62,16 +81,18 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load page.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         [Route("update")]
         // PUT: api/CustomPages/5
         public IActionResult Update([FromBody] CustomPageDTO page)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -100,18 +121,20 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to update page.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
             return Ok();
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         [Route("add")]
         // POST: api/CustomPages
         public IActionResult Add([FromBody] CustomPageDTO page)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -150,16 +173,16 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to add page.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
-        [Authorize(Roles = "Admin")]
         [Route("delete/{id}")]
-        // DELETE: api/CustomPages/5
         [HttpGet]
         public IActionResult Delete(int id)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
             try
             {
                 var customPage = db.CustomPages.FirstOrDefault(t => t.ID == id);
@@ -174,7 +197,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to delete page.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
     }

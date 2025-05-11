@@ -1,5 +1,10 @@
 ﻿export class API {
     static GetURL() {
-        return '//localhost:59709/';
+        if (window.location.hostname.toLowerCase().startsWith("localhost"))
+            return "https://localhost:7266/api";
+        else if (window.location.hostname.toLowerCase().startsWith("www.rudrasofttech.com") || window.location.hostname.toLowerCase().startsWith("rudrasofttech.com"))
+            return "https://www.rudrasofttech.com/api";
+        else
+            return "";
     }
 }

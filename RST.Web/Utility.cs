@@ -7,8 +7,10 @@ namespace RST.Web
 {
     public class Utility
     {
+        public const string UnauthorizedMessage = "You don't have permission to take this action.";
+        public const string ServerErrorMessage = "Unable to process request.";
         #region WebsiteSetting
-        
+
 
         public static string ImageFormat()
         {

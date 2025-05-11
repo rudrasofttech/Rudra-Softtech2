@@ -6,23 +6,37 @@ using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
 using System.Net;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MembersController(RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
 
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
+
         [HttpGet]
         public IActionResult Get(int page = 1, int psize = 20)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 int count = db.Members.Count();
-                var result = new PagedData<Member>() { PageIndex = page, PageSize = psize };
-                result.TotalRecords = count;
+                var result = new PagedData<Member>
+                {
+                    PageIndex = page,
+                    PageSize = psize,
+                    TotalRecords = count
+                };
 
                 var query = db.Members.OrderBy(t => t.ID).Skip((page - 1) * psize).Take(psize);
 
@@ -34,17 +48,19 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load members list.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         [Route("ChangePassword/{id}")]
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public IActionResult ChangePassword(int id, [FromBody] ChangePasswordDTO data)
         {
             try
             {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
@@ -63,7 +79,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to change password of the member.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
@@ -73,6 +89,9 @@ namespace RST.Web.Controllers
         {
             try
             {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
                 var member = db.Members.FirstOrDefault(m => m.ID == id);
                 if (member == null)
                 {
@@ -82,7 +101,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load member.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
@@ -90,11 +109,13 @@ namespace RST.Web.Controllers
         // DELETE: api/Members/5
         [HttpGet]
         [Route("delete/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Delete(int id)
         {
             try
             {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
                 var member = db.Members.FirstOrDefault(m => m.ID == id);
                 if (member == null)
                 {
@@ -108,7 +129,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to delete member.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 

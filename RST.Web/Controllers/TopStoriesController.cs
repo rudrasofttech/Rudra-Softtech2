@@ -3,25 +3,41 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Demo")]
+    [Authorize]
     public class TopStoriesController(RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
-
-        public List<TopStory> GetTopStories()
+        private bool CheckRole(string roles)
         {
-            return [.. db.TopStories];
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
+
+        public IActionResult GetTopStories()
+        {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+            try
+            {
+                return Ok(db.TopStories.Include(t => t.CreatedBy).ToList());
+            }
+            catch (Exception ex) {
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
         }
 
         // GET: api/TopStories/5
 
         public IActionResult GetTopStory(int id)
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             var topStory = db.TopStories.Include(t => t.Post).FirstOrDefault(t => t.ID == id);
             if (topStory == null)
             {
@@ -36,6 +52,9 @@ namespace RST.Web.Controllers
         [Route("addpost/{postId}")]
         public IActionResult AddPost(int postId)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -65,7 +84,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
         }
@@ -76,6 +95,9 @@ namespace RST.Web.Controllers
         [Route("remove/{postId}")]
         public IActionResult RemovePost(int postId)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 var topStory = db.TopStories.Include(t => t.Post).FirstOrDefault(t => t.Post.ID == postId);
@@ -91,7 +113,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
     }

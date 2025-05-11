@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "bootstrap": "^3.4.1",
+    "dayjs": "^1.11.13",
     "moment": "^2.24.0",
     "react": "^16.0.0",
     "react-bootstrap": "^0.31.5",

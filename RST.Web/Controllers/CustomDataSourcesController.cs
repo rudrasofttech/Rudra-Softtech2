@@ -5,19 +5,29 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CustomDataSourcesController(ILogger<CustomDataSourcesController> logger, RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
         private readonly ILogger<CustomDataSourcesController> _logger = logger;
 
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
+
         [HttpGet]
         public IActionResult Get()
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 List<CustomDataSourceDTO> result = [.. db.CustomDataSources.Select(m => new CustomDataSourceDTO()
@@ -38,7 +48,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to load top stories.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
@@ -46,6 +56,9 @@ namespace RST.Web.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
 
@@ -57,16 +70,18 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // PUT: api/CustomDataSources/
         [HttpPost]
         [Route("update")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Update([FromBody] CustomDataSource ds)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -93,16 +108,18 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // POST: api/CustomDataSources
         [HttpPost]
         [Route("add")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] CustomDataSource ds)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -130,16 +147,18 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // DELETE: api/CustomDataSources/5
         [HttpGet]
         [Route("delete/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Delete(int id)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             try
             {
                 var customDataSource = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
@@ -155,7 +174,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to delete top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
     }

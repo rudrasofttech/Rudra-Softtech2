@@ -13,7 +13,7 @@ namespace RST.Model
         public int ID { get; set; }
         [MaxLength(200)]
         [Required]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = null!;
         [Required]
         public DateTime DateCreated { get; set; }
         [Required]
@@ -22,10 +22,10 @@ namespace RST.Model
         public Member? ModifiedBy { get; set; }
         public PostStatus Status { get; set; } = PostStatus.Draft;
         public bool Sitemap { get; set; }
-        public string Body { get; set; } = string.Empty;
-        public string Head { get; set; } = string.Empty;
+        public string Body { get; set; } = null!;
+        public string Head { get; set; } = null!;
         public bool NoTemplate { get; set; }
-        public string PageMeta { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
+        public string PageMeta { get; set; } = null!;
+        public string Title { get; set; } = null!;
     }
 }

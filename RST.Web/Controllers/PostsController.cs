@@ -5,40 +5,57 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Demo")]
+    [Authorize]
     public class PostsController(RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
 
-        [HttpGet]
-        public List<PostDTO> Get()
+        private bool CheckRole(string roles)
         {
-            List<PostDTO> result = db.Posts.Select(m => new PostDTO()
-            {
-                ID = m.ID,
-                CreatedBy = m.CreatedBy.ID,
-                Title = m.Title,
-                Status = m.Status.ToString(),
-                CreatedByName = m.CreatedBy.FirstName,
-                DateCreated = m.DateCreated,
-                DateModified = m.DateModified,
-                ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
-                Sitemap = m.Sitemap,
-                ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
-            }).ToList();
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
 
-            return result;
+        [HttpGet]
+        public IActionResult Get()
+        {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+            try
+            {
+                List<PostDTO> result = [.. db.Posts.Include(t => t.CreatedBy).Include(t => t.ModifiedBy).Select(m => new PostDTO()
+                {
+                    ID = m.ID,
+                    CreatedBy = m.CreatedBy.ID,
+                    Title = m.Title,
+                    Status = m.Status.ToString(),
+                    CreatedByName = m.CreatedBy.FirstName,
+                    DateCreated = m.DateCreated,
+                    DateModified = m.DateModified,
+                    ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
+                    Sitemap = m.Sitemap,
+                    ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
+                })];
+
+                return Ok(result);
+            }
+            catch (Exception ex) {
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
         }
 
         // GET: api/Posts/5
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (id == 0)
             {
                 return Ok(new Post() { Category = new Category() { ID = 0, Name = "" } });
@@ -55,9 +72,11 @@ namespace RST.Web.Controllers
         // PUT: api/Posts/5
         [HttpPost]
         [Route("update/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Update(int id, [FromBody] Post post)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -117,9 +136,11 @@ namespace RST.Web.Controllers
 
         // POST: api/Posts
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public IActionResult Post([FromBody] Post post)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -163,13 +184,14 @@ namespace RST.Web.Controllers
         // DELETE: api/Posts/5
         [HttpGet]
         [Route("remove/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Remove(int id)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             var post = db.Posts.FirstOrDefault(t => t.ID == id);
             if (post == null)
                 return NotFound();
-            
 
             db.Posts.Remove(post);
             db.SaveChanges();

@@ -5,26 +5,42 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using System.Net;
+using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Demo")]
+    [Authorize]
     [ApiController]
     public class WebsiteSettingsController(RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
+        private bool CheckRole(string roles)
+        {
+            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+        }
 
         [HttpGet]
-        public List<WebsiteSetting> GetWebsiteSettings()
+        public IActionResult GetWebsiteSettings()
         {
-            return db.WebsiteSettings.Where(t => t.KeyName != "UniversalPassword").ToList();
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+            try
+            {
+                return Ok(db.WebsiteSettings.Where(t => t.KeyName != "UniversalPassword").ToList());
+            }
+            catch (Exception ex) {
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
         }
 
         // GET: api/WebsiteSettings/5
         [HttpGet("{id}")]
         public IActionResult GetWebsiteSetting(string id)
         {
+            if (!CheckRole("admin,demo"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id.Trim());
             if (websiteSetting == null)
             {
@@ -37,15 +53,15 @@ namespace RST.Web.Controllers
         // PUT: api/WebsiteSettings/5
         [HttpPost]
         [Route("update")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Update(WebsiteSetting websiteSetting)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-
-           
 
             try
             {
@@ -64,7 +80,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
         }
@@ -72,9 +88,11 @@ namespace RST.Web.Controllers
         // POST: api/WebsiteSettings
         [HttpPost]
         [Route("add")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Add(WebsiteSetting websiteSetting)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -94,16 +112,18 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Unable to save top story.", exception = ex.Message });
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // DELETE: api/WebsiteSettings/5
         [HttpGet]
         [Route("delete/{id}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult Delete(string id)
         {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
             var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id);
             if (websiteSetting == null)
             {
