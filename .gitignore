@@ -272,3 +272,5 @@ __pycache__/
 /RST/drive/Carsprite.png
 /RST.Web/appsettings.Development.json
 /RST.Web/wwwroot/logs
+/RST.Web/appsettings.Production.json
+/LiveBackup
