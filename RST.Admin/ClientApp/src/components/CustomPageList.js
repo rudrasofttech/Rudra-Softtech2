@@ -5,6 +5,9 @@ import { MessageStrip } from './MessageStrip';
 import { API } from './api';
 import Spinner from './shared/Spinner';
 import dayjs from 'dayjs';
+import pages from '../browser.png';
+import deleteicon from '../delete.png';
+import editicon from '../edit.png';
 
 export class CustomPageList extends Component {
     displayName = CustomPageList.name
@@ -26,7 +29,7 @@ export class CustomPageList extends Component {
     }
 
     fetchData() {
-        this.setState({ loading: true });
+        this.setState({ loading: true, bsstyle: '', message: '' });
         fetch(API.GetURL() + '/custompages/list', {
             method: 'get',
             headers: {
@@ -36,16 +39,13 @@ export class CustomPageList extends Component {
         })
             .then(response => {
 
-                if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
-                } else if (response.status === 200) {
+                 if (response.status === 200) {
                     response.json().then(data => {
-                        this.setState({ custompages: data, loading: false, bsstyle: '', message: '' });
+                        this.setState({ custompages: data, bsstyle: '', message: '' });
                     });
                 } else {
                     response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.Message });
+                        this.setState({ bsstyle: 'danger', message: data.error });
                     }).catch(err => {
                         this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                     });
@@ -59,37 +59,33 @@ export class CustomPageList extends Component {
 
     handleDeletePage(e) {
         if (window.confirm("Are you sure you want to delete this page?")) {
-            fetch(API.GetURL() + '/custompages/' + e.target.name,
+            fetch(`${API.GetURL()}/custompages/delete/${e}`,
                 {
-                    method: 'delete',
+                    method: 'get',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.state.token}`
                     }
                 })
                 .then(response => {
                     console.log(response.status);
                     if (response.status === 200) {
                         response.json().then(data => {
-                            let list = this.state.custompages;
-                            for (var k in list) {
-                                if (list[k].ID === data.ID) {
-                                    list.splice(k, 1);
-                                    this.setState({ custompages: list });
-                                    break;
-                                }
-                            }
+                            let list = this.state.custompages.filter(t => t.id !== data.id);
+                            this.setState({ custompages: list });
                         });
-                    }
-                    else if (response.status === 401) {
-                        this.setState({ bsstyle: "danger", message: "Authorization has been denied for this request." });
                     }
                     else {
                         response.json().then(data => {
-                            console.log(data);
-                            this.setState({ bsstyle: 'danger', message: data.Message });
+                            this.setState({ bsstyle: 'danger', message: data.error });
+                        }).catch(err => {
+                            this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                         });
                     }
+                }).catch(err => {
+                    this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                }).finally(() => {
+                    this.setState({ loading: false });
                 });
         }
     }
@@ -116,8 +112,11 @@ export class CustomPageList extends Component {
             
             return (
                 <div>
-                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 className="h2">Web Pages</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={pages} className="img-fluid icon-large me-2" /> Web pages</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
+                            <Link to={'/custompagemanage'} className="btn btn-primary">Create New</Link>
+                        </div>
                     </div>
                     <div className="fixedBottom ">
                         <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
@@ -133,7 +132,7 @@ export class CustomPageList extends Component {
                                 <th>Modified By</th>
                                 <th>Status</th>
                                 <th>Sitemap</th>
-                                <th><Link to={'/custompagemanage/0'} className="btn btn-link">Create New</Link></th>
+                                <th colSpan={2}></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -151,8 +150,13 @@ export class CustomPageList extends Component {
                                     <td>
                                         <input type="checkbox" defaultChecked={cp.sitemap} disabled />
                                     </td>
-                                    <td><Link className='btn btn-link' to={'/custompagemanage/' + cp.id}>Edit</Link>
-                                        <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeletePage}>Delete</button></td>
+                                    <td>
+                                        <Link className='btn btn-link' to={'/custompagemanage/' + cp.id}> <img src={editicon} className="img-fluid icon-extra-small" />
+                                        </Link></td>
+                                    <td>
+                                        <button type='button' className='btn btn-link' onClick={() => { this.handleDeletePage(cp.id) }}>
+                                            <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                        </button></td>
                                 </tr>
                             )}
                         </tbody>

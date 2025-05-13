@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace RST.Web.Controllers
@@ -12,9 +13,10 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class PostsController(RSTContext context) : ControllerBase
+    public class PostsController(RSTContext context, ILogger<PostsController> _logger) : ControllerBase
     {
         private readonly RSTContext db = context;
+        private readonly ILogger<PostsController> logger = _logger;
 
         private bool CheckRole(string roles)
         {
@@ -28,7 +30,8 @@ namespace RST.Web.Controllers
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
             try
             {
-                List<PostDTO> result = [.. db.Posts.Include(t => t.CreatedBy).Include(t => t.ModifiedBy).Select(m => new PostDTO()
+                List<PostDTO> result = [.. db.Posts.Include(t => t.CreatedBy).Include(t => t.ModifiedBy)
+                    .OrderByDescending(t => t.DateCreated).ThenBy(t => t.Title).Select(m => new PostDTO()
                 {
                     ID = m.ID,
                     CreatedBy = m.CreatedBy.ID,
@@ -71,8 +74,8 @@ namespace RST.Web.Controllers
 
         // PUT: api/Posts/5
         [HttpPost]
-        [Route("update/{id}")]
-        public IActionResult Update(int id, [FromBody] Post post)
+        [Route("update")]
+        public IActionResult Update([FromBody] Post post)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -91,13 +94,15 @@ namespace RST.Web.Controllers
 
             try
             {
-                var p = db.Posts.FirstOrDefault(t => t.ID == id && !(t.URL == post.URL && t.ID != id));
+                var p = db.Posts.FirstOrDefault(t => t.ID == post.ID && !(t.URL == post.URL && t.ID != post.ID));
                 if (p != null)
                 {
+                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                    var m = db.Members.First(d => d.Email == email);
                     p.Article = post.Article;
                     p.Category = db.Categories.First(t => t.ID == post.Category.ID);
-                    p.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
-                    p.DateModified = DateTime.Now;
+                    p.ModifiedBy = m;
+                    p.DateModified = DateTime.UtcNow;
                     p.Description = post.Description;
                     p.MetaTitle = post.MetaTitle;
                     p.OGDescription = post.OGDescription;
@@ -110,28 +115,21 @@ namespace RST.Web.Controllers
                     p.URL = post.URL;
                     p.WriterEmail = post.WriterEmail;
                     p.WriterName = post.WriterName;
-
-                    //db.Entry(p).State = EntityState.Modified;
                     db.SaveChanges();
+                    return Ok(p);
                 }
                 else
                 {
                     return BadRequest("URL already exist.");
                 }
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!PostExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                logger.LogError(ex, "PostsController > Update");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
-            return Ok();
+            
         }
 
         // POST: api/Posts
@@ -140,44 +138,53 @@ namespace RST.Web.Controllers
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
-
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
-            if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
-                || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
-                || string.IsNullOrEmpty(post.URL))
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
+                    || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
+                    || string.IsNullOrEmpty(post.URL))
+                {
+                    return BadRequest("Required field missing.");
+                }
+                if (!db.Posts.Any(t => t.URL == post.URL))
+                {
+                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                    var m = db.Members.First(d => d.Email == email);
+                    var p = new Post
+                    {
+                        Article = post.Article,
+                        Category = db.Categories.First(t => t.ID == post.Category.ID),
+                        CreatedBy = m,
+                        DateCreated = DateTime.UtcNow,
+                        Description = post.Description,
+                        MetaTitle = post.MetaTitle,
+                        OGDescription = post.OGDescription,
+                        OGImage = post.OGImage,
+                        Sitemap = post.Sitemap,
+                        Status = post.Status,
+                        Tag = post.Tag,
+                        TemplateName = post.TemplateName,
+                        Title = post.Title,
+                        URL = post.URL,
+                        WriterEmail = post.WriterEmail,
+                        WriterName = post.WriterName
+                    };
+                    db.Posts.Add(p);
+                    db.SaveChanges();
+                    return Ok(p);
+                }
+                else
+                {
+                    return BadRequest("URL already exist.");
+                }
+            }catch(Exception ex)
             {
-                return BadRequest("Required field missing.");
-            }
-            if (!db.Posts.Any(t => t.URL == post.URL))
-            {
-                var p = new Post();
-                p.Article = post.Article;
-                p.Category = db.Categories.First(t => t.ID == post.Category.ID);
-                p.CreatedBy = db.Members.First(d => d.Email == User.Identity.Name);
-                p.DateCreated = DateTime.Now;
-                p.Description = post.Description;
-                p.MetaTitle = post.MetaTitle;
-                p.OGDescription = post.OGDescription;
-                p.OGImage = post.OGImage;
-                p.Sitemap = post.Sitemap;
-                p.Status = post.Status;
-                p.Tag = post.Tag;
-                p.TemplateName = post.TemplateName;
-                p.Title = post.Title;
-                p.URL = post.URL;
-                p.WriterEmail = post.WriterEmail;
-                p.WriterName = post.WriterName;
-                db.Posts.Add(p);
-                db.SaveChanges();
-
-                return Ok(p);
-            }
-            else
-            {
-                return BadRequest("URL already exist.");
+                logger.LogError(ex, "Postscontroller > post");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
 
@@ -186,24 +193,25 @@ namespace RST.Web.Controllers
         [Route("remove/{id}")]
         public IActionResult Remove(int id)
         {
-            if (!CheckRole("admin"))
-                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+            try
+            {
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
 
-            var post = db.Posts.FirstOrDefault(t => t.ID == id);
-            if (post == null)
-                return NotFound();
+                var post = db.Posts.FirstOrDefault(t => t.ID == id);
+                if (post == null)
+                    return NotFound();
 
-            db.Posts.Remove(post);
-            db.SaveChanges();
+                db.Posts.Remove(post);
+                db.SaveChanges();
 
-            return Ok(post);
-        }
-
-       
-
-        private bool PostExists(int id)
-        {
-            return db.Posts.Any(e => e.ID == id);
+                return Ok(post);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Postscontroller > post");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
         }
     }
 }

@@ -4,48 +4,66 @@ import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, 
 import { MessageStrip } from './MessageStrip';
 import { DrivePop } from './DrivePop';
 import { API } from './api';
+import Spinner from './shared/Spinner';
+import pages from '../browser.png';
 
 export class CustomPageManage extends Component {
     displayName = CustomPageManage.name;
 
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
-
-        if (token === null) {
-            loggedin = false;
-        }
         this.handleChange = this.handleChange.bind(this);
+        this.handleBlur = this.handleBlur.bind(this);
         this.saveData = this.saveData.bind(this);
         this.handleDriveModal = this.handleDriveModal.bind(this);
-        this.state = { custompage: null, loading: true, loggedin: loggedin, bsstyle: '', message: '' };
-        if (loggedin) {
-            this.fetchData(token, this.props.match.params.ID === null ? '0' : this.props.match.params.ID);
+        this.state = {
+            redirect: '',
+            status: 0, noTemplate: false,
+            sitemap: true, name: '', title: '', pageMeta: '', head: '',
+            body: '', id: this.props.match.params.id !== undefined && this.props.match.params.id !== null ? this.props.match.params.id : 0,
+            token: localStorage.getItem("token"),
+            loading: false, loggedin: localStorage.getItem("token") === null ? false : true, bsstyle: '', message: ''
+        };
+
+    }
+
+    componentDidMount() {
+        if (this.state.id !== 0) {
+            this.fetchData(this.state.id);
         }
     }
 
-    fetchData(t, id) {
-        fetch(API.GetURL() + 'api/custompages/' + id, {
+    fetchData(id) {
+        this.setState({ loading: true, bsstyle: '', message: '' });
+        fetch(`${API.GetURL()}/custompages/${id}`, {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
-                } else if (response.status === 200) {
+                if (response.status === 200) {
                     response.json().then(data => {
                         console.log(data);
-                        data.CreatedBy = { ID: 0, Email: '' };
-                        this.setState({ custompage: data, bsstyle: '', message: '', loading: false });
+
+                        this.setState({
+                            status: data.status, noTemplate: data.noTemplate,
+                            sitemap: data.sitemap, name: data.name, title: data.title, pageMeta: data.pageMeta, head: data.head,
+                            body: data.body, id: data.id
+                        });
                     });
                 } else {
                     response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.Message, loading: false });
+                        this.setState({ bsstyle: 'danger', message: data.error });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                     });
                 }
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
 
     }
@@ -55,167 +73,189 @@ export class CustomPageManage extends Component {
     }
 
     saveData(e) {
-        let saveurl = API.GetURL() + 'api/custompages';
-        let method = 'post';
-        if ((this.props.match.params.ID !== null && this.props.match.params.ID !== "0") || this.state.custompage.ID !== 0) {
-            saveurl = saveurl + '/' + ((this.state.custompage.ID !== 0) ? this.state.custompage.ID : this.props.match.params.ID);
-            method = 'put';
+        let saveurl = `${API.GetURL()}/custompages/add`;
+
+        if (this.props.match.params.id !== undefined && this.props.match.params.id !== null) {
+            saveurl = `${API.GetURL()}/custompages/update`;
         }
-        this.setState({ loading: true });
+        this.setState({ loading: true, bsstyle: '', message: '' });
         fetch(saveurl, {
-            method: method,
+            method: 'post',
             body: JSON.stringify({
-                Name: this.state.custompage.Name, Status: this.state.custompage.Status, Sitemap: this.state.custompage.Sitemap,
-                Body: this.state.custompage.Body, Head: this.state.custompage.Head, NoTemplate: this.state.custompage.NoTemplate,
-                PageMeta: this.state.custompage.PageMeta, Title: this.state.custompage.Title
+                id: this.state.id,
+                name: this.state.name, status: this.state.status, sitemap: this.state.sitemap,
+                body: this.state.body, head: this.state.head, noTemplate: this.state.noTemplate,
+                pageMeta: this.state.pageMeta, title: this.state.title
             }),
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    this.setState({ loading: false, bsstyle: 'danger', message: "Authorization has been denied for this request." });
-                } else if (response.status === 200) {
-                    this.setState({ loading: false, message: "Page saved.", bsstyle: 'success' });
-                } else if (response.status === 201) {
-                    this.setState({ loading: false, message: "Page created, you keeping the page here.", bsstyle: 'success' });
+                if (response.status === 200) {
+
                     response.json().then(data => {
-                        this.fetchData(localStorage.getItem("token"), data.ID);
+                        this.setState({ message: "Page saved.", bsstyle: 'success' });
+                        setTimeout(() => { this.fetchData(data.id) }, 2000);
                     });
                 } else {
-                    this.setState({ loading: false, message: "Page cannot be saved.", bsstyle: 'danger' });
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.error });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                    });
                 }
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
     }
 
-    slugify() {
-        fetch(API.GetURL() + 'api/Utility/Slugify?t=' + this.state.article.URL)
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-                let a = this.state.custompage;
-                a.Name = data;
-                this.setState({ custompage: a });
-            });
-    }
 
     handleBlur(e) {
+        const fd = new FormData();
         switch (e.target.name) {
             case 'Name':
-                this.slugify();
+                fd.append("url", this.state.name);
+                fetch(`${API.GetURL()}/custompages/slugify`, {
+                    method: 'post',
+                    body: fd,
+                    headers: {
+                        'Authorization': `Bearer ${this.state.token}`
+                    }
+                })
+                    .then(response => {
+                        if (response.status === 200) {
+                            response.text().then(data => {
+                                this.setState({ name: data });
+                            });
+                        }
+                    }).catch(err => {
+                        console.log(err);
+                        this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                    });
                 break;
+
         }
     }
 
     handleChange(e) {
-        var temp = this.state.custompage;
+
         switch (e.target.name) {
             case 'Status':
-                temp.Status = e.target.value;
+                this.setState({ status: parseInt(e.target.value, 10) });
                 break;
+
             case 'Name':
-                temp.Name = e.target.value;
+                this.setState({ name: e.target.value });
                 break;
             case 'Title':
-                temp.Title = e.target.value;
+                this.setState({ title: e.target.value });
                 break;
             case 'Sitemap':
-                temp.Sitemap = e.target.checked;
+                this.setState({ sitemap: e.target.checked });
                 break;
             case 'Body':
-                temp.Body = e.target.value;
+                this.setState({ body: e.target.value });
                 break;
             case 'Head':
-                temp.Head = e.target.value;
+                this.setState({ head: e.target.value });
                 break;
             case 'NoTemplate':
-                temp.NoTemplate = e.target.checked;
+                this.setState({ noTemplate: e.target.checked });
                 break;
             case 'PageMeta':
-                temp.PageMeta = e.target.value;
+                this.setState({ pageMeta: e.target.value });
                 break;
         }
-        this.setState({ custompage: temp });
     }
 
-    renderTable(page) {
-        if (page !== null) {
+    render() {
+        if (!this.state.loggedin) {
+            return <Redirect to="/loginform" />;
+        }
+        else if (this.state.redirect !== "")
+            return <Redirect to={this.state.redirect} />;
+        else {
+
             return (
                 <div>
-                    
-                    <Grid fluid>
-                        <Row>
-                            <Col sm={12}>
-                                <Table>
-                                    <tbody>
-                                        <tr>
-                                            <td><FormGroup controlId="Status">
-                                                <ControlLabel>Status (Required)</ControlLabel>
-                                                <FormControl name="Status" componentClass="select" placeholder="select" value={page.Status} onChange={this.handleChange}>
-                                                    <option value="1">Draft</option>
-                                                    <option value="2">Publish</option>
-                                                    <option value="3">Inactive</option>
-                                                </FormControl>
-                                            </FormGroup></td>
-                                            <td>
-                                                <Checkbox name="NoTemplate" checked={page.NoTemplate} onChange={this.handleChange}>Empty Page</Checkbox> <Checkbox name="Sitemap" checked={page.Sitemap} onChange={this.handleChange}>Sitemap</Checkbox>
-                                            </td>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={pages} className="img-fluid icon-large me-2" /> Web page</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
 
-                                        </tr>
-                                        <tr>
-                                            <td colSpan="3">
-                                                <FormGroup controlId="Name" >
-                                                    <ControlLabel>Page Name (Required)</ControlLabel>
-                                                    <FormControl name="Name" type="text" value={page.Name} onChange={this.handleChange} onBlur={this.handleBlur} />
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colSpan="3">
-                                                <FormGroup controlId="Title" >
-                                                    <ControlLabel>Page Title (Required)</ControlLabel>
-                                                    <FormControl name="Title" type="text" value={page.Title} onChange={this.handleChange} />
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
+                        </div>
+                    </div>
+                    <div className="fixedBottom ">
+                        <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                    </div>
+                    {this.state.loading ? <Spinner /> : null}
+                    <form className="mb-5" onSubmit={(e) => {
+                        e.preventDefault(); this.saveData();
+                    }}>
+                        <div className="row">
+                            <div className="col">
+                                <div className="mb-3">
+                                    <label className="form-label">Status (Required)</label>
+                                    <select className="form-select" name="Status" required value={this.state.status} onChange={this.handleChange}>
+                                        <option value={1}>Draft</option>
+                                        <option value={2}>Publish</option>
+                                        <option value={3}>Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="col">
+                                <div className="form-check">
+                                    {this.state.noTemplate ? <input className="form-check-input" name="NoTemplate" type="checkbox" checked id="noTemplateCheckDefault" onChange={this.handleChange} /> :
+                                        <input className="form-check-input" type="checkbox" name="NoTemplate" id="noTemplateCheckDefault" onChange={this.handleChange} />}
+                                    <label className="form-check-label" htmlFor="noTemplateCheckDefault">
+                                        No Template
+                                    </label>
+                                </div>
+                            </div>
+                            <div className="col">
+                                <div className="form-check">
+                                    {this.state.sitemap ? <input className="form-check-input" name="Sitemap" type="checkbox" checked id="SitemapCheckDefault" onChange={this.handleChange} /> :
+                                        <input className="form-check-input" type="checkbox" name="Sitemap" id="SitemapCheckDefault" onChange={this.handleChange} />}
+                                    <label className="form-check-label" htmlFor="SitemapCheckDefault">
+                                        Sitemap
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Page Name (Required)</label>
+                            <input type='text' maxLength="200" required className="form-control" name='Name' value={this.state.name} onChange={this.handleChange} onBlur={this.handleBlur} required />
+                        </div>
 
-                                        <tr>
-                                            <td colSpan="3">
-                                                <FormGroup controlId="PageMeta">
-                                                    <ControlLabel>Page Meta(optional)</ControlLabel>
-                                                    <FormControl name="PageMeta" componentClass="textarea" rows="4" value={page.PageMeta} onChange={this.handleChange} />
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colSpan="3">
-                                                <FormGroup controlId="Head">
-                                                    <ControlLabel>Page Head(optional)</ControlLabel>
-                                                    <FormControl name="Head" componentClass="textarea" rows="6" value={page.Head} onChange={this.handleChange} />
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
+                        <div className="mb-3">
+                            <label className="form-label">Page Title (Required)</label>
+                            <input type='text' maxLength="150" className="form-control" name='Title' value={this.state.title} onChange={this.handleChange} required />
+                        </div>
 
-                                        <tr>
-                                            <td colSpan="3">
-                                                <FormGroup controlId="Body">
-                                                    <ControlLabel>Body (Required)</ControlLabel> <Button bsStyle="link" onClick={this.handleDriveModal}>Open Drive</Button>
-                                                    <FormControl name="Body" componentClass="textarea" rows="20" value={page.Body} onChange={this.handleChange} />
-                                                </FormGroup>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colSpan="3">
-                                                <Button type="button" onClick={this.saveData}>Save</Button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </Table>
-                            </Col>
-                        </Row>
+                        <div className="mb-3">
+                            <label className="form-label">Page Meta(optional)</label>
+                            <textarea name="PageMeta" className="form-control" rows="6" value={this.state.pageMeta}
+                                onChange={this.handleChange}></textarea>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">Page Head(optional)</label>
+                            <textarea name="Head" className="form-control" rows="6" value={this.state.head}
+                                onChange={this.handleChange}></textarea>
+                        </div>
+
+
+                        <div className="mb-3">
+                            <label className="form-label">Body (Required)</label>
+                            <Button bsStyle="link" onClick={this.handleDriveModal}>Open Drive</Button>
+                            <textarea name="Body" className="form-control" required rows="20" value={this.state.body} onChange={this.handleChange}></textarea>
+                        </div>
+                        <button disabled={this.state.loading} type="submit" className="btn btn-secondary">Save</button>
+
+
                         <Modal show={this.state.showdrivemodal} onHide={this.handleDriveModal}>
                             <Modal.Header closeButton>
                                 <Modal.Title>Drive</Modal.Title>
@@ -224,29 +264,7 @@ export class CustomPageManage extends Component {
                                 <DrivePop />
                             </Modal.Body>
                         </Modal>
-                    </Grid>
-                </div>
-            );
-        } else {
-            return <span />;
-        }
-    }
-
-    render() {
-        if (!this.state.loggedin) {
-            return <Redirect to="/loginform" />;
-        }
-        else {
-            let contents = this.state.loading
-                ? <ProgressBar active now={100} />
-                : this.renderTable(this.state.custompage);
-            return (
-                <div>
-                    <h1>Web Page</h1>
-                    <div className="fixedBottom ">
-                        <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
-                    </div>
-                    {contents}
+                    </form>
                 </div>
             );
         }

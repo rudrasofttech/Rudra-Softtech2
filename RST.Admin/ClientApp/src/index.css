@@ -101,3 +101,18 @@
         display: inline-block;
         border-radius: 50%;
     }
+
+.icon-extra-small {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-small {
+    width: 30px;
+    height: 30px;
+}
+
+.icon-large {
+    width: 40px;
+    height: 40px;
+}

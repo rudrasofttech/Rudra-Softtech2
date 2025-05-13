@@ -3,45 +3,52 @@ import { Link, Redirect } from 'react-router-dom';
 import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
-
+import members from '../group.png';
+import Spinner from './shared/Spinner';
+import dayjs from 'dayjs';
 export class MemberList extends Component {
     displayName = MemberList.name
 
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
 
-        if (token === null) {
-            loggedin = false;
-        }
         this.state = {
-            data: { Members: [], TotalPages: 0, Page: 0 }, pagesize: 20, loading: true, loggedin: loggedin, showchangepasswordmodal: false, bsstyle: '', message: ''
+            data: { items: [], pageCount: 0, pageIndex: 0 }, pagesize: 20, token: localStorage.getItem("token"),
+            loading: false, loggedin: localStorage.getItem("token") === null ? false : true, showchangepasswordmodal: false, bsstyle: '', message: ''
         };
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
-        if (loggedin) {
-            this.fetchData(token, 1, this.state.pagesize);
-        }
+
+    }
+    componentDidMount() {
+        this.fetchData(1, this.state.pagesize);
     }
 
-    fetchData(t, page, size) {
-        fetch(API.GetURL() + 'api/members?page=' + page + '&psize=' + size, {
+    fetchData(page, size) {
+        this.setState({ loading: true, bsstyle: '', message: '' });
+        fetch(API.GetURL() + '/members?page=' + page + '&psize=' + size, {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                 if (response.status === 200) {
+                    response.json().then(data => {
+                        this.setState({ data: data});
+                    });
                 } else {
-                    response.json()
-                        .then(data => {
-                            console.log(data);
-                            this.setState({ bsstyle: '', message: '', data: data, loading: false });
-                        });
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.error });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                    });
                 }
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
     }
 
@@ -79,7 +86,7 @@ export class MemberList extends Component {
 
     handlePageChange(e) {
         if (e.target.value !== '') {
-            this.fetchData(localStorage.getItem("token"), parseInt(e.target.value, 10), this.state.pagesize);
+            this.fetchData(parseInt(e.target.value, 10), this.state.pagesize);
         }
     }
 
@@ -90,28 +97,28 @@ export class MemberList extends Component {
 
     renderTable(ds) {
         let paging = <span />;
-        if (this.state.data.TotalPages > 0) {
+        if (this.state.data.pageCount > 0) {
             paging = <Row>
                 <Col smOffset={8} sm={2}>
-                    <FormGroup controlId="formControlsSelect">
-                        <FormControl componentClass="select" value={this.state.pagesize} onChange={this.handlePageSizeChange} placeholder="select" title="Page Size">
+                    <div className="mb-2">
+                        <select className="form-select" defaultValue={this.state.pagesize} onChange={this.handlePageSizeChange} aria-label="Default select example">
                             <option value="10">10 Per Page</option>
                             <option value="20">20 Per Page</option>
                             <option value="30">30 Per Page</option>
                             <option value="50">50 Per Page</option>
                             <option value="100">100 Per Page</option>
-                        </FormControl>
-                    </FormGroup>
+                        </select>
+                    </div>
 
                 </Col>
                 <Col sm={2}>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>Go To</InputGroup.Addon>
-                            <FormControl min="1" max={this.state.data.TotalPages} type="number" value={this.state.data.Page} onChange={this.handlePageChange} />
-                            <InputGroup.Addon> / {this.state.data.TotalPages}</InputGroup.Addon>
-                        </InputGroup>
-                    </FormGroup>
+                    <div className="mb-3">
+                        <div className="input-group">
+                            <span className="input-group-text" id="basic-addon3">Go To</span>
+                            <input min="1" max={this.state.data.pageCount} type="number" value={this.state.data.pageIndex} onChange={this.handlePageChange} className="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" />
+                            <span className="input-group-text"> / {this.state.data.pageCount}</span>
+                        </div>
+                    </div>
                 </Col>
             </Row>;
         }
@@ -127,27 +134,22 @@ export class MemberList extends Component {
                             <Table responsive striped bordered condensed hover>
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Email</th>
                                         <th>Name</th>
-                                        <th>Date Created</th>
-                                        <th>Date Modified</th>
+                                        <th>Last Logon</th>
                                         <th>Status</th>
                                         <th>Type</th>
-                                        <th />
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {ds.map(cp =>
-                                        <tr key={cp.ID}>
-                                            <td>{cp.ID}</td>
-                                            <td>{cp.Email}</td>
-                                            <td>{cp.FirstName}</td>
-                                            <td>{cp.CreateDate}</td>
-                                            <td>{cp.ModifyDate}</td>
-                                            <td>{this.renderMemberStatus(cp.Status)}</td>
-                                            <td>{this.renderMemberType(cp.UserType)}</td>
-                                            <td><Link className='btn btn-link' to={'/changepassword/' + cp.ID}>Change Password</Link></td>
+                                        <tr key={cp.id}>
+                                            <td>{cp.email}</td>
+                                            <td>{cp.firstName}</td>
+                                            <td>{dayjs(cp.lastLogon).format("DD.MMM.YYYY")}</td>
+                                            <td>{this.renderMemberStatus(cp.status)}</td>
+                                            <td>{this.renderMemberType(cp.userType)}</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -165,11 +167,13 @@ export class MemberList extends Component {
             return (<Redirect to="/loginform" />);
         } else {
             let contents = this.state.loading
-                ? <p><em>Loading...</em></p>
-                : this.renderTable(this.state.data.Members, this.columns);
+                ? <Spinner />
+                : this.renderTable(this.state.data.items, this.columns);
             return (
                 <div>
-                    <h1>Members</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 className="h2"><img src={members} className="img-fluid icon-large me-2" /> Members</h1>
+                    </div>
                     {contents}
                 </div>
             );

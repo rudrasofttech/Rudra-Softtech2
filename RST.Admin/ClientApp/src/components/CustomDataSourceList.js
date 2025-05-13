@@ -5,6 +5,9 @@ import { MessageStrip } from './MessageStrip';
 import { API } from './api';
 import Spinner from './shared/Spinner';
 import dayjs from 'dayjs';
+import gears from '../gears.png';
+import deleteicon from '../delete.png';
+import editicon from '../edit.png';
 
 export class CustomDataSourceList extends Component {
     //displayName = CustomDataSourceList.name
@@ -21,7 +24,7 @@ export class CustomDataSourceList extends Component {
     }
 
     fetchData() {
-        this.setState({ loading: true });
+        this.setState({ loading: true, bsstyle: '', message: '' });
         fetch(API.GetURL() + '/CustomDataSources', {
             method: 'get',
             headers: {
@@ -30,16 +33,13 @@ export class CustomDataSourceList extends Component {
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
-                } else if (response.status === 200) {
+                if (response.status === 200) {
                     response.json().then(data => {
-                        this.setState({ datasources: data, loading: false, bsstyle: '', message: '' });
+                        this.setState({ datasources: data });
                     });
                 } else {
                     response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.Message });
+                        this.setState({ bsstyle: 'danger', message: data.error });
                     }).catch(err => {
                         this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                     });
@@ -53,12 +53,12 @@ export class CustomDataSourceList extends Component {
 
     handleDeleteDS(e) {
         if (window.confirm("Are you sure you want to delete this data source?")) {
-            fetch(API.GetURL() + 'CustomDataSources/' + e.target.name,
+            fetch(API.GetURL() + '/CustomDataSources/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.state.token}`
                     }
                 })
                 .then(response => {
@@ -103,7 +103,7 @@ export class CustomDataSourceList extends Component {
                             <th>Created By</th>
                             <th>Date Modified</th>
                             <th>Modified By</th>
-                            <th><Link to={'/datasourcemanage/0'} className="btn btn-link">Create New</Link></th>
+                            <th colSpan={2}></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -118,8 +118,16 @@ export class CustomDataSourceList extends Component {
                                     {cp.dateModified !== null ? dayjs(cp.dateModified).format("DD.MMM.YYYY") : null}
                                 </td>
                                 <td>{cp.modifiedByName}</td>
-                                <td><Link className='btn btn-link' to={'/datasourcemanage/' + cp.id}>Edit</Link>
-                                    <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeleteDS}>Delete</button></td>
+                                <td>
+                                    <Link className='btn btn-link' to={'/datasourcemanage/' + cp.id}>
+                                        <img src={editicon} className="img-fluid icon-extra-small" />
+                                    </Link>
+                                </td>
+                                <td>
+                                    <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeleteDS}>
+                                        <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                    </button>
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -138,8 +146,11 @@ export class CustomDataSourceList extends Component {
                 : this.renderDataSourcesTable(this.state.datasources);
             return (
                 <div>
-                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 className="h2">Data Sources</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={gears} className="img-fluid icon-large me-2" /> Data Sources</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
+                            <Link to={'/datasourcemanage/0'} className="btn btn-primary">Create New</Link>
+                        </div>
                     </div>
                     {contents}
                 </div>

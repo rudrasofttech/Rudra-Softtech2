@@ -35,11 +35,11 @@ export default class App extends Component {
                 <Route path='/MemberList' component={MemberList} />
                 <Route path='/WebsiteSettings' component={WebsiteSettings} />
                 <Route path='/NewsletterDesign' component={NewsletterDesign} />
-                <Route path='/CustomPageManage/:ID' component={CustomPageManage} />
-                <Route path='/ArticleManage/:ID' component={ArticleManage} />
-                <Route path='/DataSourceManage/:ID' component={DataSourceManage} />
-                <Route path='/CategoryManage/:ID' component={CategoryManage} />
-                <Route path='/ChangePassword/:ID' component={ChangePassword} />
+                <Route path='/custompagemanage/:id?' component={CustomPageManage} />
+                <Route path='/ArticleManage/:id?' component={ArticleManage} />
+                <Route path='/DataSourceManage/:id?' component={DataSourceManage} />
+                <Route path='/CategoryManage/:id?' component={CategoryManage} />
+                <Route path='/ChangePassword/:id?' component={ChangePassword} />
             </Layout>
         );
     }

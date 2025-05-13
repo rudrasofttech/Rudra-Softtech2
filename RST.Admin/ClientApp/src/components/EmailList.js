@@ -1,65 +1,72 @@
 ﻿import React, { Component } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import { Col, Grid, Row, FormGroup, InputGroup, FormControl, Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
+import Spinner from './shared/Spinner';
+import email from '../letter.png';
+import dayjs from 'dayjs';
 
 export class EmailList extends Component {
     displayName = EmailList.name
 
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
-
-        if (token === null) {
-            loggedin = false;
-        }
-        this.state = { data: { Messages: [], TotalPages: 0, Page: 0 }, pagesize: 20, etype: '', group: '', sent: '', read: '', loading: true, loggedin: loggedin, emailgroups: [], bsstyle: '', message: '' };
+        
+        this.state = {
+            data: { items: [], pageCount: 0, pageIndex: 0 }, pagesize: 20, etype: '', group: '', sent: '', read: '', token: localStorage.getItem("token"),
+            loading: false, loggedin: localStorage.getItem("token") === null ? false : true, emailgroups: [], bsstyle: '', message: '' };
         this.handleChange = this.handleChange.bind(this);
         this.handlePageChange = this.handlePageChange.bind(this);
         this.handlePageSizeChange = this.handlePageSizeChange.bind(this);
-        if (loggedin) {
-            this.fetchEmailGroup();
-            this.fetchData(token, 0, this.state.pagesize, this.state.etype, this.state.group, this.state.sent, this.state.read);
-        }
     }
 
-    fetchData(t, page, size, etype, group, sent, read) {
-        fetch(API.GetURL() + 'api/EmailMessages?page=' + page + '&psize=' + size + '&etype=' + etype + '&group=' + group + '&sent=' + sent + '&read=' + read, {
+    componentDidMount() {
+        this.fetchEmailGroup();
+        this.fetchData(1, this.state.pagesize, this.state.etype, this.state.group, this.state.sent, this.state.read);
+    }
+
+    fetchData(page, size, etype, group, sent, read) {
+        this.setState({ loading: true, bsstyle: '', message: '' });
+        fetch(API.GetURL() + '/EmailMessages?page=' + page + '&psize=' + size + '&etype=' + etype + '&group=' + group + '&sent=' + sent + '&read=' + read, {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
+                if (response.status === 200) {
+                    response.json().then(data => {
+                        console.log(data);
+                        this.setState({ data: data, loading: false, bsstyle: '', message: '' });
+                    });
                 } else {
-                    response.json()
-                        .then(data => {
-                            console.log(data);
-                            this.setState({ data: data, loading: false, bsstyle: '', message: '' });
-                        });
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.error });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                    });
                 }
-
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
     }
 
     fetchEmailGroup() {
-        fetch(API.GetURL() + 'api/EmailMessages/EmailGroups',
+        fetch(API.GetURL() + '/EmailMessages/EmailGroups',
             {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem("token")
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.state.token}`
                 }
             })
             .then(response => {
                 if (response.status === 200 || response.status === 204) {
                     response.json().then(data => { this.setState({ emailgroups: data }); });
-                }
-                else if (response.status === 401) {
-                    console.log("Authorization has been denied for this request for email groups.");
                 }
             });
     }
@@ -86,33 +93,33 @@ export class EmailList extends Component {
 
     handlePageChange(e) {
         if (e.target.value !== '') {
-            this.fetchData(localStorage.getItem("token"), parseInt(e.target.value, 10), this.state.pagesize, this.state.etype, this.state.group, this.state.sent, this.state.read);
+            this.fetchData(parseInt(e.target.value, 10), this.state.pagesize, this.state.etype, this.state.group, this.state.sent, this.state.read);
         }
     }
 
     handlePageSizeChange(e) {
         if (e.target.value !== '') {
             this.setState({ pagesize: e.target.value });
-            this.fetchData(localStorage.getItem("token"), 1, e.target.value, this.state.etype, this.state.group, this.state.sent, this.state.read);
+            this.fetchData( 1, e.target.value, this.state.etype, this.state.group, this.state.sent, this.state.read);
         }
     }
     handleChange(e) {
         switch (e.target.name) {
             case 'EmailMessageType':
                 this.setState({ etype: e.target.value });
-                this.fetchData(localStorage.getItem("token"), 1, this.state.pagesize, e.target.value, this.state.group, this.state.sent, this.state.read);
+                this.fetchData( 1, this.state.pagesize, e.target.value, this.state.group, this.state.sent, this.state.read);
                 break;
             case 'EmailGroup':
                 this.setState({ group: e.target.value });
-                this.fetchData(localStorage.getItem("token"), 1, this.state.pagesize, this.state.etype, e.target.value, this.state.sent, this.state.read);
+                this.fetchData(1, this.state.pagesize, this.state.etype, e.target.value, this.state.sent, this.state.read);
                 break;
             case 'Sent':
                 this.setState({ sent: e.target.value });
-                this.fetchData(localStorage.getItem("token"), 1, this.state.pagesize, this.state.etype, this.state.group, e.target.value, this.state.read);
+                this.fetchData(1, this.state.pagesize, this.state.etype, this.state.group, e.target.value, this.state.read);
                 break;
             case 'Read':
                 this.setState({ read: e.target.value });
-                this.fetchData(localStorage.getItem("token"), 1, this.state.pagesize, this.state.etype, this.state.group, this.state.sent, e.target.value);
+                this.fetchData(1, this.state.pagesize, this.state.etype, this.state.group, this.state.sent, e.target.value);
                 break;
             default:
                 break;
@@ -121,28 +128,27 @@ export class EmailList extends Component {
     }
     renderTable(ds) {
         let paging = <span />;
-        if (this.state.data.TotalPages > 0) {
+        if (this.state.data.pageCount > 0) {
             paging = <Row>
-                <Col smOffset={8} sm={2}>
-                    <FormGroup controlId="formControlsSelect">
-                        <FormControl componentClass="select" value={this.state.pagesize} onChange={this.handlePageSizeChange} placeholder="select" title="Page Size">
+                <Col md={3}>
+                    <div className="mb-2">
+                        <select className="form-select" defaultValue={this.state.pagesize} onChange={this.handlePageSizeChange} aria-label="Default select example">
                             <option value="10">10 Per Page</option>
                             <option value="20">20 Per Page</option>
                             <option value="30">30 Per Page</option>
                             <option value="50">50 Per Page</option>
                             <option value="100">100 Per Page</option>
-                        </FormControl>
-                    </FormGroup>
-
+                        </select>
+                    </div>
                 </Col>
-                <Col sm={2}>
-                    <FormGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>Go To</InputGroup.Addon>
-                            <FormControl min="1" max={this.state.data.TotalPages} type="number" value={this.state.data.Page} onChange={this.handlePageChange} />
-                            <InputGroup.Addon> / {this.state.data.TotalPages}</InputGroup.Addon>
-                        </InputGroup>
-                    </FormGroup>
+                <Col md={3}>
+                    <div className="mb-3">
+                        <div className="input-group">
+                            <span className="input-group-text" id="basic-addon3">Go To</span>
+                            <input min="1" max={this.state.data.pageCount} type="number" value={this.state.data.pageIndex} onChange={this.handlePageChange} className="form-control" style={{width:"40px"}} id="basic-url" aria-describedby="basic-addon3 basic-addon4" />
+                            <span className="input-group-text"> / {this.state.data.pageCount}</span>
+                        </div>
+                    </div>
                 </Col>
             </Row>;
         }
@@ -152,10 +158,10 @@ export class EmailList extends Component {
                     <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
                 </div>
                 <Grid fluid="true">
-                    <Row>
+                    <Row className="mb-3">
                         <Col sm={3}>
-                            <FormGroup controlId="EmailMessageType">
-                                <FormControl componentClass="select" name="EmailMessageType" value={this.state.etype} onChange={this.handleChange} placeholder="select" title="Email Message Type">
+                            <div className="mb-2">
+                                <select className="form-select" name="EmailMessageType" value={this.state.etype} onChange={this.handleChange} placeholder="select" title="Email Message Type">
                                     <option value="">Email Type</option>
                                     <option value="1">Activation</option>
                                     <option value="2">Unsubscribe</option>
@@ -163,36 +169,30 @@ export class EmailList extends Component {
                                     <option value="3">Newsletter</option>
                                     <option value="4">ChangePassword</option>
                                     <option value="5">Reminder</option>
-                                </FormControl>
-                            </FormGroup>
+                                </select>
+                            </div>
                         </Col>
                         <Col sm={3}>
-                            <FormGroup controlId="EmailGroup">
-                                <FormControl componentClass="select" name="EmailGroup" value={this.state.group} onChange={this.handleChange} placeholder="select" title="Email Message Group">
-                                    <option value="">Email Group</option>
-                                    {this.state.emailgroups.map(cp =>
-                                        <option key={cp.EmailGroup} value={cp.EmailGroup}>{cp.EmailGroup}</option>
-                                    )}
-                                </FormControl>
-                            </FormGroup>
+                            <select className="form-select" name="EmailGroup" value={this.state.group} onChange={this.handleChange} placeholder="select" title="Email Message Group">
+                                <option value="">Email Group</option>
+                                {this.state.emailgroups.map(cp =>
+                                    <option key={cp.emailGroup} value={cp.emailGroup}>{cp.emailGroup}</option>
+                                )}
+                            </select>
                         </Col>
                         <Col sm={3}>
-                            <FormGroup controlId="Sent">
-                                <FormControl componentClass="select" name="Sent" value={this.state.sent} onChange={this.handleChange} placeholder="select" title="Email Sent">
-                                    <option value="">Is Sent</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </FormControl>
-                            </FormGroup>
+                            <select className="form-select" name="Sent" value={this.state.sent} onChange={this.handleChange} placeholder="select" title="Email Sent">
+                                <option value="">Is Sent</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
                         </Col>
                         <Col sm={3}>
-                            <FormGroup controlId="Read">
-                                <FormControl componentClass="select" name="Read" value={this.state.read} onChange={this.handleChange} placeholder="select" title="Email Read">
-                                    <option value="">Is Read</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </FormControl>
-                            </FormGroup>
+                            <select className="form-select" name="Read" value={this.state.read} onChange={this.handleChange} placeholder="select" title="Email Read">
+                                <option value="">Is Read</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
                         </Col>
                     </Row>
                     {paging}
@@ -213,15 +213,15 @@ export class EmailList extends Component {
                                 </thead>
                                 <tbody>
                                     {ds.map(cp =>
-                                        <tr key={cp.ID}>
-                                            <td>{cp.ToAddress} {cp.ToName}</td>
-                                            <td>{cp.LastAttempt}</td>
-                                            <td><input type="checkbox" defaultChecked={cp.IsRead} disabled /></td>
-                                            <td><input type="checkbox" defaultChecked={cp.IsSent} disabled /></td>
-                                            <td>{cp.EmailGroup}</td>
-                                            <td>{cp.CreateDate}</td>
-                                            <td>{cp.SentDate}</td>
-                                            <td>{cp.Subject}</td>
+                                        <tr key={cp.id}>
+                                            <td>{cp.toName}<br />{cp.toAddress}</td>
+                                            <td>{cp.lastAttempt !== null ? dayjs(cp.lastAttempt).format("DD.MMM.YYYY") : null}</td>
+                                            <td><input type="checkbox" defaultChecked={cp.isRead} disabled /></td>
+                                            <td><input type="checkbox" defaultChecked={cp.isSent} disabled /></td>
+                                            <td>{cp.emailGroup}</td>
+                                            <td>{dayjs(cp.createDate).format("DD.MMM.YYYY")}</td>
+                                            <td>{cp.sentDate !== null ? dayjs(cp.sentDate).format("DD.MMM.YYYY") : null}</td>
+                                            <td>{cp.subject}</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -240,11 +240,17 @@ export class EmailList extends Component {
             return (<Redirect to="/loginform" />);
         } else {
             let contents = this.state.loading
-                ? <p><em>Loading...</em></p>
-                : this.renderTable(this.state.data.Messages);
+                ? <Spinner />
+                : this.renderTable(this.state.data.items);
             return (
                 <div>
-                    <h1>Emails</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={email} className="img-fluid icon-large me-2" /> Emails</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
+                            
+                        </div>
+                    </div>
+                    
                     {contents}
                 </div>
             );

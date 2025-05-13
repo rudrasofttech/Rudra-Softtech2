@@ -5,6 +5,9 @@ import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
 import Spinner from './shared/Spinner';
+import articles from '../article.png';
+import deleteicon from '../delete.png';
+import editicon from '../edit.png';
 
 export class ArticleList extends Component {
     displayName = ArticleList.name
@@ -12,7 +15,14 @@ export class ArticleList extends Component {
     constructor(props) {
         super(props);
 
-        this.state = { articles: [], token: localStorage.getItem("token"), loading: false, loggedin: localStorage.getItem("token") !== null, bsstyle: '', message: '' };
+        this.state = {
+            articles: [],
+            token: localStorage.getItem("token"),
+            loading: false,
+            loggedin: localStorage.getItem("token") !== null,
+            bsstyle: '',
+            message: ''
+        };
         this.handleDeleteArticle = this.handleDeleteArticle.bind(this);
     }
 
@@ -21,7 +31,7 @@ export class ArticleList extends Component {
     }
 
     fetchData() {
-        this.setState({ loading: true });
+        this.setState({ loading: true, bsstyle: '', message: '' });
         fetch(API.GetURL() + '/posts', {
             method: 'get',
             headers: {
@@ -30,16 +40,13 @@ export class ArticleList extends Component {
             }
         })
             .then(response => {
-                if (response.status === 401) {
-                    localStorage.removeItem("token");
-                    this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
-                } else if (response.status === 200) {
+                if (response.status === 200) {
                     response.json().then(data => {
                         this.setState({ articles: data });
                     });
                 } else {
                     response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.Message });
+                        this.setState({ bsstyle: 'danger', message: data.error });
                     }).catch(err => {
                         this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                     });
@@ -53,39 +60,34 @@ export class ArticleList extends Component {
 
     handleDeleteArticle(e) {
         if (window.confirm("Are you sure you want to delete this article?")) {
-            fetch(API.GetURL() + '/posts/' + e.target.name,
+            this.setState({ loading: true, bsstyle: '', message: '' });
+            fetch(`${API.GetURL()}/posts/remove/${e}`,
                 {
-                    method: 'delete',
+                    method: 'get',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.state.token}`
                     }
                 })
                 .then(response => {
                     console.log(response.status);
                     if (response.status === 200) {
                         response.json().then(data => {
-                            console.log(data);
-                            let list = this.state.articles;
-                            for (var k in list) {
-                                if (list[k].ID === data.ID) {
-                                    list.splice(k, 1);
-                                    this.setState({ articles: list });
-                                    break;
-                                }
-                            }
+                            let list = this.state.articles.filter(t => t.id !== data.id);
+                            this.setState({ articles: list });
                         });
-                    }
-                    else if (response.status === 401) {
-                        this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request." });
-
                     }
                     else {
                         response.json().then(data => {
-                            console.log(data);
-                            this.setState({ message: 'Article deleted', bsstyle: 'success', loggedin: false });
+                            this.setState({ bsstyle: 'danger', message: data.error });
+                        }).catch(err => {
+                            this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                         });
                     }
+                }).catch(err => {
+                    this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                }).finally(() => {
+                    this.setState({ loading: false });
                 });
         }
     }
@@ -102,7 +104,7 @@ export class ArticleList extends Component {
                         <th>Date Modified</th>
                         <th>Modified By</th>
                         <th>Status</th>
-                        <th><Link to={'/articlemanage/0'} className="btn btn-link">Create New</Link></th>
+                        <th colSpan="2"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -114,8 +116,16 @@ export class ArticleList extends Component {
                             <td>{cp.dateModified !== null ? dayjs(cp.dateModified).format("DD.MMM.YYYY") : null}</td>
                             <td>{cp.modifiedByName}</td>
                             <td>{cp.status}</td>
-                            <td><Link className='btn btn-link' to={'/articlemanage/' + cp.id}>Edit</Link>
-                                <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeleteArticle}>Delete</button></td>
+                            <td>
+                                <Link className='btn btn-link' to={`/articlemanage/${cp.id}`}>
+                                    <img src={editicon} className="img-fluid icon-extra-small" />
+                                </Link>
+                            </td>
+                            <td>
+                                <button type='button' className='btn btn-link' onClick={() => { this.handleDeleteArticle(cp.id) }}>
+                                    <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                </button>
+                            </td>
                         </tr>
                     )}
                 </tbody>
@@ -128,20 +138,28 @@ export class ArticleList extends Component {
         if (!this.state.loggedin) {
             return (<Redirect to="/loginform" />);
         } else {
-            let contents = this.state.loading
-                ? <Spinner />
-                : this.renderTable(this.state.articles);
-            return (
-                <div>
-                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 className="h2">Articles</h1>
+            return <div>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={articles} className="img-fluid icon-large me-2" /> Articles</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
+                            <Link to={'/articlemanage/0'} className="btn btn-primary">Create New</Link>
+
+                            {/*<div className="btn-group me-2">*/}
+                            {/*    <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>*/}
+                            {/*    <button type="button" className="btn btn-sm btn-outline-secondary">Export</button>*/}
+                            {/*</div>*/}
+                            {/*<button type="button" className="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1">*/}
+                            {/*    <svg className="bi" aria-hidden="true"><use xlink: href="#calendar3"></use></svg>*/}
+                            {/*This week*/}
+                            {/*</button>*/}
+                        </div>
                     </div>
                     <div className="fixedBottom ">
                         <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
                     </div>
-                    {contents}
-                </div>
-            );
+                    {this.state.loading ? <Spinner /> : null}
+                    {this.renderTable(this.state.articles) }
+                </div>;
         }
     }
 }

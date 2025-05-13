@@ -32,7 +32,10 @@ namespace RST.Web.Controllers
             try
             {
 
-                foreach (var m in db.CustomPages.Include(t => t.CreatedBy).Include(t => t.ModifiedBy).ToList())
+                foreach (var m in db.CustomPages.Include(t => t.CreatedBy).Include(t => t.ModifiedBy)
+                    .OrderByDescending(t => t.DateModified)
+                    .ThenByDescending(t => t.DateCreated)
+                    .ThenBy(t => t.Name).ToList())
                 {
 
                     result.Add(new CustomPageDTO()
@@ -105,6 +108,8 @@ namespace RST.Web.Controllers
 
             try
             {
+                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                var m = db.Members.First(d => d.Email == email);
                 var cp = db.CustomPages.First(t => t.ID == page.ID);
                 cp.Head = page.Head;
                 cp.Name = page.Name;
@@ -114,17 +119,27 @@ namespace RST.Web.Controllers
                 cp.Status = page.Status;
                 cp.Title = page.Title;
                 cp.Body = page.Body;
-                cp.DateModified = DateTime.Now;
-                cp.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                cp.DateModified = DateTime.UtcNow;
+                cp.ModifiedBy = m;
                 db.Entry(cp).State = EntityState.Modified;
                 db.SaveChanges();
+                return Ok(cp);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
-            return Ok();
+            
+        }
+
+        [HttpPost]
+        [Route("slugify")]
+        [AllowAnonymous]
+        // PUT: api/CustomPages/5
+        public IActionResult Slugify([FromForm] string url)
+        {
+            return Ok(Utility.Slugify(url));
         }
 
         [HttpPost]
@@ -148,11 +163,13 @@ namespace RST.Web.Controllers
             {
                 if (!db.CustomPages.Any(t => t.Name.Trim() == page.Name.Trim()))
                 {
+                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                    var m = db.Members.First(d => d.Email == email);
                     var cp = new CustomPage()
                     {
                         Body = page.Body,
-                        CreatedBy = db.Members.First(d => d.Email == User.Identity.Name),
-                        DateCreated = DateTime.Now,
+                        CreatedBy = m,
+                        DateCreated = DateTime.UtcNow,
                         Head = page.Head,
                         Name = page.Name,
                         NoTemplate = page.NoTemplate,

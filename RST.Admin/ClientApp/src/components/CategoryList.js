@@ -3,23 +3,25 @@ import { Link, Redirect } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
+import Spinner from './shared/Spinner';
+import categories from '../product-categories.png';
+import deleteicon from '../delete.png';
+import editicon from '../edit.png';
 
 export class CategoryList extends Component {
     displayName = CategoryList.name;
+
     constructor(props) {
         super(props);
-        const token = localStorage.getItem("token");
-        let loggedin = true;
-
-        if (token === null) {
-            loggedin = false;
-        }
-        this.state = { categories: [], loading: true, loggedin: loggedin, bsstyle: '', message: '' };
+        this.state = { categories: [], token: localStorage.getItem("token"), loading: true, loggedin: localStorage.getItem("token") === null ? false : true, bsstyle: '', message: '' };
         this.handleDeleteCategory = this.handleDeleteCategory.bind(this);
-        if (loggedin) {
-            this.fetchData(token);
-        }
+
     }
+
+    componentDidMount() {
+        this.fetchData();
+    }
+
     renderMemberStatus(param) {
         switch (param) {
             case 0:
@@ -32,6 +34,7 @@ export class CategoryList extends Component {
                 return '';
         }
     }
+
     renderTable(ds) {
         return (
             <div>
@@ -41,22 +44,30 @@ export class CategoryList extends Component {
                 <Table responsive striped bordered condensed hover>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Name</th>
                             <th>Url Name</th>
                             <th>Status</th>
-                            <th><Link to={'/categorymanage/0'} className="btn btn-link">Create New</Link></th>
+                            <th colSpan={2}></th>
                         </tr>
                     </thead>
                     <tbody>
                         {ds.map(cp =>
-                            <tr key={cp.ID}>
-                                <td>{cp.ID}</td>
-                                <td>{cp.Name}</td>
-                                <td>{cp.UrlName}</td>
-                                <td>{this.renderMemberStatus(cp.Status)}</td>
-                                <td><Link className='btn btn-link btn-md' to={'/categorymanage/' + cp.ID}>Edit</Link>
-                                    <button type='button' name={cp.ID} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>Delete</button></td>
+                            <tr key={cp.id}>
+                                <td>{cp.name}</td>
+                                <td>{cp.urlName}</td>
+                                <td>
+                                    {this.renderMemberStatus(cp.status)}
+                                </td>
+                                <td>
+                                    <Link className='btn btn-link btn-md' to={'/categorymanage/' + cp.id}>
+                                        <img src={editicon} className="img-fluid icon-extra-small" />
+                                    </Link>
+                                </td>
+                                <td>
+                                    <button type='button' name={cp.id} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>
+                                        <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                    </button>
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -64,31 +75,48 @@ export class CategoryList extends Component {
             </div>
         );
     }
-    fetchData(t) {
-        fetch(API.GetURL() + 'api/Categories', {
+
+    fetchData() {
+        this.setState({ loading: true });
+        fetch(API.GetURL() + '/Categories', {
             method: 'get',
             headers: {
-                'Authorization': 'Bearer ' + t
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.state.token}`
             }
         })
             .then(response => {
                 if (response.status === 401) {
+                    localStorage.removeItem("token");
                     this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loading: false });
                 }
-                return response.json().then(data => {
-                    this.setState({ categories: data, loading: false });
-                });
+                else if (response.status === 200) {
+                    response.json().then(data => {
+                        this.setState({ categories: data, loading: false, bsstyle: '', message: '' });
+                    });
+                } else {
+                    response.json().then(data => {
+                        this.setState({ bsstyle: 'danger', message: data.Message });
+                    }).catch(err => {
+                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                    });
+                }
+            }).catch(err => {
+                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+            }).finally(() => {
+                this.setState({ loading: false });
             });
 
     }
+
     handleDeleteCategory(e) {
         if (window.confirm("Are you sure you want to delete this category?")) {
-            fetch(API.GetURL() + 'api/Categories/' + e.target.name,
+            fetch(API.GetURL() + 'Categories/' + e.target.name,
                 {
                     method: 'delete',
                     headers: {
-                        'Authorization': 'Bearer ' + localStorage.getItem("token"),
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.state.token}`
                     }
                 })
                 .then(response => {
@@ -125,11 +153,16 @@ export class CategoryList extends Component {
             return (<Redirect to="/loginform" />);
         } else {
             let contents = this.state.loading
-                ? <p><em>Loading...</em></p>
+                ? <Spinner />
                 : this.renderTable(this.state.categories);
             return (
                 <div>
-                    <h1>Categories</h1>
+                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
+                        <h1 className="h2"><img src={categories} className="img-fluid icon-large me-2" />  Categories</h1>
+                        <div className="btn-toolbar mb-2 mb-md-0">
+                            <Link to={'/categorymanage/0'} className="btn btn-primary">Create New</Link>
+                        </div>
+                    </div>
                     {contents}
                 </div>
             );
