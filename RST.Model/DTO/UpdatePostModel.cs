@@ -5,21 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RST.Model
+namespace RST.Model.DTO
 {
-    public class Post
+    public class UpdatePostModel
     {
-        [Key]
-        public int ID { get; set; }
+        
         [MaxLength(200)]
         [Required]
         public string Title { set; get; }
-        public DateTime DateCreated { get; set; }
-        public Member CreatedBy { get; set; }
-        public DateTime? DateModified { get; set; }
-        public Member? ModifiedBy { get; set; }
         public PostStatus Status { get; set; }
-        public Category Category { get; set; }
+        public int CategoryId { get; set; }
         [MaxLength(200)]
         [Required]
         public string Tag { get; set; }
@@ -31,13 +26,13 @@ namespace RST.Model
         [MaxLength(100)]
         [Required]
         public string WriterName { get; set; }
+        [EmailAddress]
         public string WriterEmail { get; set; }
         [MaxLength(300)]
         public string OGImage { get; set; }
         [MaxLength(500)]
         public string OGDescription { get; set; }
         public string MetaTitle { get; set; }
-        public int Viewed { get; set; }
         [MaxLength(250)]
         [Required]
         public string URL { get; set; }

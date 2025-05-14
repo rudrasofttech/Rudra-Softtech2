@@ -64,7 +64,7 @@ export class CategoryList extends Component {
                                     </Link>
                                 </td>
                                 <td>
-                                    <button type='button' name={cp.id} className='btn btn-link btn-md' onClick={this.handleDeleteCategory}>
+                                    <button disabled={this.state.loading} type='button' className='btn btn-link btn-md' onClick={() => { this.handleDeleteCategory(cp.id) }}>
                                         <img src={deleteicon} className="img-fluid icon-extra-small" />
                                     </button>
                                 </td>
@@ -106,14 +106,13 @@ export class CategoryList extends Component {
             }).finally(() => {
                 this.setState({ loading: false });
             });
-
     }
 
     handleDeleteCategory(e) {
         if (window.confirm("Are you sure you want to delete this category?")) {
-            fetch(API.GetURL() + 'Categories/' + e.target.name,
+            fetch(`${API.GetURL() }/Categories/delete/${e}`,
                 {
-                    method: 'delete',
+                    method: 'get',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${this.state.token}`
@@ -124,14 +123,8 @@ export class CategoryList extends Component {
                     if (response.status === 200) {
                         response.json().then(data => {
                             console.log(data);
-                            let list = this.state.categories;
-                            for (var k in list) {
-                                if (list[k].ID === data.ID) {
-                                    list.splice(k, 1);
-                                    this.setState({ categories: list });
-                                    break;
-                                }
-                            }
+                            let list = this.state.categories.filter(t => t.id !== data.id);
+                            this.setState({ categories: list });
                         });
                     }
                     else if (response.status === 401) {
@@ -139,10 +132,15 @@ export class CategoryList extends Component {
                     }
                     else {
                         response.json().then(data => {
-                            console.log(data);
-                            this.setState({ bsstyle: '', message: '', loggedin: false });
+                            this.setState({ bsstyle: 'danger', message: data.Message });
+                        }).catch(err => {
+                            this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                         });
                     }
+                }).catch(err => {
+                    this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                }).finally(() => {
+                    this.setState({ loading: false });
                 });
         }
     }
@@ -160,7 +158,7 @@ export class CategoryList extends Component {
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
                         <h1 className="h2"><img src={categories} className="img-fluid icon-large me-2" />  Categories</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
-                            <Link to={'/categorymanage/0'} className="btn btn-primary">Create New</Link>
+                            <Link to={'/categorymanage'} className="btn btn-primary">Create New</Link>
                         </div>
                     </div>
                     {contents}

@@ -74,8 +74,8 @@ namespace RST.Web.Controllers
 
         // PUT: api/Posts/5
         [HttpPost]
-        [Route("update")]
-        public IActionResult Update([FromBody] Post post)
+        [Route("update/{id}")]
+        public IActionResult Update(int id,[FromBody] UpdatePostModel model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -85,36 +85,39 @@ namespace RST.Web.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
-                || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
-                || string.IsNullOrEmpty(post.URL))
+            if (string.IsNullOrEmpty(model.Title) || string.IsNullOrEmpty(model.Tag) || string.IsNullOrEmpty(model.Description)
+                || string.IsNullOrEmpty(model.Article) || string.IsNullOrEmpty(model.WriterName) || string.IsNullOrEmpty(model.WriterEmail)
+                || string.IsNullOrEmpty(model.URL))
             {
                 return BadRequest("Required field missing.");
             }
-
+            if (!db.Categories.Any(t => t.ID == model.CategoryId))
+            {
+                return BadRequest(new { error = "Incorrect category selected." });
+            }
             try
             {
-                var p = db.Posts.FirstOrDefault(t => t.ID == post.ID && !(t.URL == post.URL && t.ID != post.ID));
+                var p = db.Posts.FirstOrDefault(t => t.ID == id && !(t.URL == model.URL && t.ID != id));
                 if (p != null)
                 {
                     var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                     var m = db.Members.First(d => d.Email == email);
-                    p.Article = post.Article;
-                    p.Category = db.Categories.First(t => t.ID == post.Category.ID);
+                    p.Article = model.Article;
+                    p.Category = db.Categories.First(t => t.ID == model.CategoryId);
                     p.ModifiedBy = m;
                     p.DateModified = DateTime.UtcNow;
-                    p.Description = post.Description;
-                    p.MetaTitle = post.MetaTitle;
-                    p.OGDescription = post.OGDescription;
-                    p.OGImage = post.OGImage;
-                    p.Sitemap = post.Sitemap;
-                    p.Status = post.Status;
-                    p.Tag = post.Tag;
-                    p.TemplateName = post.TemplateName;
-                    p.Title = post.Title;
-                    p.URL = post.URL;
-                    p.WriterEmail = post.WriterEmail;
-                    p.WriterName = post.WriterName;
+                    p.Description = model.Description;
+                    p.MetaTitle = model.MetaTitle;
+                    p.OGDescription = model.OGDescription;
+                    p.OGImage = model.OGImage;
+                    p.Sitemap = model.Sitemap;
+                    p.Status = model.Status;
+                    p.Tag = model.Tag;
+                    p.TemplateName = model.TemplateName;
+                    p.Title = model.Title;
+                    p.URL = model.URL;
+                    p.WriterEmail = model.WriterEmail;
+                    p.WriterName = model.WriterName;
                     db.SaveChanges();
                     return Ok(p);
                 }
@@ -134,7 +137,7 @@ namespace RST.Web.Controllers
 
         // POST: api/Posts
         [HttpPost]
-        public IActionResult Post([FromBody] Post post)
+        public IActionResult Post([FromBody] UpdatePostModel model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -144,34 +147,38 @@ namespace RST.Web.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                if (string.IsNullOrEmpty(post.Title) || string.IsNullOrEmpty(post.Tag) || string.IsNullOrEmpty(post.Description)
-                    || string.IsNullOrEmpty(post.Article) || string.IsNullOrEmpty(post.WriterName) || string.IsNullOrEmpty(post.WriterEmail)
-                    || string.IsNullOrEmpty(post.URL))
+                if (string.IsNullOrEmpty(model.Title) || string.IsNullOrEmpty(model.Tag) || string.IsNullOrEmpty(model.Description)
+                    || string.IsNullOrEmpty(model.Article) || string.IsNullOrEmpty(model.WriterName) || string.IsNullOrEmpty(model.WriterEmail)
+                    || string.IsNullOrEmpty(model.URL))
                 {
                     return BadRequest("Required field missing.");
                 }
-                if (!db.Posts.Any(t => t.URL == post.URL))
+                if(!db.Categories.Any(t => t.ID == model.CategoryId))
+                {
+                    return BadRequest(new { error = "Incorrect category selected." });
+                }
+                if (!db.Posts.Any(t => t.URL == model.URL))
                 {
                     var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                     var m = db.Members.First(d => d.Email == email);
                     var p = new Post
                     {
-                        Article = post.Article,
-                        Category = db.Categories.First(t => t.ID == post.Category.ID),
+                        Article = model.Article,
+                        Category = db.Categories.First(t => t.ID == model.CategoryId),
                         CreatedBy = m,
                         DateCreated = DateTime.UtcNow,
-                        Description = post.Description,
-                        MetaTitle = post.MetaTitle,
-                        OGDescription = post.OGDescription,
-                        OGImage = post.OGImage,
-                        Sitemap = post.Sitemap,
-                        Status = post.Status,
-                        Tag = post.Tag,
-                        TemplateName = post.TemplateName,
-                        Title = post.Title,
-                        URL = post.URL,
-                        WriterEmail = post.WriterEmail,
-                        WriterName = post.WriterName
+                        Description = model.Description,
+                        MetaTitle = model.MetaTitle,
+                        OGDescription = model.OGDescription,
+                        OGImage = model.OGImage,
+                        Sitemap = model.Sitemap,
+                        Status = model.Status,
+                        Tag = model.Tag,
+                        TemplateName = model.TemplateName,
+                        Title = model.Title,
+                        URL = model.URL,
+                        WriterEmail = model.WriterEmail,
+                        WriterName = model.WriterName
                     };
                     db.Posts.Add(p);
                     db.SaveChanges();

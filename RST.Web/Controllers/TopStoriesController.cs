@@ -10,15 +10,17 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TopStoriesController(RSTContext context) : ControllerBase
+    public class TopStoriesController(ILogger<TopStoriesController> _logger, RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
+        private readonly ILogger<TopStoriesController> logger = _logger;
         private bool CheckRole(string roles)
         {
             return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
         }
 
-        public IActionResult GetTopStories()
+        [HttpGet]
+        public IActionResult Get()
         {
             if (!CheckRole("admin,demo"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -27,30 +29,37 @@ namespace RST.Web.Controllers
                 return Ok(db.TopStories.Include(t => t.CreatedBy).ToList());
             }
             catch (Exception ex) {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+                logger.LogError(ex, "TopStoriesController > Get");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
 
         // GET: api/TopStories/5
-
-        public IActionResult GetTopStory(int id)
+        [HttpGet]
+        public IActionResult Get(int id)
         {
-            if (!CheckRole("admin,demo"))
-                return Unauthorized(new { error = Utility.UnauthorizedMessage });
-
-            var topStory = db.TopStories.Include(t => t.Post).FirstOrDefault(t => t.ID == id);
-            if (topStory == null)
+            try
             {
-                return NotFound();
-            }
+                if (!CheckRole("admin,demo"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
 
-            return Ok(topStory);
+                var topStory = db.TopStories.Include(t => t.Post).FirstOrDefault(t => t.ID == id);
+                if (topStory == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(topStory);
+            }
+            catch (Exception ex) {
+                logger.LogError(ex, "TopStoriesController > Get(id)");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
         }
 
         // PUT: api/TopStories/5
         [HttpPost]
-        [Route("addpost/{postId}")]
-        public IActionResult AddPost(int postId)
+        public IActionResult Post([FromForm] int postId)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -74,17 +83,23 @@ namespace RST.Web.Controllers
                         return NotFound(new { error = "Post not found" });
                     else
                     {
-                        var ts = new TopStory() { CreatedBy = db.Members.First(d => d.Email == User.Identity.Name), DateCreated = DateTime.UtcNow, Post = post };
+                        var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                        var m = db.Members.First(d => d.Email == email);
+                        var ts = new TopStory() { 
+                            CreatedBy = m, 
+                            DateCreated = DateTime.UtcNow, 
+                            Post = post };
+
                         db.TopStories.Add(ts);
                         db.SaveChanges();
                         return Ok(ts);
                     }
                 }
-
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+                logger.LogError(ex, "TopStoriesController > Post");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
 
         }
@@ -92,8 +107,8 @@ namespace RST.Web.Controllers
 
         // DELETE: api/TopStories/5
         [HttpGet]
-        [Route("remove/{postId}")]
-        public IActionResult RemovePost(int postId)
+        [Route("delete/{postId}")]
+        public IActionResult Delete(int postId)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -113,7 +128,8 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+                logger.LogError(ex, "TopStoriesController > Delete");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
     }

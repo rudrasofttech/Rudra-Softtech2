@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FormGroup, FormControl, FieldGroup, Button, ControlLabel, ProgressBar, Checkbox, Table, Modal, Grid, Row, Col } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { DrivePop } from './DrivePop';
 import { API } from './api';
@@ -250,7 +250,7 @@ export class CustomPageManage extends Component {
 
                         <div className="mb-3">
                             <label className="form-label">Body (Required)</label>
-                            <Button bsStyle="link" onClick={this.handleDriveModal}>Open Drive</Button>
+                            <button type="button" className="btn btn-link" onClick={this.handleDriveModal}>Open Drive</button>
                             <textarea name="Body" className="form-control" required rows="20" value={this.state.body} onChange={this.handleChange}></textarea>
                         </div>
                         <button disabled={this.state.loading} type="submit" className="btn btn-secondary">Save</button>

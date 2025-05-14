@@ -34,6 +34,8 @@ export class NavMenu extends Component {
                 if (response.status === 401) {
                     localStorage.removeItem("token");
                 }
+            }).catch(err => {
+                console.log(err);
             });
     }
 

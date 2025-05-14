@@ -12,10 +12,10 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class CustomDataSourcesController(ILogger<CustomDataSourcesController> logger, RSTContext context) : ControllerBase
+    public class CustomDataSourcesController(ILogger<CustomDataSourcesController> _logger, RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
-        private readonly ILogger<CustomDataSourcesController> _logger = logger;
+        private readonly ILogger<CustomDataSourcesController> logger = _logger;
 
         private bool CheckRole(string roles)
         {
@@ -30,7 +30,7 @@ namespace RST.Web.Controllers
 
             try
             {
-                List<CustomDataSourceDTO> result = [.. db.CustomDataSources.Select(m => new CustomDataSourceDTO()
+                List<CustomDataSourceDTO> result = [.. db.CustomDataSources.Include(t => t.CreatedBy).Include(t => t.ModifiedBy).Select(m => new CustomDataSourceDTO()
                 {
                 ID = m.ID,
                 Query = m.Query,
@@ -48,6 +48,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "CustomDataSourcesController > Get");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
@@ -70,14 +71,15 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "CustomDataSourcesController > Get");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // PUT: api/CustomDataSources/
         [HttpPost]
-        [Route("update")]
-        public IActionResult Update([FromBody] CustomDataSource ds)
+        [Route("update/{id}")]
+        public IActionResult Update(int id, [FromBody] PostCustomDataSource model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -89,33 +91,34 @@ namespace RST.Web.Controllers
 
             try
             {
-                var cds = db.CustomDataSources.FirstOrDefault(t => t.ID == ds.ID);
+                var cds = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
                 if (cds != null)
                 {
-                    cds.HtmlTemplate = ds.HtmlTemplate;
-                    cds.Name = ds.Name;
-                    cds.Query = ds.Query;
-                    cds.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
-                    cds.DateModified = DateTime.Now;
-                    db.Entry(cds).State = EntityState.Modified;
+                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                    var m = db.Members.First(d => d.Email == email);
+                    cds.HtmlTemplate = model.HtmlTemplate;
+                    cds.Name = model.Name;
+                    cds.Query = model.Query;
+                    cds.ModifiedBy = m;
+                    cds.DateModified = DateTime.UtcNow;
                     db.SaveChanges();
                     return Ok(cds);
                 }
                 else
                 {
-                    return BadRequest(new { error = "Unable to find data source with this id." });
+                    return NotFound(new { error = "Unable to find data source with this id." });
                 }
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "CustomDataSourcesController > Update");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // POST: api/CustomDataSources
         [HttpPost]
-        [Route("add")]
-        public IActionResult Add([FromBody] CustomDataSource ds)
+        public IActionResult Post([FromBody] PostCustomDataSource model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -126,15 +129,18 @@ namespace RST.Web.Controllers
             }
             try
             {
-                if (db.CustomDataSources.Any(t => t.Name.Trim() == ds.Name.Trim()))
+                if (!db.CustomDataSources.Any(t => t.Name.Trim() == model.Name.Trim()))
                 {
+                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                    var m = db.Members.First(d => d.Email == email);
+
                     var cds = new CustomDataSource()
                     {
-                        CreatedBy = db.Members.First(d => d.Email == User.Identity.Name),
-                        DateCreated = DateTime.Now,
-                        HtmlTemplate = ds.HtmlTemplate,
-                        Name = ds.Name,
-                        Query = ds.Query
+                        CreatedBy = m,
+                        DateCreated = DateTime.UtcNow,
+                        HtmlTemplate = model.HtmlTemplate.Trim(),
+                        Name = model.Name.Trim(),
+                        Query = model.Query.Trim()
                     };
                     db.CustomDataSources.Add(cds);
                     db.SaveChanges();
@@ -147,6 +153,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "CustomDataSourcesController > Post");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
@@ -174,6 +181,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "CustomDataSourcesController > Delete");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }

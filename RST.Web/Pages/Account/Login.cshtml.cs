@@ -21,16 +21,16 @@ namespace RST.Web.Pages.Account
         [Required]
         [MaxLength(150)]
         [BindProperty]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
         [Required]
         [BindProperty]
         [DataType(DataType.Password)]
         [MaxLength(150)]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
-        public string Error { get; set; }
+        public string Error { get; set; } = string.Empty;
 
-        public LoginReturnDTO LoginReturn {  get; set; }
+        public LoginReturnDTO LoginReturn { get; set; } = null!;
         public Member? CurrentMember { get; set; }
 
         public void OnGet()

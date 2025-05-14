@@ -53,9 +53,9 @@ export class CustomDataSourceList extends Component {
 
     handleDeleteDS(e) {
         if (window.confirm("Are you sure you want to delete this data source?")) {
-            fetch(API.GetURL() + '/CustomDataSources/' + e.target.name,
+            fetch(`${API.GetURL()}/CustomDataSources/delete/${e}`,
                 {
-                    method: 'delete',
+                    method: 'get',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${this.state.token}`
@@ -66,14 +66,8 @@ export class CustomDataSourceList extends Component {
                     if (response.status === 200) {
                         response.json().then(data => {
                             console.log(data);
-                            let list = this.state.datasources;
-                            for (var k in list) {
-                                if (list[k].ID === data.ID) {
-                                    list.splice(k, 1);
-                                    this.setState({ datasources: list });
-                                    break;
-                                }
-                            }
+                            let list = this.state.datasources.filter(t => t.id !== data.id);
+                            this.setState({ datasources: list });
                         });
                     }
                     else if (response.status === 401) {
@@ -81,10 +75,15 @@ export class CustomDataSourceList extends Component {
                     }
                     else {
                         response.json().then(data => {
-                            console.log(data);
-                            this.setState({ bsstyle: '', message: '', loading: false });
+                            this.setState({ bsstyle: 'danger', message: data.error });
+                        }).catch(err => {
+                            this.setState({ bsstyle: 'danger', message: "Unable to process request." });
                         });
                     }
+                }).catch(err => {
+                    this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                }).finally(() => {
+                    this.setState({ loading: false });
                 });
         }
     }
@@ -124,7 +123,8 @@ export class CustomDataSourceList extends Component {
                                     </Link>
                                 </td>
                                 <td>
-                                    <button type='button' name={cp.id} className='btn btn-link' onClick={this.handleDeleteDS}>
+                                    <button disabled={this.state.loading} type='button'  className='btn btn-link'
+                                        onClick={() => { this.handleDeleteDS(cp.id); } }>
                                         <img src={deleteicon} className="img-fluid icon-extra-small" />
                                     </button>
                                 </td>
@@ -149,7 +149,7 @@ export class CustomDataSourceList extends Component {
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
                         <h1 className="h2"><img src={gears} className="img-fluid icon-large me-2" /> Data Sources</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
-                            <Link to={'/datasourcemanage/0'} className="btn btn-primary">Create New</Link>
+                            <Link to={'/datasourcemanage'} className="btn btn-primary">Create New</Link>
                         </div>
                     </div>
                     {contents}

@@ -67,30 +67,30 @@ namespace RST.Web
         }
         #endregion
 
-        #region Serialization helper functions
-        public static T Deserialize<T>(string obj)
-        {
-            // Create a new file stream for reading the XML file
-            XmlSerializer SerializerObj = new XmlSerializer(typeof(T));
-            // Load the object saved above by using the Deserialize function
-            T LoadedObj = (T)SerializerObj.Deserialize(new StringReader(obj));
+        //#region Serialization helper functions
+        //public static T Deserialize<T>(string obj)
+        //{
+        //    // Create a new file stream for reading the XML file
+        //    XmlSerializer SerializerObj = new XmlSerializer(typeof(T));
+        //    // Load the object saved above by using the Deserialize function
+        //    T LoadedObj = (T)SerializerObj.Deserialize(new StringReader(obj));
 
-            return LoadedObj;
-        }
+        //    return LoadedObj;
+        //}
 
-        public static string Serialize<T>(T obj)
-        {
-            // Create a new XmlSerializer instance with the type of the test class
-            XmlSerializer SerializerObj = new XmlSerializer(typeof(T));
+        //public static string Serialize<T>(T obj)
+        //{
+        //    // Create a new XmlSerializer instance with the type of the test class
+        //    XmlSerializer SerializerObj = new XmlSerializer(typeof(T));
 
-            // Create a new file stream to write the serialized object to a file
-            TextWriter WriteFileStream = new StringWriter();
-            SerializerObj.Serialize(WriteFileStream, obj);
+        //    // Create a new file stream to write the serialized object to a file
+        //    TextWriter WriteFileStream = new StringWriter();
+        //    SerializerObj.Serialize(WriteFileStream, obj);
 
-            // Cleanup
-            return WriteFileStream.ToString();
-        }
-        #endregion
+        //    // Cleanup
+        //    return WriteFileStream.ToString();
+        //}
+        //#endregion
 
         
 

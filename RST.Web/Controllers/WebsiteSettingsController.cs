@@ -12,16 +12,17 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class WebsiteSettingsController(RSTContext context) : ControllerBase
+    public class WebsiteSettingsController(ILogger<WebsiteSettingsController> _logger, RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
+        private readonly ILogger<WebsiteSettingsController> logger = _logger;
         private bool CheckRole(string roles)
         {
             return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
         }
 
         [HttpGet]
-        public IActionResult GetWebsiteSettings()
+        public IActionResult Get()
         {
             if (!CheckRole("admin,demo"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -29,25 +30,35 @@ namespace RST.Web.Controllers
             {
                 return Ok(db.WebsiteSettings.Where(t => t.KeyName != "UniversalPassword").ToList());
             }
-            catch (Exception ex) {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "WebsiteSettingsController > Get");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
 
         // GET: api/WebsiteSettings/5
         [HttpGet("{id}")]
-        public IActionResult GetWebsiteSetting(string id)
+        public IActionResult Get(string id)
         {
-            if (!CheckRole("admin,demo"))
-                return Unauthorized(new { error = Utility.UnauthorizedMessage });
-
-            var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id.Trim());
-            if (websiteSetting == null)
+            try
             {
-                return NotFound();
-            }
+                if (!CheckRole("admin,demo"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
 
-            return Ok(websiteSetting);
+                var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id.Trim());
+                if (websiteSetting == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(websiteSetting);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "WebsiteSettingsController > Get(id)");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
         }
 
         // PUT: api/WebsiteSettings/5
@@ -80,6 +91,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "WebsiteSettingsController > Update");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
 
@@ -99,7 +111,7 @@ namespace RST.Web.Controllers
             }
             try
             {
-                if(db.WebsiteSettings.Any(t => t.KeyName == websiteSetting.KeyName.Trim()))
+                if (db.WebsiteSettings.Any(t => t.KeyName == websiteSetting.KeyName.Trim()))
                 {
                     return BadRequest(new { error = "Setting name is duplicate" });
                 }
@@ -112,6 +124,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "WebsiteSettingsController > Add");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
@@ -121,19 +134,27 @@ namespace RST.Web.Controllers
         [Route("delete/{id}")]
         public IActionResult Delete(string id)
         {
-            if (!CheckRole("admin"))
-                return Unauthorized(new { error = Utility.UnauthorizedMessage });
-
-            var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id);
-            if (websiteSetting == null)
+            try
             {
-                return NotFound();
+                if (!CheckRole("admin"))
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
+                var websiteSetting = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == id);
+                if (websiteSetting == null)
+                {
+                    return NotFound();
+                }
+
+                db.WebsiteSettings.Remove(websiteSetting);
+                db.SaveChanges();
+
+                return Ok(websiteSetting);
             }
-
-            db.WebsiteSettings.Remove(websiteSetting);
-            db.SaveChanges();
-
-            return Ok(websiteSetting);
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "WebsiteSettingsController > Delete");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
         }
     }
 }

@@ -44,7 +44,7 @@ builder.Services.AddAuthentication(options =>
     options.LogoutPath = new PathString("/account/logout");
     options.ExpireTimeSpan = TimeSpan.FromDays(180);
 });
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 
 builder.Services.AddCors(options =>
 {

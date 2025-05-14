@@ -12,10 +12,10 @@ namespace RST.Web.Pages
         private readonly ILogger<IndexModel> _logger = logger;
         private readonly WebsiteSettingsService _siteSettingsService = websiteSettingsService;
         private readonly DataSourceService _dataSourceService = dataSourceService;
-        public CustomPage CustomPage { get; set; }
-        public string CommonHeadContent { get; set; }
-        public string SiteHeader { get; set; }
-        public string SiteFooter { get; set; }
+        public CustomPage CustomPage { get; set; } = null!;
+        public string CommonHeadContent { get; set; } = string.Empty;
+        public string SiteHeader { get; set; } = string.Empty;
+        public string SiteFooter { get; set; } = string.Empty;
 
         public void OnGet(string pagename)
         {

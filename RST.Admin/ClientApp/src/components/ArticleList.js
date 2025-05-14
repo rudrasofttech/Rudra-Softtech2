@@ -142,7 +142,7 @@ export class ArticleList extends Component {
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
                         <h1 className="h2"><img src={articles} className="img-fluid icon-large me-2" /> Articles</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
-                            <Link to={'/articlemanage/0'} className="btn btn-primary">Create New</Link>
+                            <Link to={'/articlemanage'} className="btn btn-primary">Create New</Link>
 
                             {/*<div className="btn-group me-2">*/}
                             {/*    <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>*/}

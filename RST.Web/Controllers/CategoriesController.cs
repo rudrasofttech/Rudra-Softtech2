@@ -2,16 +2,17 @@
 using Microsoft.AspNetCore.Mvc;
 using RST.Context;
 using RST.Model;
+using RST.Model.DTO;
 using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoriesController(ILogger<CategoriesController> logger, RSTContext context) : ControllerBase
+    public class CategoriesController(ILogger<CategoriesController> _logger, RSTContext context) : ControllerBase
     {
         private readonly RSTContext db = context;
-        private readonly ILogger<CategoriesController> _logger = logger;
+        private readonly ILogger<CategoriesController> logger = _logger;
 
         private bool CheckRole(string roles)
         {
@@ -20,28 +21,43 @@ namespace RST.Web.Controllers
 
         // GET: api/Categories
         [HttpGet]
-        public List<Category> Get()
+        public IActionResult Get()
         {
-            return [.. db.Categories];
+            try
+            {
+                return Ok(db.Categories.ToList());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("CategoriesController > Get");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
         }
 
         // GET: api/Categories/5
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            
-            var category = db.Categories.FirstOrDefault(t => t.ID == id);
-            if (category == null)
-                return NotFound();
+            try
+            {
+                var category = db.Categories.FirstOrDefault(t => t.ID == id);
+                if (category == null)
+                    return NotFound();
 
-            return Ok(category);
+                return Ok(category);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("CategoriesController > Get(id)");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
         }
 
         // PUT: api/Categories/5
         [HttpPost]
-        [Route("update")]
+        [Route("update/{id}")]
         [Authorize]
-        public IActionResult Update([FromBody] Category category)
+        public IActionResult Update(int id, [FromBody] PostCategoryModel model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -53,28 +69,29 @@ namespace RST.Web.Controllers
 
             try
             {
-                var c = db.Categories.FirstOrDefault(t => t.ID == category.ID);
+                var c = db.Categories.FirstOrDefault(t => t.ID == id);
                 if (c == null)
                     return NotFound(new { error = "Category not found" });
                 else
                 {
-                    c.Name = category.Name;
-                    c.UrlName = category.UrlName;
-                    c.Status = category.Status;
+                    c.Name = model.Name;
+                    c.UrlName = model.UrlName;
+                    c.Status = model.Status;
                     db.SaveChanges();
                     return Ok(c);
                 }
             }
             catch (Exception ex)
             {
+                logger.LogError("CategoriesController > Update");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
 
         // POST: api/Categories
         [HttpPost]
-        [Route("add")]
-        public IActionResult Add([FromBody] Category category)
+        [Authorize]
+        public IActionResult Post([FromBody] PostCategoryModel model)
         {
             try
             {
@@ -85,18 +102,23 @@ namespace RST.Web.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                category.ID = 0;
-                if (db.Categories.Any(t => t.Name == category.Name.Trim()))
+                
+                if (db.Categories.Any(t => t.Name == model.Name.Trim()))
                     return BadRequest(new { error = "Duplicate category name." });
-                if (db.Categories.Any(t => t.UrlName == category.UrlName.Trim()))
+                if (db.Categories.Any(t => t.UrlName == model.UrlName.Trim()))
                     return BadRequest(new { error = "Duplicate category url." });
-                db.Categories.Add(category);
+                db.Categories.Add(new Category() { 
+                    Name = model.Name,
+                    Status = model.Status,
+                    UrlName = Utility.Slugify(model.UrlName),
+                });
                 db.SaveChanges();
 
-                return Ok(category);
+                return Ok(model);
             }
             catch (Exception ex)
             {
+                logger.LogError("CategoriesController > Post");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
@@ -104,6 +126,7 @@ namespace RST.Web.Controllers
         // DELETE: api/Categories/5
         [HttpGet]
         [Route("delete/{id}")]
+        [Authorize]
         public IActionResult Delete(int id)
         {
             try
@@ -129,6 +152,7 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
+                logger.LogError("CategoriesController > Delete");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
         }
