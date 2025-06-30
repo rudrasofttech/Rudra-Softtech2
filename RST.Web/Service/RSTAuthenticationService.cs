@@ -14,7 +14,7 @@ namespace RST.Web.Service
         public Tuple<Member?, bool> ValidateUser(string username, string password)
         {
             var m = dc.Members.FirstOrDefault(t => t.Email == username &&
-            (t.Status == MemberStatus.Active || t.Status == MemberStatus.Unverified));
+            (t.Status == RecordStatus.Active || t.Status == RecordStatus.Unverified));
 
             if(m != null && m.EncryptedPassword != null)
             {
@@ -69,7 +69,7 @@ namespace RST.Web.Service
                 }
                 catch (Exception)
                 {
-                    m.Status = MemberStatus.Deleted;
+                    m.Status = RecordStatus.Deleted;
                     dc.SaveChanges();
                 }
             }
@@ -78,12 +78,12 @@ namespace RST.Web.Service
 
         public Member? GetUser(string username)
         {
-            return dc.Members.SingleOrDefault(t => (t.Email == username ) && t.Status != MemberStatus.Deleted);
+            return dc.Members.SingleOrDefault(t => (t.Email == username ) && t.Status != RecordStatus.Deleted);
         }
 
         public bool AnyLoginAttempteRemain(string email)
         {
-            var m = dc.Members.FirstOrDefault(t => (t.Email == email) && t.Status != MemberStatus.Deleted);
+            var m = dc.Members.FirstOrDefault(t => (t.Email == email) && t.Status != RecordStatus.Deleted);
             if (m == null)
                 return true;
             else
@@ -157,7 +157,7 @@ namespace RST.Web.Service
                 {
                     link.VerifyDate = DateTime.UtcNow;
                     var m = dc.Members.First(t => t.ID == link.Member.ID);
-                    m.Status = (byte)MemberStatus.Active;
+                    m.Status = (byte)RecordStatus.Active;
                     m.ModifyDate = DateTime.UtcNow;
                     m.ModifiedBy = link.Member;
                     dc.SaveChanges();
@@ -216,7 +216,7 @@ namespace RST.Web.Service
                 Newsletter = newsletter,
                 Password = string.Empty, //password,
                 EncryptedPassword = EncryptionHelper.CalculateSHA256($"{password}-{password}"),
-                Status = MemberStatus.Unverified,
+                Status = RecordStatus.Unverified,
                 UserType = mType,
             };
 

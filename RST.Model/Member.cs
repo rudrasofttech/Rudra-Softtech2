@@ -30,7 +30,7 @@ namespace RST.Model
         [MaxLength(200)]
         public string FirstName { get; set; } = string.Empty;
         [JsonIgnore]
-        public MemberStatus Status { get; set; }
+        public RecordStatus Status { get; set; }
         public DateTime? LastLogon { get; set; }
         [JsonIgnore]
         public DateTime? ModifyDate { get; set; }

@@ -26,6 +26,8 @@ namespace RST.Context
 
         public virtual DbSet<CustomDataSource> CustomDataSources { get; set; }
         public virtual DbSet<CustomPage> CustomPages { get; set; }
+        public virtual DbSet<UserWebsite> UserWebsites { get; set; }
+        public virtual DbSet<UserWebsiteTheme> UserWebsiteThemes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -48,6 +50,8 @@ namespace RST.Context
 
                 entity.Property(e => e.KeyName).HasMaxLength(50);
             });
+            modelBuilder.Entity<UserWebsite>().ToTable("UserWebsite");
+            modelBuilder.Entity<UserWebsiteTheme>().ToTable("UserWebsiteTheme");
         }
     }
 }

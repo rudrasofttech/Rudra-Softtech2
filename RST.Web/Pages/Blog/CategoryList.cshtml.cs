@@ -27,7 +27,7 @@ namespace RST.Web.Pages.Blog
             {
                 Posts.AddRange(db.Posts.Where(t => t.Category.ID == c.ID));
             }
-            Categories.AddRange(db.Categories.Where(t => t.Status == MemberStatus.Active).OrderBy(t => t.Name));
+            Categories.AddRange(db.Categories.Where(t => t.Status == RecordStatus.Active).OrderBy(t => t.Name));
             CommonHeadContent = _siteSettingsService.GetSiteSetting("CommonHeadContent");
             SiteFooter = _siteSettingsService.GetSiteSetting("SiteFooter");
             SiteHeader = _siteSettingsService.GetSiteSetting("SiteHeader");

@@ -6,6 +6,7 @@ import { API } from './api';
 import Spinner from './shared/Spinner';
 import email from '../letter.png';
 import dayjs from 'dayjs';
+import deleteicon from '../delete.png';
 
 export class EmailList extends Component {
     displayName = EmailList.name
@@ -71,6 +72,47 @@ export class EmailList extends Component {
             });
     }
 
+    handleDeleteCategory(e) {
+        if (window.confirm("Are you sure you want to delete this Email?")) {
+            fetch(`${API.GetURL()}/emailmessages/delete/${e}`,
+                {
+                    method: 'get',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.state.token}`
+                    }
+                })
+                .then(response => {
+                    console.log(response.status);
+                    if (response.status === 200) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let d = {
+                                items: this.state.data.items.filter(t => t.id !== data.id),
+                                pageCount: this.state.data.pageCount,
+                                pageIndex: this.state.data.pageIndex
+                            };
+                            this.setState({ data: d });
+                        });
+                    }
+                    else if (response.status === 401) {
+                        this.setState({ bsstyle: 'danger', message: "Authorization has been denied for this request.", loggedin: false });
+                    }
+                    else {
+                        response.json().then(data => {
+                            this.setState({ bsstyle: 'danger', message: data.Message });
+                        }).catch(err => {
+                            this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                        });
+                    }
+                }).catch(err => {
+                    this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                }).finally(() => {
+                    this.setState({ loading: false });
+                });
+        }
+    }
+
     renderEmailType(param) {
 
         switch (param) {
@@ -103,6 +145,7 @@ export class EmailList extends Component {
             this.fetchData( 1, e.target.value, this.state.etype, this.state.group, this.state.sent, this.state.read);
         }
     }
+
     handleChange(e) {
         switch (e.target.name) {
             case 'EmailMessageType':
@@ -126,6 +169,7 @@ export class EmailList extends Component {
         }
 
     }
+
     renderTable(ds) {
         let paging = <span />;
         if (this.state.data.pageCount > 0) {
@@ -209,6 +253,7 @@ export class EmailList extends Component {
                                         <th>Create Date</th>
                                         <th>Sent Date</th>
                                         <th>Subject</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -222,6 +267,10 @@ export class EmailList extends Component {
                                             <td>{dayjs(cp.createDate).format("DD.MMM.YYYY")}</td>
                                             <td>{cp.sentDate !== null ? dayjs(cp.sentDate).format("DD.MMM.YYYY") : null}</td>
                                             <td>{cp.subject}</td>
+                                            <td><button disabled={this.state.loading} type='button' className='btn btn-link btn-md'
+                                                onClick={() => { this.handleDeleteCategory(cp.id) }}>
+                                                <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                            </button></td>
                                         </tr>
                                     )}
                                 </tbody>

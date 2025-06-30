@@ -17,6 +17,6 @@ namespace RST.Model
         [Required]
         [MaxLength(100)]
         public string UrlName { get; set; } = string.Empty;
-        public MemberStatus Status { get; set; }
+        public RecordStatus Status { get; set; }
     }
 }

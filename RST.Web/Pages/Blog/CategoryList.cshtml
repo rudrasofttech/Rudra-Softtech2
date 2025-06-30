@@ -47,7 +47,7 @@
                             <ul class="cat">
                                 @foreach (Category c in Model.Categories)
                                 {
-                                    if (c.Status == MemberStatus.Active)
+                                    if (c.Status == RecordStatus.Active)
                                     {
                                         <li>
                                             <a href="@Url.Content(string.Format("~/blog/{0}/index", c.UrlName))">

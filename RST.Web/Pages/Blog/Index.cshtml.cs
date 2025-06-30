@@ -23,7 +23,7 @@ namespace RST.Web.Pages.Blog
             CommonHeadContent = _siteSettingsService.GetSiteSetting("CommonHeadContent");
             SiteFooter = _siteSettingsService.GetSiteSetting("SiteFooter");
             SiteHeader = _siteSettingsService.GetSiteSetting("SiteHeader");
-            Categories.AddRange(_context.Categories.Where(t => t.Status == MemberStatus.Active).OrderBy(t => t.Name));
+            Categories.AddRange(_context.Categories.Where(t => t.Status == RecordStatus.Active).OrderBy(t => t.Name));
             Posts.Clear();
             Posts.AddRange(_context.Posts.OrderByDescending(t => t.DateCreated));
         }

@@ -1,6 +1,18 @@
 ﻿namespace RST.Model
 {
-    public enum MemberStatus
+    public enum WebsiteType
+    {
+        None = 0,
+        VCard = 1,
+        Personal = 2,
+        Blog = 3,
+        Portfolio = 4,
+        ECommerce = 5,
+        Educational = 6,
+        NonProfit = 7,
+        Resume = 8,
+    }
+    public enum RecordStatus
     {
         Active = 0,
         Inactive = 1,

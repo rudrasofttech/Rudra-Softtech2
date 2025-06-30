@@ -5,16 +5,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RST.Model.DTO
+namespace RST.Model.DTO.UserWebsite
 {
-    public class PostCategoryModel
+    public class CreateUserWebsiteDTO
     {
         [Required]
-        [MaxLength(100)]
+        [MaxLength(250)]
         public string Name { get; set; } = string.Empty;
         [Required]
-        [MaxLength(100)]
-        public string UrlName { get; set; } = string.Empty;
-        public RecordStatus Status { get; set; }
+        public WebsiteType WSType { get; set; }
+        public Guid ThemeId { get; set; } = Guid.Empty;
     }
 }

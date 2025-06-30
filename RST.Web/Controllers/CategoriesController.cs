@@ -145,7 +145,7 @@ namespace RST.Web.Controllers
                 }
                 else
                 {
-                    category.Status = MemberStatus.Deleted;
+                    category.Status = RecordStatus.Deleted;
                 }
                 db.SaveChanges();
                 return Ok(category);

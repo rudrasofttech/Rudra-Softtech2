@@ -121,7 +121,7 @@ namespace RST.Web.Controllers
                 {
                     return NotFound();
                 }
-                member.Status = MemberStatus.Deleted;
+                member.Status = RecordStatus.Deleted;
                 member.ModifyDate = DateTime.Now;
                 db.Entry(member).State = EntityState.Modified; db.SaveChanges();
 
