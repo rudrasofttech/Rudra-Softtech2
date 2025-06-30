@@ -274,3 +274,4 @@ __pycache__/
 /RST.Web/wwwroot/logs
 /RST.Web/appsettings.Production.json
 /LiveBackup
+/RST.Admin/.config
