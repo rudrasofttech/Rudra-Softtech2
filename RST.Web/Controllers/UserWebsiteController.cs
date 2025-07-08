@@ -18,18 +18,32 @@ namespace RST.Web.Controllers
 
         private bool CheckRole(string roles)
         {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+            if (string.IsNullOrWhiteSpace(roles))
+                return false;
+
+            var allowedRoles = roles
+                .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(r => r.Trim())
+                .Where(r => !string.IsNullOrEmpty(r))
+                .ToList();
+
+            var userRoles = User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return allowedRoles.Any(ar => userRoles.Any(ur => string.Equals(ar, ur, StringComparison.OrdinalIgnoreCase)));
         }
 
         [HttpGet]
 
-        public IActionResult Get([FromQuery]int page = 1, [FromQuery] int psize = 20)
+        public async Task<IActionResult> GetAsync([FromQuery]int page = 1, [FromQuery] int psize = 20)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
             try
             {
-                int count = db.UserWebsites.Count();
+                int count = await db.UserWebsites.CountAsync();
                 var result = new PagedData<UserWebsiteListItemDTO>
                 {
                     PageIndex = page,
@@ -37,7 +51,12 @@ namespace RST.Web.Controllers
                     TotalRecords = count
                 };
 
-                var query = db.UserWebsites.OrderBy(t => t.Created).Skip((page - 1) * psize).Take(psize);
+                var query = await db.UserWebsites
+        .OrderBy(t => t.Created)
+        .Skip((page - 1) * psize)
+        .Take(psize)
+        .AsNoTracking()
+        .ToListAsync(); 
 
                 foreach (var m in query.ToList())
                 {
@@ -124,6 +143,11 @@ namespace RST.Web.Controllers
                 if (db.UserWebsites.Any(t => t.Name == model.Name))
                     return BadRequest(new { error = "Website with this name already exists." });
 
+                // Load the theme using ThemeId from the model
+                var theme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == model.ThemeId);
+                if (theme == null)
+                    return BadRequest(new { error = "Theme not found." });
+
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                 var m = db.Members.First(d => d.Email == email);
                 var uw = new UserWebsite()
@@ -132,7 +156,9 @@ namespace RST.Web.Controllers
                     Name = model.Name,
                     Owner = m,
                     Status = RecordStatus.Inactive,
-                    WSType = model.WSType
+                    WSType = model.WSType,
+                    Html = theme.Html,         // Set Html from theme
+                    ThemeId = theme.Id         // Set ThemeId from theme
                 };
                 if (uw.WSType == WebsiteType.VCard)
                     uw.VisitingCardDetail = new VisitingCardDetail();
@@ -356,6 +382,46 @@ namespace RST.Web.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error updating user Visiting Card");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpPost]
+        [Route("updatetheme")]
+        public IActionResult UpdateTheme([FromBody] UpdateThemeModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                var member = db.Members.FirstOrDefault(d => d.Email == email);
+                if (member == null)
+                    return Unauthorized(new { error = "User not found." });
+
+                var website = db.UserWebsites.Include(t => t.Owner)
+                    .FirstOrDefault(t => t.Id == model.WebsiteId && t.Owner.ID == member.ID);
+
+                if (website == null)
+                    return NotFound(new { error = "Website not found or you do not have permission to update it." });
+
+                var theme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == model.ThemeId);
+                if (theme == null)
+                    return BadRequest(new { error = "Theme not found." });
+
+                website.ThemeId = theme.Id;
+                website.Html = theme.Html;
+                website.Modified = DateTime.UtcNow;
+
+                db.UserWebsites.Update(website);
+                db.SaveChanges();
+
+                return Ok(website);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating website theme");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }

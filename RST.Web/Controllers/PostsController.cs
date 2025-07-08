@@ -20,7 +20,21 @@ namespace RST.Web.Controllers
 
         private bool CheckRole(string roles)
         {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+            if (string.IsNullOrWhiteSpace(roles))
+                return false;
+
+            var allowedRoles = roles
+                .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(r => r.Trim())
+                .Where(r => !string.IsNullOrEmpty(r))
+                .ToList();
+
+            var userRoles = User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return allowedRoles.Any(ar => userRoles.Any(ur => string.Equals(ar, ur, StringComparison.OrdinalIgnoreCase)));
         }
 
         [HttpGet]

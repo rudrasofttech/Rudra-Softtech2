@@ -19,7 +19,21 @@ namespace RST.Web.Controllers
 
         private bool CheckRole(string roles)
         {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
+            if (string.IsNullOrWhiteSpace(roles))
+                return false;
+
+            var allowedRoles = roles
+                .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(r => r.Trim())
+                .Where(r => !string.IsNullOrEmpty(r))
+                .ToList();
+
+            var userRoles = User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return allowedRoles.Any(ar => userRoles.Any(ur => string.Equals(ar, ur, StringComparison.OrdinalIgnoreCase)));
         }
 
         [HttpGet]
@@ -87,7 +101,7 @@ namespace RST.Web.Controllers
 
         [HttpPost]
         [Route("create")]
-        public IActionResult Create([FromBody] UserWebsiteTheme theme)
+        public IActionResult Create([FromBody] PostUserWebsiteThemeDTO model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -95,7 +109,7 @@ namespace RST.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (theme == null)
+            if (model == null)
             {
                 return BadRequest(new { error = "Invalid theme data" });
             }
@@ -103,7 +117,16 @@ namespace RST.Web.Controllers
             {
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                 var m = db.Members.First(d => d.Email == email);
-                theme.CreatedById = m.ID;
+                var theme = new UserWebsiteTheme
+                {
+                    Name = model.Name,
+                    Tags = model.Tags,
+                    Html = model.Html,
+                    WSType = model.WSType,
+                    CreateDate = DateTime.UtcNow,
+                    ModifyDate = null,
+                    CreatedById = m.ID
+                };
                 db.UserWebsiteThemes.Add(theme);
                 db.SaveChanges();
                 return CreatedAtAction(nameof(Get), new { id = theme.Id }, theme);
@@ -115,7 +138,9 @@ namespace RST.Web.Controllers
             }
         }
 
-        public IActionResult Update([FromBody] UserWebsiteTheme theme)
+        [HttpPost]
+        [Route("update/{id}")]
+        public IActionResult Update(Guid id, [FromBody] PostUserWebsiteThemeDTO model)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
@@ -123,23 +148,23 @@ namespace RST.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            if (theme == null || theme.Id == Guid.Empty)
+            if (model == null || id == Guid.Empty)
             {
                 return BadRequest(new { error = "Invalid theme data" });
             }
             try
             {
 
-                var existingTheme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == theme.Id);
+                var existingTheme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == id);
                 if (existingTheme == null)
                 {
                     return NotFound(new { error = "Theme not found" });
                 }
-                existingTheme.Name = theme.Name;
-                existingTheme.Tags = theme.Tags;
-                existingTheme.Html = theme.Html;
+                existingTheme.Name = model.Name;
+                existingTheme.Tags = model.Tags;
+                existingTheme.Html = model.Html;
                 existingTheme.ModifyDate = DateTime.UtcNow;
-                existingTheme.WSType = theme.WSType;
+                existingTheme.WSType = model.WSType;
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                 var m = db.Members.First(d => d.Email == email);
                 existingTheme.ModifiedById = m.ID;
@@ -153,6 +178,8 @@ namespace RST.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("delete/{id}")]
         public IActionResult Delete(Guid id)
         {
             if (!CheckRole("admin"))

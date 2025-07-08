@@ -17,6 +17,8 @@ import { EmailList } from './components/EmailList';
 import { NewsletterDesign } from './components/NewsletterDesign';
 import { ChangePassword } from './components/ChangePassword';
 import { Logout } from './components/Logout';
+import UserWebsiteThemeList from './components/UserWebsiteThemeList';
+import { UserWebsiteThemeManage } from './components/UserWebsiteThemeManage';
 
 export default class App extends Component {
     displayName = App.name
@@ -40,6 +42,8 @@ export default class App extends Component {
                 <Route path='/DataSourceManage/:id?' component={DataSourceManage} />
                 <Route path='/CategoryManage/:id?' component={CategoryManage} />
                 <Route path='/ChangePassword/:id?' component={ChangePassword} />
+                <Route path='/UserWebsiteThemes' component={UserWebsiteThemeList} />
+                <Route path='/UserWebsiteThemeManage/:id?' component={UserWebsiteThemeManage} />
             </Layout>
         );
     }
