@@ -50,6 +50,8 @@ namespace RST.Model
         [MaxLength(300)]
         public string? LinkedIn { get; set; }
         [MaxLength(300)]
+        public string? Twitter { get; set; }
+        [MaxLength(300)]
         public string? Facebook { get; set; }
         [MaxLength(250)]
         public string? Email { get; set; }
@@ -69,6 +71,7 @@ namespace RST.Model
 
     public class VCardPhoto
     {
+        public Guid PhotoId { get; set; } = Guid.NewGuid();
         [MaxLength(100)]
         public string Title { get; set; } = string.Empty;
         [MaxLength(250)]
