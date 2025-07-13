@@ -9,13 +9,9 @@ using Microsoft.EntityFrameworkCore;
 namespace RST.Web.Service
 {
     
-    public class DataSourceService 
+    public class DataSourceService(RSTContext ctx)
     {
-        private readonly RSTContext db;
-        public DataSourceService(RSTContext ctx)
-        {
-            db = ctx;
-        }
+        private readonly RSTContext db = ctx;
 
         public string LoadContent(string name)
         {
@@ -29,27 +25,25 @@ namespace RST.Web.Service
                 }
                 else
                 {
-                    using (var conn = new SqlConnection(db.Database.GetConnectionString()))
+                    using var conn = new SqlConnection(db.Database.GetConnectionString());
+                    conn.Open();
+                    var comm = new SqlCommand(string.Format("{0} FOR XML RAW , ROOT('DataSource'), Elements;", cds.Query), conn);
+                    var reader = comm.ExecuteXmlReader();
+                    if (reader.Read())
                     {
-                        conn.Open();
-                        SqlCommand comm = new SqlCommand(string.Format("{0} FOR XML RAW , ROOT('DataSource'), Elements;", cds.Query), conn);
-                        XmlReader reader = comm.ExecuteXmlReader();
-                        if (reader.Read())
-                        {
-                            string data = string.Format("<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:msxsl=\"urn:schemas-microsoft-com:xslt\" exclude-result-prefixes=\"msxsl\"> <xsl:output method=\"xml\" omit-xml-declaration=\"yes\" /> {0} </xsl:stylesheet>", cds.HtmlTemplate.Trim());
-                            // Load the style sheet.
-                            XslCompiledTransform xslt = new XslCompiledTransform();
-                            XmlReader xmlread = XmlReader.Create(new StringReader(data));
-                            xslt.Load(xmlread);
+                        string data = string.Format("<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:msxsl=\"urn:schemas-microsoft-com:xslt\" exclude-result-prefixes=\"msxsl\"> <xsl:output method=\"xml\" omit-xml-declaration=\"yes\" /> {0} </xsl:stylesheet>", cds.HtmlTemplate.Trim());
+                        // Load the style sheet.
+                        var xslt = new XslCompiledTransform();
+                        var xmlread = XmlReader.Create(new StringReader(data));
+                        xslt.Load(xmlread);
 
-                            // Execute the transform and output the results to a file.
-                            StringBuilder builder = new StringBuilder();
-                            XmlWriter xmlOutput = XmlWriter.Create(builder);
+                        // Execute the transform and output the results to a file.
+                        var builder = new StringBuilder();
+                        var xmlOutput = XmlWriter.Create(builder);
 
-                            xslt.Transform(reader, xmlOutput);
+                        xslt.Transform(reader, xmlOutput);
 
-                            return builder.ToString();
-                        }
+                        return builder.ToString();
                     }
                 }
 
@@ -67,7 +61,7 @@ namespace RST.Web.Service
             }
             string output = input;
 
-            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+            var doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(input);
             if (doc.DocumentNode.SelectNodes("//datasource") != null)
             {

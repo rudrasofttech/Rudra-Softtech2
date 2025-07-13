@@ -20,5 +20,7 @@ namespace RST.Model
         [JsonIgnore]
         public int? ModifiedById { get; set; } = null;
         public WebsiteType WSType { get; set; } = WebsiteType.None;
+        [MaxLength(250)]
+        public string? Thumbnail { get; set; } = string.Empty;
     }
 }

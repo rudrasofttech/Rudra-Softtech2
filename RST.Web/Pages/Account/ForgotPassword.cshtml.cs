@@ -14,7 +14,7 @@ namespace RST.Web.Pages.Account
 
         [MaxLength(150)]
         [BindProperty]
-        [Required]
+        [Required(ErrorMessage = "Email is required.")]
         public string Email { get; set; } = string.Empty;
 
         public bool IsResetPasswordEmailSent { get; set; }

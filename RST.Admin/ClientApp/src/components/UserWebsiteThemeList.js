@@ -120,6 +120,7 @@ class UserWebsiteThemeList extends Component {
                             <Table responsive striped bordered condensed hover>
                                 <thead>
                                     <tr>
+                                        <th style={{ width: "150px" }}></th>
                                         <th>Name</th>
                                         <th>Tags</th>
                                         <th>Created</th>
@@ -128,6 +129,7 @@ class UserWebsiteThemeList extends Component {
                                 <tbody>
                                     {themes.map(theme => (
                                         <tr key={theme.id}>
+                                            <td><img src={theme.thumbnail} className="img-fluid" /></td>
                                             <td>{theme.name}</td>
                                             <td>{theme.tags}</td>
                                             <td>{new Date(theme.createDate).toLocaleString()}</td>

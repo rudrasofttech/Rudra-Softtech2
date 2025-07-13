@@ -123,6 +123,7 @@ namespace RST.Web.Controllers
                     Tags = model.Tags,
                     Html = model.Html,
                     WSType = model.WSType,
+                    Thumbnail = model.Thumbnail,
                     CreateDate = DateTime.UtcNow,
                     ModifyDate = null,
                     CreatedById = m.ID
@@ -163,6 +164,7 @@ namespace RST.Web.Controllers
                 existingTheme.Name = model.Name;
                 existingTheme.Tags = model.Tags;
                 existingTheme.Html = model.Html;
+                existingTheme.Thumbnail = model.Thumbnail;
                 existingTheme.ModifyDate = DateTime.UtcNow;
                 existingTheme.WSType = model.WSType;
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;

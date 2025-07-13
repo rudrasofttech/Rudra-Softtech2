@@ -15,7 +15,7 @@ export class UserWebsiteThemeManage extends Component {
 
         this.state = {
             name: '',
-            tags: '', html: '', wstype: 0,
+            tags: '', html: '', wstype: 0, thumbnail: '',
             token: localStorage.getItem("token"),
             loading: false, loggedin: localStorage.getItem("token") === null ? false : true,
             error : '', success : '',
@@ -43,7 +43,7 @@ export class UserWebsiteThemeManage extends Component {
                     response.json().then(data => {
                         console.log(data);
                         this.setState({
-                            name: data.name, tags: data.tags, html: data.html, wstype: data.wsType, loading: false
+                            name: data.name, tags: data.tags, html: data.html, wstype: data.wsType, thumbnail: data.thumbnail, loading: false
                         });
                     });
                 } else if (response.status === 401) {
@@ -74,7 +74,7 @@ export class UserWebsiteThemeManage extends Component {
         fetch(saveurl, {
             method: 'post',
             body: JSON.stringify({
-                name: this.state.name, html: this.state.html, tags: this.state.tags,
+                name: this.state.name, html: this.state.html, tags: this.state.tags, thumbnail: this.state.thumbnail,
                 wsType: this.state.wstype
             }),
             headers: {
@@ -144,6 +144,10 @@ export class UserWebsiteThemeManage extends Component {
                                 <option value="7">NonProfit</option>
                                 <option value="8">Resume</option>
                             </select>
+                        </div>
+                        <div className="mb-3" >
+                            <label htmlFor="thumbnailTxt" class="form-label">Thumbnail</label>
+                            <input id="thumbnailTxt" className="form-control" disabled={this.state.loading} name="Thumbnail" type="url" maxLength="250" value={this.state.thumbnail} onChange={(e) => { this.setState({ thumbnail: e.target.value }); }} />
                         </div>
                         <div className="mb-3">
                             <label htmlFor="htmlTxt" className="form-label">HTML (Required)</label>

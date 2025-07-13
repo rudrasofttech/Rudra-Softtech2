@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RST.Context;
@@ -11,6 +11,7 @@ namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserWebsiteController(RSTContext context, ILogger<UserWebsiteController> _logger) : ControllerBase
     {
         private readonly RSTContext db = context;

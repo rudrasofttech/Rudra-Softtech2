@@ -101,6 +101,11 @@ export class NavMenu extends Component {
                             <img src={template} className="img-fluid icon-small me-2" />
                             Website Themes</Link>
                     </li>
+                    <li className="nav-item mb-2">
+                        <Link className="nav-link text-dark" to={'/UserWebsites'}>
+                            <img src={template} className="img-fluid icon-small me-2" />
+                            User Websites</Link>
+                    </li>
                     {/*<li className="nav-item mb-2">*/}
                     {/*    <Link className="nav-link text-dark" to={'/NewsletterDesign'}>*/}
                     {/*        <img src={newsletter} className="img-fluid icon-small me-2" />*/}

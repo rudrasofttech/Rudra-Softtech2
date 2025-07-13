@@ -2,3 +2,84 @@
 @model RST.Web.Pages.Account.RegisterModel
 @{
 }
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Rudra Softtech Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row">
+            <div class="offset-lg-4 col-lg-4 col-md-6">
+                <div class="text-start mb-3">
+                <img src="//www.rudrasofttech.com/l/img/rst-logo-small.png" alt="Rudra Softtech LLP" style="max-height:80px;" class="img-fluid" />
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Success))
+                {
+                    <div class="text-success my-3 fs-5 p-3 border-success ">@Html.Raw(Model.Success)</div>
+                }
+                else
+                {
+                    <h2 class="mb-3">Create an Account</h2>
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="nameTxt" class="form-label">Your Name</label>
+                            <input autocomplete="off" asp-for="MemberName" id="nameTxt" class="form-control" />
+                            <span asp-validation-for="MemberName" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="emailTxt" class="form-label">Email</label>
+                            <input autocomplete="off" asp-for="Email" id="emailTxt" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="passwordTxt" class="form-label">Password</label>
+                            <input asp-for="Password" id="passwordTxt" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3 fs-6">
+                            By continuing you agree to our <a href="https://www.rudrasofttech.com/privacy" target="_blank">privacy policy</a> and <a href="#" target="_blank">terms of use</a>.
+                        </div>
+                        <div class="mb-3 fs-6">
+                            You agree that Rudra Softtech LLP will send account and products related emails.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Captcha</label>
+                            <div class="row g-0">
+                                <div class="col-5">
+                                    <img src="@Model.CaptchaImage" class="img-fluid" />
+                                </div>
+                                <div class="col">
+                                    <input type="hidden" name="CaptchaKey" value="@Model.CaptchaKey" />
+                                    <input type="text" class="form-control" required name="CaptchaValue" maxlength="20" />
+                                </div>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.RegisterMessage))
+                        {
+                            <div class="text-danger my-2">@Model.RegisterMessage</div>
+                        }
+                        <div class="text-center mb-4">
+                            <button type="submit" class="btn btn-primary w-100">Register</button>
+                        </div>
+                        <div class="text-end mb-4 border-top pt-4">
+                            <p>I am already registered. <a href="~/account/login?returnurl=@Request.Query["returnurl"]">Sign in</a></p>
+                        </div>
+                    </form>
+                    
+                }
+            </div>
+        </div>
+    </div>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+</body>
+</html>

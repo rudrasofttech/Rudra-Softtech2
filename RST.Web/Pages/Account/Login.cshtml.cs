@@ -18,11 +18,11 @@ namespace RST.Web.Pages.Account
         private readonly IConfiguration _config = config;
         private readonly RSTAuthenticationService authService = _authService;
         public List<string> Errors { get; set; } = [];
-        [Required]
+        [Required(ErrorMessage = "Email is required.")]
         [MaxLength(150)]
         [BindProperty]
         public string Email { get; set; } = string.Empty;
-        [Required]
+        [Required(ErrorMessage = "Password is required.")]
         [BindProperty]
         [DataType(DataType.Password)]
         [MaxLength(150)]
@@ -39,6 +39,27 @@ namespace RST.Web.Pages.Account
             {
                 var email = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
                 CurrentMember = authService.GetUser(email);
+
+                var claims = new List<Claim>() {
+                new(ClaimTypes.NameIdentifier,  CurrentMember.Email),
+                new(ClaimTypes.Email, CurrentMember.Email),
+                new("FullName", CurrentMember.FirstName)};
+                if (CurrentMember.UserType == MemberTypeType.Admin)
+                    claims.Add(new Claim(ClaimTypes.Role, "admin"));
+                else if (CurrentMember.UserType == MemberTypeType.Author)
+                    claims.Add(new Claim(ClaimTypes.Role, "author"));
+                else if (CurrentMember.UserType == MemberTypeType.Member)
+                    claims.Add(new Claim(ClaimTypes.Role, "member"));
+                else if (CurrentMember.UserType == MemberTypeType.Editor)
+                    claims.Add(new Claim(ClaimTypes.Role, "editor"));
+                else if (CurrentMember.UserType == MemberTypeType.Demo)
+                    claims.Add(new Claim(ClaimTypes.Role, "demo"));
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                string rurl = string.Empty;
+                if (Request.Query.ContainsKey("returnurl"))
+                    rurl = Request.Query["returnurl"].ToString();
+                LoginReturn = new LoginReturnDTO() { Member = CurrentMember, Token = GenerateJSONWebToken(CurrentMember), ReturnURL = rurl };
             }
         }
 

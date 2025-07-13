@@ -89,5 +89,13 @@ namespace RST.Web.Service
             builder.Append($"<div style='margin-bottom:30px'>https://www.rudrasofttech.com/account/resetpassword/{rpl.ID}</div>");
             return SendEmail(m.Email, m.FirstName, "Reset Password Link of Rudra Softtech Account", builder.ToString(), "ResetPassword");
         }
+
+        public EmailMessage SendRegistrationLink(Member m)
+        {
+            var builder = new StringBuilder();
+            builder.Append($"<div style='margin-bottom:10px'>Welcome {m.FirstName},</div>");
+            builder.Append("<div style='margin-bottom:15px'>You are now a registered member. Thanks for choosing Rudra Softtech LLP! We are happy to see you on board. You can use your account to access Ply.</div>");
+            return SendEmail(m.Email, m.FirstName, "Registration Successful", builder.ToString(), "Registration");
+        }
     }
 }

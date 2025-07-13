@@ -19,6 +19,7 @@ import { ChangePassword } from './components/ChangePassword';
 import { Logout } from './components/Logout';
 import UserWebsiteThemeList from './components/UserWebsiteThemeList';
 import { UserWebsiteThemeManage } from './components/UserWebsiteThemeManage';
+import UserWebsiteList from './components/UserWebsiteList';
 
 export default class App extends Component {
     displayName = App.name
@@ -44,6 +45,7 @@ export default class App extends Component {
                 <Route path='/ChangePassword/:id?' component={ChangePassword} />
                 <Route path='/UserWebsiteThemes' component={UserWebsiteThemeList} />
                 <Route path='/UserWebsiteThemeManage/:id?' component={UserWebsiteThemeManage} />
+                <Route path='/UserWebsites' component={UserWebsiteList} />
             </Layout>
         );
     }
