@@ -59,7 +59,8 @@ namespace RST.Web.Pages.Account
                 string rurl = string.Empty;
                 if (Request.Query.ContainsKey("returnurl"))
                     rurl = Request.Query["returnurl"].ToString();
-                LoginReturn = new LoginReturnDTO() { Member = CurrentMember, Token = GenerateJSONWebToken(CurrentMember), ReturnURL = rurl };
+                DateTime expiry = DateTime.UtcNow.AddDays(90);
+                LoginReturn = new LoginReturnDTO() { Member = CurrentMember, Expiry = expiry, Token = GenerateJSONWebToken(CurrentMember, expiry), ReturnURL = rurl };
             }
         }
 
@@ -98,7 +99,9 @@ namespace RST.Web.Pages.Account
                 string rurl = string.Empty;
                 if (Request.Query.ContainsKey("returnurl"))
                     rurl = Request.Query["returnurl"].ToString();
-                LoginReturn = new LoginReturnDTO() { Member = m, Token = GenerateJSONWebToken(m), ReturnURL = rurl };
+
+                DateTime expiry = DateTime.UtcNow.AddDays(90);
+                LoginReturn = new LoginReturnDTO() { Member = m, Token = GenerateJSONWebToken(m, expiry), ReturnURL = rurl };
             }
             else
             {
@@ -106,11 +109,11 @@ namespace RST.Web.Pages.Account
             }
         }
 
-        private string GenerateJSONWebToken(Member m)
+        private string GenerateJSONWebToken(Member m, DateTime expiry)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var dt = DateTime.UtcNow.AddDays(90);
+            var dt = expiry;
             var claims = new List<Claim>() {
                 new(ClaimTypes.NameIdentifier,  m.Email),
                 new(ClaimTypes.Email, m.Email),

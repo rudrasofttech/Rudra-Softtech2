@@ -1,49 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap');
+﻿
 
-.dancing-script{
+
+.dancing-script {
     font-family: "Dancing Script", cursive;
     font-optical-sizing: auto;
 }
 
-
+.merienda {
+    font-family: "Merienda", cursive;
+    font-optical-sizing: auto;
+}
 
 :root {
     --background: #ffffff;
     --foreground: #171717;
-    --bs-primary: #6C7A89;
-    --bs-danger: #A26769;
+    /*--bs-primary: #6C7A89;
+    --bs-danger: #A26769;*/
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+    max-width: 100vw;
+    overflow-x: hidden;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 .custom-navbar {
@@ -52,9 +56,9 @@ a {
 
 
 @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+    html {
+        color-scheme: dark;
+    }
 }
 
 .hero-text {
@@ -79,5 +83,172 @@ a {
     /* Your styles for large screens go here */
     .hero-text {
         font-size: 5rem !important;
+    }
+}
+/* ================================
+🌈 Bootstrap-Compatible Color Palette
+=============================== */
+:root {
+    --bs-primary: #007bff;
+    --bs-secondary: #6c757d;
+    --bs-success: #28a745;
+    --bs-danger: #dc3545;
+    --bs-warning: #ffc107;
+    --bs-info: #17a2b8;
+    --bs-light: #f8f9fa;
+    --bs-dark: #343a40;
+    --bs-body-bg: #ffffff;
+    --bs-body-color: #212529;
+    --bs-link-color: #007bff;
+    --bs-border-radius: 0.375rem;
+}
+
+/* ================================
+⚙️ Global Layout & Buttons
+=============================== */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+
+button {
+    background-color: var(--bs-primary);
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: var(--bs-border-radius);
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+    button:hover {
+        background-color: var(--bs-secondary);
+    }
+
+/* ================================
+🧙 Wizard Component
+=============================== */
+.wizard-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: var(--bs-light);
+    border-radius: 1rem;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+}
+
+.wizard-step {
+    margin-bottom: 2rem;
+}
+
+.wizard-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+    .wizard-controls button {
+        min-width: 100px;
+    }
+
+/* ================================
+🎯 Choose Site Type Step
+=============================== */
+.wizard-step-type {
+    text-align: center;
+    padding: 1rem;
+}
+
+    .wizard-step-type h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--bs-dark);
+        margin-bottom: 2rem;
+    }
+
+.options-grid {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.option-card {
+    background-color: var(--bs-dark);
+    color: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    cursor: pointer;
+    width: 280px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+    .option-card:hover {
+        transform: translateY(-5px);
+        background-color: var(--bs-primary);
+    }
+
+    .option-card.active {
+        
+        background-color: var(--bs-primary);
+    }
+
+    .option-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+
+    .option-card p {
+        font-size: 1rem;
+        opacity: 0.85;
+    }
+
+/* ================================
+✨ Utilities & Responsive
+=============================== */
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+.px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+    .options-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .option-card {
+        width: 90%;
+    }
+
+    .wizard-controls {
+        flex-direction: column;
+        gap: 1rem;
     }
 }

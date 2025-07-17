@@ -40,7 +40,10 @@
                         <script>
                             sessionStorage.setItem("token", "@Model.LoginReturn.Token");
                             try{
-                                window.opener.postMessage({t : "@Model.LoginReturn.Token", email : "@Model.LoginReturn.Member.Email", name: "@Model.LoginReturn.Member.FirstName" }, "*");
+                                window.opener.postMessage({token : "@Model.LoginReturn.Token", 
+                                email : "@Model.LoginReturn.Member.Email", 
+                                name: "@Model.LoginReturn.Member.FirstName",
+                                expiry: "@Model.LoginReturn.Expiry"}, "*");
                             }catch(e){
                                 console.error("Error posting message to opener:", e);
                             }
@@ -82,7 +85,6 @@
                                 <p><a href="~/account/register?returnurl=@Request.Query["returnurl"]">Register Now</a> for free acount.</p>
                             </div>
                         </form>
-
                     }
                 }
                 else
@@ -95,7 +97,11 @@
                             <a class="btn btn-primary mt-4" href="~/account/logout">Logout Now</a>
                             <script>
                                 try{
-                                    window.opener.postMessage({t : "@Model.LoginReturn.Token", email : "@Model.LoginReturn.Member.Email", name: "@Model.LoginReturn.Member.FirstName" }, "*");
+                                    window.opener.postMessage({
+                                        token : "@Model.LoginReturn.Token", 
+                                        email : "@Model.LoginReturn.Member.Email", 
+                                        name: "@Model.LoginReturn.Member.FirstName",
+                                    expiry: "@Model.LoginReturn.Expiry"}, "*");
                                 }catch(e){
                                     console.error("Error posting message to opener:", e);
                                 }

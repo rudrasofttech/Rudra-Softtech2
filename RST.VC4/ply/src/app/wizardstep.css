@@ -1,0 +1,45 @@
+.wizard-step-type {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.options-grid {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.option-card {
+    background: #1e1e2f;
+    color: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    width: 280px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+    .option-card:hover {
+        transform: translateY(-5px);
+        background: #292945;
+    }
+
+    .option-card h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .option-card p {
+        font-size: 1rem;
+        opacity: 0.8;
+    }

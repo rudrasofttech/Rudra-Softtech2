@@ -6,12 +6,12 @@ import useAppStore from '../store/useAppStore'
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const { token, login, logout } = useAppStore()
+  const { token } = useAppStore()
 
   const isLoggedIn = !!token
 
   return (
-    <AuthContext.Provider value={{ token, isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ token, isLoggedIn }}>
       {children}
     </AuthContext.Provider>
   )
