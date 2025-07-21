@@ -108,22 +108,21 @@ export class LoginForm extends Component {
                     <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
                 </div>
                 <form onSubmit={this.formSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="emailtxt">Email</label>
+                    <div className="mb-3">
+                        <label className='form-label' htmlFor="emailtxt">Email</label>
                         <input type='text' required maxLength="300" value={this.state.email}
                             placeholder="contact@rudrasofttech.com"
                             onChange={this.handleEmailChange} className="form-control" id="emailtxt"/>
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="passwordtxt">Password</label>
+                    <div className="mb-3">
+                        <label className='form-label' htmlFor="passwordtxt">Password</label>
                         <input type='password' required maxLength="300" value={this.state.password}
                             onChange={this.handlePassChange} className="form-control" id="passwordtxt" />
                     </div>
                     <button disabled={this.state.loading} type="submit" className="btn btn-primary">
-                        {this.state.loading ? <div className="spinner-border spinner-border-sm mr-2" role="status">
-                            <span className="sr-only">Loading...</span>
+                        {this.state.loading ? <div className="spinner-border spinner-border-sm me-2" role="status">
                         </div> : null}
-                        Submit</button>
+                        Login</button>
                 </form>
             </div>
         </div>;
