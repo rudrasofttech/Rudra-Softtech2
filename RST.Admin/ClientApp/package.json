@@ -2,6 +2,7 @@
   "name": "rstadmin",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/admin",
   "dependencies": {
     "bootstrap": "^5.3.6",
     "dayjs": "^1.11.13",

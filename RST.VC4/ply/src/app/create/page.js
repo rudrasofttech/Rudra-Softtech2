@@ -54,6 +54,7 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
     const [name, setName] = useState(formData.name);
     const [designation, setDesignation] = useState(formData.designation);
     const [email, setEmail] = useState(formData.email);
+    const [address, setAddress] = useState(formData.address);
 
     return (
         <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
@@ -66,6 +67,7 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     className="form-control form-control-lg"
                     onBlur={() => { setFormData({ name, designation, email }); }}
                 />
+                {name.length === 0 ? <div className="text-end"><small className="text-danger">Required</small></div> : null}
             </div>
             <div className="mb-3">
                 <label className="form-label">Designation</label>
@@ -74,11 +76,12 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     name="designation"
                     value={designation}
                     onChange={(e) => { setDesignation(e.target.value); }}
-                    placeholder="e.g. Designer, Developer, CEO, Director"
+                    placeholder=""
                     className="form-control form-control-lg"
                     maxLength={80}
                     onBlur={() => { setFormData({ name, designation, email }); }}
                 />
+                <div className="text-end"><small>Example- Designer, Developer, CEO, Director</small></div>
             </div>
             <div className="mb-3">
                 <label className="form-label">Email</label>
@@ -87,11 +90,26 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     name="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); }}
-                    placeholder="you@example.com"
+                    placeholder=""
                     className="form-control form-control-lg"
                     maxLength={100}
                     onBlur={() => { setFormData({ name, designation, email }); }}
                 />
+                <div className="text-end"><small>Example- you@example.com</small></div>
+            </div>
+            <div className="mb-3">
+                <label className="form-label">Address</label>
+                <input disabled={name.length === 0}
+                    type="text"
+                    name="address"
+                    value={address}
+                    onChange={(e) => { setAddress(e.target.value); }}
+                    placeholder=""
+                    className="form-control form-control-lg"
+                    maxLength={200}
+                    onBlur={() => { setFormData({ name, designation, email, address }); }}
+                />
+                <div className="text-end"><small>Example- 112, Janpath, New Delhi 110022</small></div>
             </div>
             <div className="wizard-controls pt-4">
                 <button onClick={prev} type="button" className="btn btn-secondary">Back</button>
@@ -282,10 +300,38 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
     );
 };
 
-
-
-const WizardStepTheme = ({prev}) => <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
-    <h2 className="title">Review & Submit</h2>
+const WizardStepTheme = ({prev, name, designation, email, phoneNumbers, socialLinks}) => <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
+    <h2 className="title mb-3">Review & Submit</h2>
+    {name.length > 0 ? <div className="mb-2">
+        <label className="form-label me-2">Full Name - </label>
+        <label className="form-label fw-bold">{name}</label>
+    </div> : null}
+    {designation.length > 0 ? <div className="mb-2">
+        <label className="form-label me-2">Designation - </label>
+        <label className="form-label fw-bold">{designation}</label>
+    </div> : null}
+    {email.length > 0 ? <div className="mb-2">
+        <label className="form-label me-2">Email - </label>
+        <label className="form-label fw-bold">{email}</label>
+    </div> : null}
+    {phoneNumbers && phoneNumbers.length > 0 ? <>
+        {phoneNumbers.map((num, index) => {
+            if (!num || num.trim().length === 0) return null; // Skip empty numbers
+            return <div className="mb-2" key={index}>
+                <label className="form-label me-2">Phone Number - </label>
+                <label className="form-label fw-bold">{num}</label>
+            </div>;
+        })}
+    </> : null}
+    {socialLinks && Object.keys(socialLinks).length > 0 ? <>
+        {socialLinks.whatsapp ? <div className="mb-2"><label className="form-label me-2">Whatsapp - </label><label className="form-label">{socialLinks.whatsapp}</label></div> : null} 
+        {socialLinks.telegram ? <div className="mb-2"><label className="form-label me-2">Telegram - </label><label className="form-label">{socialLinks.telegram}</label></div> : null}
+        {socialLinks.youtube ? <div className="mb-2"><label className="form-label me-2">Youtube - </label><label className="form-label">{socialLinks.youtube}</label></div> : null}
+        {socialLinks.instagram ? <div className="mb-2"><label className="form-label me-2">Instagram - </label><label className="form-label">{socialLinks.instagram}</label></div> : null}
+        {socialLinks.linkedin ? <div className="mb-2"><label className="form-label me-2">LinkedIn - </label><label className="form-label">{socialLinks.linkedin}</label></div> : null}
+        {socialLinks.twitter ? <div className="mb-2"><label className="form-label me-2">Twitter - </label><label className="form-label">{socialLinks.twitter}</label></div> : null}
+        {socialLinks.facebook ? <div className="mb-2"><label className="form-label me-2">Facebook - </label><label className="form-label">{socialLinks.facebook}</label></div> : null}
+    </> : null}
             <div className="wizard-controls">
                 <button onClick={prev}>Back</button>
     </div>
@@ -303,9 +349,9 @@ export default function Create() {
     const [name, setName] = useState('');
     const [designation, setDesignation] = useState('');
     const [email, setEmail] = useState('');
-    const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']); // For future use if needed
-    const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' }); // For future use if needed]
-    const [whatsapp, setWhatsapp] = useState(''); // For future use if needed]
+    const [address, setAddress] = useState(''); 
+    const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']); 
+    const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' }); 
     const maxSteps = 5;
     const next = () => {
         if (step <= maxSteps) {
@@ -358,12 +404,13 @@ export default function Create() {
                     formData={{
                         name,
                         designation,
-                        email,
+                        email, address
                     }}
                     setFormData={(d) => {
                         setName(d.name);
                         setDesignation(d.designation);
                         setEmail(d.email);
+                        setAddress(d.address);
                     }}
                 /> : null}
                 {step === 2 ? <WizardStepPhoneNumbers
@@ -375,7 +422,7 @@ export default function Create() {
                 {step === 3 ? <WizardStepSocialLinks next={next}
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null }
-                {step === 5 ? <WizardStepTheme prev={prev} /> : null}
+                {step === 5 ? <WizardStepTheme prev={prev} name={name} designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
                 
             </Container>
         </>
