@@ -37,7 +37,6 @@ namespace RST.Web.Controllers
         }
 
         [HttpGet]
-
         public async Task<IActionResult> GetAsync([FromQuery]int page = 1, [FromQuery] int psize = 20)
         {
             if (!CheckRole("admin"))
@@ -128,6 +127,29 @@ namespace RST.Web.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error fetching user websites");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpPost]
+        [Route("isuniquename")]
+        public IActionResult IsUniqueName([FromBody] ValidWebsiteNameDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = db.UserWebsites.Any(t => t.Name == model.Name);
+                
+                if(result)
+                    return Conflict(new { error = "Website with this name already exists." });
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking name exists");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }

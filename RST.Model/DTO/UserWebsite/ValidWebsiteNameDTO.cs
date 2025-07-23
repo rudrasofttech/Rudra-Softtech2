@@ -3,15 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RST.Model.DTO.UserWebsite
 {
-    public class CreateUserWebsiteDTO
+    public class ValidWebsiteNameDTO
     {
         [Required]
         [MaxLength(50)]
         [MinLength(3)]
         [DomainSafeName]
         public string Name { get; set; } = string.Empty;
-        [Required]
-        public WebsiteType WSType { get; set; }
-        public Guid ThemeId { get; set; } = Guid.Empty;
     }
 }

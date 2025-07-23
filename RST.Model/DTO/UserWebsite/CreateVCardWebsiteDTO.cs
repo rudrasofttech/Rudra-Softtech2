@@ -7,6 +7,7 @@ namespace RST.Model.DTO.UserWebsite
     {
         [Required]
         [MaxLength(50)]
+        [MinLength(3)]
         [DomainSafeName]
         public string WebsiteName { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;

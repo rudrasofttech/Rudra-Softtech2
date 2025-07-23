@@ -13,39 +13,43 @@ const ds = Merienda({
     subsets: ['latin'],
 });
 
-const WSSiteType = ({ next, onSelectType, wsType }) => {
-    const [name, setName] = useState(wsType); // Local state for name input
-    const handleSelect = (type) => {
-        setName(type); // Update local state
-        onSelectType?.(type); // Expose selected value to parent
-        setTimeout(() => { next(); }, 500);
+const WSSiteType = ({ next, onSelectType, wsType, websitename }) => {
+    const [type, setType] = useState(wsType); // Local state for name input
+    const [name, setName] = useState(websitename); // Local state for name input
+    const { isLoggedIn, token } = useAuth();
+    const handleSelect = (t) => {
+        setType(t); // Update local state
+        onSelectType?.(t); // Expose selected value to parent
+        //setTimeout(() => { next(); }, 200);
     };
-
+    const handleNameChange = (e) => { setName(e.target.value); };
     useEffect(() => { setName(wsType); }, [wsType]);
-
+    const handleNext = () => {
+    }
     return (
         <div className="wizard-step-type mx-auto bg-light rounded" style={{ width: "800px", maxWidth: "100%" }}>
             <h2 className="title">🚀 What type of site do you want to build?</h2>
+            <div className="mb-3">
+                <label className="form-label">Website Name</label>
+                <input type="text" name="wsName" className="form-control form-control-lg" value={name} maxLength="50" onChange={handleNameChange} />
+            </div>
             <div className="options-grid">
                 <div
-                    className={wsType == "vc" ? "option-card active" : "option-card"}
+                    className={type == "vc" ? "option-card active" : "option-card"}
                     onClick={() => handleSelect('vc')}>
                     <h3>💼 Visiting Card</h3>
                     <p>Minimal profile to showcase your identity with punch.</p>
                 </div>
                 <div
-                    className={wsType == "ll" ? "option-card active" : "option-card"}
+                    className={type == "ll" ? "option-card active" : "option-card"}
                     onClick={() => handleSelect('ll')}>
                     <h3>🔗 Link List</h3>
                     <p>Curated list of links—perfect for creators and professionals.</p>
                 </div>
             </div>
             <div className="text-end pt-5">
-                {name !== null && name.length > 0 ?
-                    <button onClick={next} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={name === null || name.length === 0}>Next</button>
-                    : null}
+                <button onClick={next} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={type.length === 0 || name.length === 0}>Next</button>
             </div>
-
         </div>
     );
 };
@@ -142,7 +146,7 @@ const WizardStepPhoneNumbers = ({ next, prev, phoneNumbers, setPhoneNumbers }) =
                         type="tel"
                         value={localNumbers[i]}
                         onChange={(e) => handleChange(i, e.target.value)}
-                        
+
                         className="form-control form-control-lg"
                         maxLength={14} // Adjust as needed for phone number format
                         onBlur={() => setPhoneNumbers?.(localNumbers)} // Sync to parent or Zustand
@@ -182,7 +186,7 @@ const WizardStepSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) => {
                     className="form-control form-control-lg"
                     value={wa}
                     maxLength={10}
-                    onChange={(e) => { setWhatsapp(e.target.value); } }
+                    onChange={(e) => { setWhatsapp(e.target.value); }}
                     placeholder=""
                     onBlur={() => setSocialLinks({ ...socialLinks, whatsapp: wa })}
                 />
@@ -214,7 +218,7 @@ const WizardStepSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) => {
                 />
                 <div className="text-end"><small>Example- https://www.facebook.com/singhrajkiran</small></div>
             </div>
-            
+
             <div className="wizard-controls">
                 <button onClick={prev}>Back</button>
                 <button onClick={next}>Next</button>
@@ -228,7 +232,7 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
     const [yt, setYoutube] = useState(socialLinks.youtube || '');
     const [ig, setInstagram] = useState(socialLinks.instagram || '');
     const [li, setLinkedin] = useState(socialLinks.linkedin || '');
-    
+
     useEffect(() => {
         setTelegram(socialLinks.telegram || '');
         setYoutube(socialLinks.youtube || '');
@@ -264,7 +268,7 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
                     onBlur={() => setSocialLinks({ ...socialLinks, instagram: ig })}
                 />
                 <div className="text-end"><small>Example- https://www.instagram.com/Bookwormfrom1983/</small></div>
-                
+
             </div>
             <div className="mb-3">
                 <label className="form-label">LinkedIn</label>
@@ -300,7 +304,7 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
     );
 };
 
-const WizardStepTheme = ({prev, name, designation, email, phoneNumbers, socialLinks}) => <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
+const WizardStepTheme = ({ prev, name, designation, email, phoneNumbers, socialLinks }) => <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
     <h2 className="title mb-3">Review & Submit</h2>
     {name.length > 0 ? <div className="mb-2">
         <label className="form-label me-2">Full Name - </label>
@@ -324,7 +328,7 @@ const WizardStepTheme = ({prev, name, designation, email, phoneNumbers, socialLi
         })}
     </> : null}
     {socialLinks && Object.keys(socialLinks).length > 0 ? <>
-        {socialLinks.whatsapp ? <div className="mb-2"><label className="form-label me-2">Whatsapp - </label><label className="form-label">{socialLinks.whatsapp}</label></div> : null} 
+        {socialLinks.whatsapp ? <div className="mb-2"><label className="form-label me-2">Whatsapp - </label><label className="form-label">{socialLinks.whatsapp}</label></div> : null}
         {socialLinks.telegram ? <div className="mb-2"><label className="form-label me-2">Telegram - </label><label className="form-label">{socialLinks.telegram}</label></div> : null}
         {socialLinks.youtube ? <div className="mb-2"><label className="form-label me-2">Youtube - </label><label className="form-label">{socialLinks.youtube}</label></div> : null}
         {socialLinks.instagram ? <div className="mb-2"><label className="form-label me-2">Instagram - </label><label className="form-label">{socialLinks.instagram}</label></div> : null}
@@ -332,8 +336,8 @@ const WizardStepTheme = ({prev, name, designation, email, phoneNumbers, socialLi
         {socialLinks.twitter ? <div className="mb-2"><label className="form-label me-2">Twitter - </label><label className="form-label">{socialLinks.twitter}</label></div> : null}
         {socialLinks.facebook ? <div className="mb-2"><label className="form-label me-2">Facebook - </label><label className="form-label">{socialLinks.facebook}</label></div> : null}
     </> : null}
-            <div className="wizard-controls">
-                <button onClick={prev}>Back</button>
+    <div className="wizard-controls">
+        <button onClick={prev}>Back</button>
     </div>
 </div>;
 
@@ -349,9 +353,9 @@ export default function Create() {
     const [name, setName] = useState('');
     const [designation, setDesignation] = useState('');
     const [email, setEmail] = useState('');
-    const [address, setAddress] = useState(''); 
-    const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']); 
-    const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' }); 
+    const [address, setAddress] = useState('');
+    const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']);
+    const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' });
     const maxSteps = 5;
     const next = () => {
         if (step <= maxSteps) {
@@ -421,9 +425,9 @@ export default function Create() {
                 /> : null}
                 {step === 3 ? <WizardStepSocialLinks next={next}
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
-                {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null }
+                {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 5 ? <WizardStepTheme prev={prev} name={name} designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
-                
+
             </Container>
         </>
     );
