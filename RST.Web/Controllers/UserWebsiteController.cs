@@ -177,6 +177,83 @@ namespace RST.Web.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("createvcard")]
+        public IActionResult CreateVCard([FromBody] CreateVCardWebsiteDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                // Check for duplicate website name
+                if (db.UserWebsites.Any(t => t.Name == model.WebsiteName))
+                    return BadRequest(new { error = "Website name already exists." });
+
+                // Validate theme
+                var theme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == model.ThemeId);
+                if (theme == null)
+                    return BadRequest(new { error = "Theme not found." });
+
+                // Extract email from user claims
+                var emailClaim = User.Claims.FirstOrDefault(t => t.Type == ClaimTypes.Email);
+                if (emailClaim == null)
+                    return Unauthorized(new { error = "Email claim missing." });
+
+                var member = db.Members.FirstOrDefault(d => d.Email == emailClaim.Value);
+                if (member == null)
+                    return Unauthorized(new { error = "User not registered." });
+
+                // Assemble VCard details
+                var vcardDetail = new VisitingCardDetail
+                {
+                    Title = model.Title,
+                    Logo = model.Logo,
+                    TagLine = model.TagLine,
+                    Keywords = model.Keywords,
+                    Name = model.Name,
+                    Designation = model.Designation,
+                    WhatsApp = model.WhatsApp,
+                    Telegram = model.Telegram,
+                    Youtube = model.Youtube,
+                    Instagram = model.Instagram,
+                    LinkedIn = model.LinkedIn,
+                    Twitter = model.Twitter,
+                    Facebook = model.Facebook,
+                    Email = model.Email,
+                    Phone1 = model.Phone1,
+                    Phone2 = model.Phone2,
+                    Phone3 = model.Phone3,
+                    Address = model.Address,
+                    AboutInfo = model.AboutInfo,
+                    Photos = model.Photos ?? []
+                };
+
+                var userWebsite = new UserWebsite
+                {
+                    Created = DateTime.UtcNow,
+                    Name = model.WebsiteName,
+                    Owner = member,
+                    WSType = WebsiteType.VCard,
+                    Status = RecordStatus.Inactive,
+                    ThemeId = theme.Id,
+                    Html = theme.Html,
+                    VisitingCardDetail = vcardDetail,
+                    JsonData = JsonSerializer.Serialize(vcardDetail)
+                };
+
+                db.UserWebsites.Add(userWebsite);
+                db.SaveChanges();
+
+                return Ok(userWebsite);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating VCard website");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
         [HttpGet]
         [Route("delete/{id}")]
         public IActionResult Delete(Guid id)
