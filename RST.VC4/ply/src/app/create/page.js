@@ -1,54 +1,87 @@
 ﻿'use client'
 import React from 'react';
 import { Merienda } from 'next/font/google';
-import { useAuth } from '../context/authprovider'
+import { useAuth } from '@/context/authprovider';
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Container } from "react-bootstrap";
-import PlyNavbar from "../plynavbar";
+import PlyNavbar from "@/components/plynavbar";
 import "../globals.css";
-import Loader from '../loader';
+import Loader from '@/components/loader';
+import { APIURLS } from '@/utils/config';
+import { postWithAuth } from '@/utils/api';
+import { toast } from 'react-toastify';
 
 const ds = Merienda({
     subsets: ['latin'],
 });
 
-const WSSiteType = ({ next, onSelectType, wsType, websitename }) => {
+const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
+    const router = useRouter();
     const [type, setType] = useState(wsType); // Local state for name input
-    const [name, setName] = useState(websitename); // Local state for name input
-    const { isLoggedIn, token } = useAuth();
+    const [name, setName] = useState(websiteName); // Local state for name input
+    const [errors, setErrors] = useState([]); // Local state for error messages
+    const [loading, setLoading] = useState(false);
     const handleSelect = (t) => {
-        setType(t); // Update local state
-        onSelectType?.(t); // Expose selected value to parent
-        //setTimeout(() => { next(); }, 200);
+        setType(t);
     };
+
     const handleNameChange = (e) => { setName(e.target.value); };
-    useEffect(() => { setName(wsType); }, [wsType]);
-    const handleNext = () => {
+
+    useEffect(() => {
+        setType(wsType);
+        setName(websiteName || '');
+    }, [wsType, websiteName]);
+
+    const handleNext = async () => {
+        try {
+            setLoading(true);
+            const r = await postWithAuth(`${APIURLS.userWebsite}/isuniquename`, router, { name }, { retries: 0 });
+            setLoading(false);
+            if (r.result) {
+                onSelectType?.(type, name); // Expose selected value to parent
+                next();
+            } else {
+                setErrors(r.errors);
+            }
+        } catch (err) {
+            console.error('Failed to create:', err.message);
+        }
     }
     return (
         <div className="wizard-step-type mx-auto bg-light rounded" style={{ width: "800px", maxWidth: "100%" }}>
             <h2 className="title">🚀 What type of site do you want to build?</h2>
-            <div className="mb-3">
-                <label className="form-label">Website Name</label>
+            <div className="mb-4 mt-3">
+                <label className="form-label fw-bold">Website Name</label>
                 <input type="text" name="wsName" className="form-control form-control-lg" value={name} maxLength="50" onChange={handleNameChange} />
+                <div className="text-end"><small>Choose a unique and attractive name for your website. It can only contain letter, number and underscores _ .</small></div>
             </div>
-            <div className="options-grid">
-                <div
-                    className={type == "vc" ? "option-card active" : "option-card"}
-                    onClick={() => handleSelect('vc')}>
-                    <h3>💼 Visiting Card</h3>
-                    <p>Minimal profile to showcase your identity with punch.</p>
-                </div>
-                <div
-                    className={type == "ll" ? "option-card active" : "option-card"}
-                    onClick={() => handleSelect('ll')}>
-                    <h3>🔗 Link List</h3>
-                    <p>Curated list of links—perfect for creators and professionals.</p>
+            <div className="mb-3">
+                <label className="form-label fw-bold">Choose type of website</label>
+                <div className="options-grid">
+                    <div
+                        className={type == "vc" ? "option-card active" : "option-card"}
+                        onClick={() => handleSelect('vc')}>
+                        <h3>💼 Visiting Card</h3>
+                        <p>Minimal profile to showcase your identity with punch.</p>
+                    </div>
+                    <div
+                        className={type == "ll" ? "option-card active" : "option-card"}
+                        onClick={() => handleSelect('ll')}>
+                        <h3>🔗 Link List</h3>
+                        <p>Curated list of links—perfect for creators and professionals.</p>
+                    </div>
                 </div>
             </div>
+            {errors.length > 0 ? <div>
+                <ul>
+                    {errors.map((item, index) => { return <li key={index} className="text-danger">{item}</li>; })}
+                </ul>
+            </div> : null}
             <div className="text-end pt-5">
-                <button onClick={next} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={type.length === 0 || name.length === 0}>Next</button>
+                {type.length === 0 || name.length === 0 ? null : <button onClick={handleNext} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={loading}>
+                    {loading ? <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> : null}
+                    Next</button>}
             </div>
         </div>
     );
@@ -304,56 +337,99 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
     );
 };
 
-const WizardStepTheme = ({ prev, name, designation, email, phoneNumbers, socialLinks }) => <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
-    <h2 className="title mb-3">Review & Submit</h2>
-    {name.length > 0 ? <div className="mb-2">
-        <label className="form-label me-2">Full Name - </label>
-        <label className="form-label fw-bold">{name}</label>
-    </div> : null}
-    {designation.length > 0 ? <div className="mb-2">
-        <label className="form-label me-2">Designation - </label>
-        <label className="form-label fw-bold">{designation}</label>
-    </div> : null}
-    {email.length > 0 ? <div className="mb-2">
-        <label className="form-label me-2">Email - </label>
-        <label className="form-label fw-bold">{email}</label>
-    </div> : null}
-    {phoneNumbers && phoneNumbers.length > 0 ? <>
-        {phoneNumbers.map((num, index) => {
-            if (!num || num.trim().length === 0) return null; // Skip empty numbers
-            return <div className="mb-2" key={index}>
-                <label className="form-label me-2">Phone Number - </label>
-                <label className="form-label fw-bold">{num}</label>
-            </div>;
-        })}
-    </> : null}
-    {socialLinks && Object.keys(socialLinks).length > 0 ? <>
-        {socialLinks.whatsapp ? <div className="mb-2"><label className="form-label me-2">Whatsapp - </label><label className="form-label">{socialLinks.whatsapp}</label></div> : null}
-        {socialLinks.telegram ? <div className="mb-2"><label className="form-label me-2">Telegram - </label><label className="form-label">{socialLinks.telegram}</label></div> : null}
-        {socialLinks.youtube ? <div className="mb-2"><label className="form-label me-2">Youtube - </label><label className="form-label">{socialLinks.youtube}</label></div> : null}
-        {socialLinks.instagram ? <div className="mb-2"><label className="form-label me-2">Instagram - </label><label className="form-label">{socialLinks.instagram}</label></div> : null}
-        {socialLinks.linkedin ? <div className="mb-2"><label className="form-label me-2">LinkedIn - </label><label className="form-label">{socialLinks.linkedin}</label></div> : null}
-        {socialLinks.twitter ? <div className="mb-2"><label className="form-label me-2">Twitter - </label><label className="form-label">{socialLinks.twitter}</label></div> : null}
-        {socialLinks.facebook ? <div className="mb-2"><label className="form-label me-2">Facebook - </label><label className="form-label">{socialLinks.facebook}</label></div> : null}
-    </> : null}
-    <div className="wizard-controls">
-        <button onClick={prev}>Back</button>
-    </div>
-</div>;
+const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, email, company, tagLine, phoneNumbers, socialLinks,address,wsType }) => {
+    const router = useRouter();
+    const [errors, setErrors] = useState([]); // Local state for error messages
+    const [loading, setLoading] = useState(false);
+
+    const submitInfo = async () => {
+        try {
+            setLoading(true);
+            let url = "";
+            if (wsType === 'vc') {
+                url = `${APIURLS.userWebsite}/createvcard`;
+            }
+            const r = await postWithAuth(url, router,
+                {
+                    websiteName, themeId: "593e47a0-efe5-4432-afb4-013e802bfe30", logo, company, tagLine, personName: name, designation,
+                    whatsApp: socialLinks.whatsApp,
+                    telegram: socialLinks.telegram,
+                    youtube: socialLinks.youtube, instagram: socialLinks.instagram,
+                    linkedin: socialLinks.linkedin, twitter: socialLinks.twitter, facebook: socialLinks.facebook,
+                    email, address, phone1: phoneNumbers[0], phone2: phoneNumbers[1], phone3: phoneNumbers[2]
+                }, { retries: 0 });
+            setLoading(false);
+            if (r.result) {
+                toast.success('Website created successfully!');
+                next();
+            } else {
+                setErrors(r.errors);
+            }
+        } catch (err) {
+            console.error('Failed to create:', err.message);
+        }
+    }
+    return <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
+        <h2 className="title mb-3">Review & Submit</h2>
+        {name.length > 0 ? <div className="mb-2">
+            <label className="form-label me-2">Full Name - </label>
+            <label className="form-label fw-bold">{name}</label>
+        </div> : null}
+        {designation.length > 0 ? <div className="mb-2">
+            <label className="form-label me-2">Designation - </label>
+            <label className="form-label fw-bold">{designation}</label>
+        </div> : null}
+        {email.length > 0 ? <div className="mb-2">
+            <label className="form-label me-2">Email - </label>
+            <label className="form-label fw-bold">{email}</label>
+        </div> : null}
+        {phoneNumbers && phoneNumbers.length > 0 ? <>
+            {phoneNumbers.map((num, index) => {
+                if (!num || num.trim().length === 0) return null; // Skip empty numbers
+                return <div className="mb-2" key={index}>
+                    <label className="form-label me-2">Phone Number - </label>
+                    <label className="form-label fw-bold">{num}</label>
+                </div>;
+            })}
+        </> : null}
+        {socialLinks && Object.keys(socialLinks).length > 0 ? <>
+            {socialLinks.whatsapp ? <div className="mb-2"><label className="form-label me-2">Whatsapp - </label><label className="form-label">{socialLinks.whatsapp}</label></div> : null}
+            {socialLinks.telegram ? <div className="mb-2"><label className="form-label me-2">Telegram - </label><label className="form-label">{socialLinks.telegram}</label></div> : null}
+            {socialLinks.youtube ? <div className="mb-2"><label className="form-label me-2">Youtube - </label><label className="form-label">{socialLinks.youtube}</label></div> : null}
+            {socialLinks.instagram ? <div className="mb-2"><label className="form-label me-2">Instagram - </label><label className="form-label">{socialLinks.instagram}</label></div> : null}
+            {socialLinks.linkedin ? <div className="mb-2"><label className="form-label me-2">LinkedIn - </label><label className="form-label">{socialLinks.linkedin}</label></div> : null}
+            {socialLinks.twitter ? <div className="mb-2"><label className="form-label me-2">Twitter - </label><label className="form-label">{socialLinks.twitter}</label></div> : null}
+            {socialLinks.facebook ? <div className="mb-2"><label className="form-label me-2">Facebook - </label><label className="form-label">{socialLinks.facebook}</label></div> : null}
+        </> : null}
+        {errors.length > 0 ? <div className="text-danger mb-3">
+            <ul>
+                {errors.map((item, index) => <li key={index}>{item}</li>)}
+            </ul>
+        </div> : null}
+        <div className="wizard-controls">
+            <button disabled={loading} onClick={prev}>Back</button>
+            <button disabled={loading} onClick={submitInfo}>Create Website</button>
+        </div>
+    </div>;
+}
 
 export default function Create() {
     const [redirectUrl, setRedirectUrl] = useState("");
     const router = useRouter();
     const { isLoggedIn, token } = useAuth();
-    //const [dummy, setDummy] = useState(null);
+    
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [siteType, setSiteType] = useState(null);
+    const [websiteName, setWebsiteName] = useState('');
+    const [siteType, setSiteType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
     const [designation, setDesignation] = useState('');
     const [email, setEmail] = useState('');
     const [address, setAddress] = useState('');
+    const [logo, setLogo] = useState(''); 
+    const [company, setCompany] = useState('');
+    const [tagLine, setTagLine] = useState('');
     const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']);
     const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' });
     const maxSteps = 5;
@@ -396,11 +472,13 @@ export default function Create() {
                 {error ? <div className="text-danger text-center my-2">{error}</div> : null}
                 {step === 0 ? <WSSiteType
                     next={next}
-                    onSelectType={(type) => {
+                    onSelectType={(type, name) => {
                         console.log('Parent received type:', type);
                         setSiteType(type);
+                        setWebsiteName(name); // Update website name in parent state
                     }}
                     wsType={siteType}
+                    websiteName={websiteName}
                 /> : null}
                 {step === 1 ? <WizardStepUserInfo
                     next={next}
@@ -426,7 +504,9 @@ export default function Create() {
                 {step === 3 ? <WizardStepSocialLinks next={next}
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
-                {step === 5 ? <WizardStepTheme prev={prev} name={name} designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
+                {step === 5 ? <WizardStepTheme prev={prev} name={name} company={company} logo={logo}
+                    tagLine={tagLine} websiteName={websiteName} wsType={siteType}
+                    designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
 
             </Container>
         </>

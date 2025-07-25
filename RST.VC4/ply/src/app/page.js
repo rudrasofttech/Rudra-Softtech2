@@ -1,50 +1,37 @@
 'use client'
 
-import { useAuth } from './context/authprovider'
+import { useAuth } from '@/context/authprovider'
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Container } from "react-bootstrap";
-import PlyNavbar from "./plynavbar";
+import PlyNavbar from "@/components/plynavbar";
 import "./globals.css";
-import Loader from './loader';
-
+import Loader from '@/components/loader';
+import { getWithAuth } from '@/utils/api';
+import { APIURLS } from '@/utils/config';
 export default function Home() {
     const [redirectUrl, setRedirectUrl] = useState("");
     const router = useRouter();
-    const { isLoggedIn, token } = useAuth();
+    const { isLoggedIn } = useAuth();
     const [dummy, setDummy] = useState(null);
     const [mysites, setMysites] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (token === null || token === undefined || token === "") { return; }
-        setLoading(true);
-        setError('');
-        fetch('https://www.rudrasofttech.com/api/userwebsite/mywebsites', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json', authorization: `Bearer ${token}`
+        async function fetchMySites() {
+            setLoading(true);
+            setError('');
+            var r = await getWithAuth(`${APIURLS.userWebsite}/mywebsites`, router);
+            if (r.result) {
+                setMysites(r.data);
+            } else {
+                setError(r.errors.join(', '));
             }
-        })
-            .then((response) => {
-                if (response.status === 200) {
-                    response.json().then(data => {
-                        setMysites(data);
-                    });
-                }
-                else if (response.status === 401) {
-                    setError('Unauthorized access. Please log in again.');
-                } else {
-                    setError('Failed to fetch your sites. Please try again later.');
-                }
-            })
-            .catch(err => {
-                console.error('Error fetching my sites:', err);
-                setError('Failed to fetch your sites. Please check your internet connection.');
-            })
-            .finally(() => { setLoading(false); });
-    }, [token]);
+            setLoading(false);
+        }
+        fetchMySites();
+    }, []);
 
     useEffect(() => {
         if (redirectUrl) {

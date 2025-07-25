@@ -5,15 +5,15 @@ namespace RST.Model.DTO.UserWebsite
 {
     public class CreateVCardWebsiteDTO
     {
-        [Required]
-        [MaxLength(50)]
-        [MinLength(3)]
+        [Required(ErrorMessage = "Website name is required.")]
+        [MaxLength(50, ErrorMessage = "Website name cannot exceed 50 characters in length.")]
+        [MinLength(3, ErrorMessage = "Website name must be minimum 3 characters.")]
         [DomainSafeName]
         public string WebsiteName { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
 
         [MaxLength(50)]
-        public string? Title { get; set; }
+        public string? Company { get; set; }
         [MaxLength(250)]
         public string? Logo { get; set; }
         [MaxLength(100)]
@@ -21,7 +21,7 @@ namespace RST.Model.DTO.UserWebsite
         [MaxLength(200)]
         public string? Keywords { get; set; }
         [MaxLength(80)]
-        public string? Name { get; set; }
+        public string? PersonName { get; set; }
         [MaxLength(50)]
         public string? Designation { get; set; }
         [MaxLength(15)]

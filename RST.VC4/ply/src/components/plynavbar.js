@@ -1,11 +1,11 @@
 'use client'
 import { Merienda } from 'next/font/google';
-import { useAuth } from './context/authprovider'
+import { useAuth } from '@/context/authprovider'
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Offcanvas from 'react-bootstrap/Offcanvas';
-import useAppStore from './store/useAppStore';
+import useAppStore from '@/store/useAppStore';
 import { useEffect, useRef } from 'react';
 import { Button } from 'react-bootstrap';
 

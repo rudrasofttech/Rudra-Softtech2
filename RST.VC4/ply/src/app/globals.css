@@ -158,7 +158,6 @@ button {
 🎯 Choose Site Type Step
 =============================== */
 .wizard-step-type {
-    text-align: center;
     padding: 1rem;
 }
 
@@ -172,7 +171,7 @@ button {
 .options-grid {
     display: flex;
     gap: 2rem;
-    justify-content: center;
+    justify-content: start;
     flex-wrap: wrap;
 }
 

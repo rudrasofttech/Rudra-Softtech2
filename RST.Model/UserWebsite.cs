@@ -28,7 +28,7 @@ namespace RST.Model
     public class VisitingCardDetail
     {
         [MaxLength(50)]
-        public string? Title { get; set; }
+        public string? Company { get; set; }
         [MaxLength(250)]
         public string? Logo { get; set; }
         [MaxLength(100)]
@@ -36,7 +36,7 @@ namespace RST.Model
         [MaxLength(200)]
         public string? Keywords { get; set; }
         [MaxLength(80)]
-        public string? Name { get; set; }
+        public string? PersonName { get; set; }
         [MaxLength(50)]
         public string? Designation { get; set; }
         [MaxLength(15)]

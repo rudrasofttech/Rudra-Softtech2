@@ -145,7 +145,7 @@ namespace RST.Web.Controllers
                 if(result)
                     return Conflict(new { error = "Website with this name already exists." });
 
-                return Ok();
+                return Ok(true);
             }
             catch (Exception ex)
             {
@@ -229,11 +229,11 @@ namespace RST.Web.Controllers
                 // Assemble VCard details
                 var vcardDetail = new VisitingCardDetail
                 {
-                    Title = model.Title,
+                    Company = model.Company,
                     Logo = model.Logo,
                     TagLine = model.TagLine,
                     Keywords = model.Keywords,
-                    Name = model.Name,
+                    PersonName = model.PersonName,
                     Designation = model.Designation,
                     WhatsApp = model.WhatsApp,
                     Telegram = model.Telegram,
@@ -351,12 +351,12 @@ namespace RST.Web.Controllers
                     return NotFound(new { error = "Website not found or you do not have permission to update it." });
                 if (uw.WSType == WebsiteType.VCard && uw.VisitingCardDetail != null)
                 {
-                    if (model.FieldName == "title")
+                    if (model.FieldName == "company")
                     {
                         if (model.FieldValue.Length > 50)
-                            return BadRequest(new { error = "Title cannot be longer than 50 characters." });
+                            return BadRequest(new { error = "Company name cannot be longer than 50 characters." });
 
-                        uw.VisitingCardDetail.Title = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
+                        uw.VisitingCardDetail.Company = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
                     }
                     else if (model.FieldName == "tagline")
                     {
@@ -372,12 +372,12 @@ namespace RST.Web.Controllers
 
                         uw.VisitingCardDetail.Keywords = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
                     }
-                    else if (model.FieldName == "name")
+                    else if (model.FieldName == "personname")
                     {
                         if (model.FieldValue.Length > 80)
-                            return BadRequest(new { error = "Name cannot be longer than 80 characters." });
+                            return BadRequest(new { error = "Person name cannot be longer than 80 characters." });
 
-                        uw.VisitingCardDetail.Name = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
+                        uw.VisitingCardDetail.PersonName = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
                     }
                     else if (model.FieldName == "designation")
                     {
