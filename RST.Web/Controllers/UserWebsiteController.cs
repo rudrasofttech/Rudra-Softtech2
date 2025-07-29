@@ -37,13 +37,13 @@ namespace RST.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAsync([FromQuery]int page = 1, [FromQuery] int psize = 20)
+        public IActionResult Get([FromQuery]int page = 1, [FromQuery] int psize = 20)
         {
             if (!CheckRole("admin"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
             try
             {
-                int count = await db.UserWebsites.CountAsync();
+                int count = db.UserWebsites.Count();
                 var result = new PagedData<UserWebsiteListItemDTO>
                 {
                     PageIndex = page,
@@ -51,12 +51,10 @@ namespace RST.Web.Controllers
                     TotalRecords = count
                 };
 
-                var query = await db.UserWebsites
+                var query = db.UserWebsites.Include(t => t.Owner)
         .OrderBy(t => t.Created)
         .Skip((page - 1) * psize)
-        .Take(psize)
-        .AsNoTracking()
-        .ToListAsync(); 
+        .Take(psize); 
 
                 foreach (var m in query.ToList())
                 {
@@ -96,6 +94,7 @@ namespace RST.Web.Controllers
                         t.Id,
                         t.Name,
                         t.Created,
+                        t.Modified,
                         t.Status,
                         t.Domain
                     })
@@ -109,24 +108,33 @@ namespace RST.Web.Controllers
             }
         }
 
+        [HttpGet("{id}")]
         public IActionResult Get(Guid id)
         {
             try
             {
-                var result = db.UserWebsites.Include(t => t.Owner).Where(t => t.Id == id).Select(t => new
+                var obj = db.UserWebsites.Include(t => t.Owner).FirstOrDefault(t => t.Id == id);
+                if(obj != null)
                 {
-                    t.Id,
-                    t.Name,
-                    t.Created,
-                    t.Status,
-                    t.Domain,
-                    t.Owner
-                }).ToList();
-                return Ok(result);
+                    if (obj.WSType == WebsiteType.VCard && string.IsNullOrWhiteSpace(obj.JsonData))
+                    {
+                        try
+                        {
+                            obj.VisitingCardDetail = JsonSerializer.Deserialize<VisitingCardDetail>(obj.JsonData) ?? new VisitingCardDetail();
+                            return Ok(obj);
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            logger.LogError(jsonEx, "Error deserializing VisitingCardDetail for website {WebsiteId}", id);
+                            return BadRequest(new { error = "Invalid data format for Visiting Card details." });
+                        }
+                    }
+                }
+                return NotFound(new { error = "Website not found."});
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error fetching user websites");
+                logger.LogError(ex, "Error fetching user website");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }

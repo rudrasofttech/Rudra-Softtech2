@@ -80,7 +80,7 @@ const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
             </div> : null}
             <div className="text-end pt-5">
                 {type.length === 0 || name.length === 0 ? null : <button onClick={handleNext} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={loading}>
-                    {loading ? <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> : null}
+                    {loading ? <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> : null}
                     Next</button>}
             </div>
         </div>
@@ -352,19 +352,20 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
             const r = await postWithAuth(url, router,
                 {
                     websiteName, themeId: "593e47a0-efe5-4432-afb4-013e802bfe30", logo, company, tagLine, personName: name, designation,
-                    whatsApp: socialLinks.whatsApp,
+                    whatsApp: socialLinks.whatsapp,
                     telegram: socialLinks.telegram,
                     youtube: socialLinks.youtube, instagram: socialLinks.instagram,
                     linkedin: socialLinks.linkedin, twitter: socialLinks.twitter, facebook: socialLinks.facebook,
                     email, address, phone1: phoneNumbers[0], phone2: phoneNumbers[1], phone3: phoneNumbers[2]
                 }, { retries: 0 });
-            setLoading(false);
+            
             if (r.result) {
                 toast.success('Website created successfully!');
                 next();
             } else {
                 setErrors(r.errors);
             }
+            setLoading(false);
         } catch (err) {
             console.error('Failed to create:', err.message);
         }
@@ -416,8 +417,6 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
 export default function Create() {
     const [redirectUrl, setRedirectUrl] = useState("");
     const router = useRouter();
-    const { isLoggedIn, token } = useAuth();
-    
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [websiteName, setWebsiteName] = useState('');
@@ -434,7 +433,7 @@ export default function Create() {
     const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '', youtube: '', instagram: '', linkedin: '', twitter: '', facebook: '' });
     const maxSteps = 5;
     const next = () => {
-        if (step <= maxSteps) {
+        if (step < maxSteps) {
             setStep(step + 1);
         } else {
             handleFinish();
@@ -447,14 +446,9 @@ export default function Create() {
         }
     };
 
-    useEffect(() => {
-        if (!isLoggedIn) {
-            setRedirectUrl("/");
-        }
-    }, [isLoggedIn]);
-
     const handleFinish = () => {
         console.log('Wizard completed!');
+        setRedirectUrl("/");
     };
 
 
@@ -504,7 +498,7 @@ export default function Create() {
                 {step === 3 ? <WizardStepSocialLinks next={next}
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
-                {step === 5 ? <WizardStepTheme prev={prev} name={name} company={company} logo={logo}
+                {step === 5 ? <WizardStepTheme next={next} prev={prev} name={name} company={company} logo={logo}
                     tagLine={tagLine} websiteName={websiteName} wsType={siteType}
                     designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
 

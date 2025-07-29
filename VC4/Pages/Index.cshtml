@@ -1,13 +1,8 @@
 ﻿@page
 @model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-    Layout = null;
-    
 
+@{
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>You Website name is @Model.Subdomain</p>
-</div>
+@Html.Raw(Model.PageHtml)

@@ -8,6 +8,8 @@ import Offcanvas from 'react-bootstrap/Offcanvas';
 import useAppStore from '@/store/useAppStore';
 import { useEffect, useRef } from 'react';
 import { Button } from 'react-bootstrap';
+import Link from 'next/link';
+
 
 const ds = Merienda({
     subsets: ['latin'],
@@ -71,9 +73,9 @@ export default function PlyNavbar(props) {
 
     const expand = 'md';
 
-    return <Navbar key={expand} expand={expand} className="bg-body-tertiary mb-3 custom-navbar">
+    return <Navbar key={expand} expand={expand} className="bg-body-tertiary custom-navbar">
         <Container fluid>
-            <Navbar.Brand href="#" className={"fw-bold dancing-script fs-1 " + ds.className}>Ply</Navbar.Brand>
+            <Navbar.Brand href="/" className={"fw-bold dancing-script fs-1 " + ds.className}>Ply</Navbar.Brand>
             <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />
             <Navbar.Offcanvas
                 id={`offcanvasNavbar-expand-${expand}`}
