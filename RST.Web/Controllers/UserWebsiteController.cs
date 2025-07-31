@@ -113,10 +113,10 @@ namespace RST.Web.Controllers
         {
             try
             {
-                var obj = db.UserWebsites.Include(t => t.Owner).FirstOrDefault(t => t.Id == id);
+                var obj = db.UserWebsites.FirstOrDefault(t => t.Id == id);
                 if(obj != null)
                 {
-                    if (obj.WSType == WebsiteType.VCard && string.IsNullOrWhiteSpace(obj.JsonData))
+                    if (obj.WSType == WebsiteType.VCard && !string.IsNullOrWhiteSpace(obj.JsonData))
                     {
                         try
                         {
@@ -357,132 +357,49 @@ namespace RST.Web.Controllers
 
                 if (uw == null)
                     return NotFound(new { error = "Website not found or you do not have permission to update it." });
-                if (uw.WSType == WebsiteType.VCard && uw.VisitingCardDetail != null)
+                if (uw.WSType == WebsiteType.VCard)
                 {
-                    if (model.FieldName == "company")
+                    if (!string.IsNullOrWhiteSpace(uw.JsonData))
                     {
-                        if (model.FieldValue.Length > 50)
-                            return BadRequest(new { error = "Company name cannot be longer than 50 characters." });
-
-                        uw.VisitingCardDetail.Company = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
+                        try
+                        {
+                            uw.VisitingCardDetail = JsonSerializer.Deserialize<VisitingCardDetail>(uw.JsonData) ?? new VisitingCardDetail();
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            logger.LogError(jsonEx, "Error deserializing VisitingCardDetail for website {WebsiteId}", uw.Id);
+                            uw.VisitingCardDetail = new VisitingCardDetail(); // Reset to default if deserialization fails
+                        }
                     }
-                    else if (model.FieldName == "tagline")
+                    else
                     {
-                        if (model.FieldValue.Length > 100)
-                            return BadRequest(new { error = "Tagline cannot be longer than 100 characters." });
-
-                        uw.VisitingCardDetail.TagLine = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
+                        uw.VisitingCardDetail = new VisitingCardDetail();
                     }
-                    else if (model.FieldName == "keywords")
-                    {
-                        if (model.FieldValue.Length > 200)
-                            return BadRequest(new { error = "Keywords cannot be longer than 200 characters." });
-
-                        uw.VisitingCardDetail.Keywords = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "personname")
-                    {
-                        if (model.FieldValue.Length > 80)
-                            return BadRequest(new { error = "Person name cannot be longer than 80 characters." });
-
-                        uw.VisitingCardDetail.PersonName = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "designation")
-                    {
-                        if (model.FieldValue.Length > 50)
-                            return BadRequest(new { error = "Designation cannot be longer than 50 characters." });
-
-                        uw.VisitingCardDetail.Designation = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "whatsapp")
-                    {
-                        if (model.FieldValue.Length > 15)
-                            return BadRequest(new { error = "WhatsApp cannot be longer than 15 characters." });
-
-                        uw.VisitingCardDetail.WhatsApp = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "telegram")
-                    {
-                        if (model.FieldValue.Length > 50)
-                            return BadRequest(new { error = "Telegram cannot be longer than 50 characters." });
-
-                        uw.VisitingCardDetail.Telegram = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "youtube")
-                    {
-                        if (model.FieldValue.Length > 250)
-                            return BadRequest(new { error = "Youtube cannot be longer than 250 characters." });
-
-                        uw.VisitingCardDetail.Youtube = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "instagram")
-                    {
-                        if (model.FieldValue.Length > 250)
-                            return BadRequest(new { error = "Instagram cannot be longer than 250 characters." });
-
-                        uw.VisitingCardDetail.Instagram = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "linkedin")
-                    {
-                        if (model.FieldValue.Length > 250)
-                            return BadRequest(new { error = "LinkedIn cannot be longer than 250 characters." });
-
-                        uw.VisitingCardDetail.LinkedIn = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "facebook")
-                    {
-                        if (model.FieldValue.Length > 250)
-                            return BadRequest(new { error = "Facebook cannot be longer than 250 characters." });
-
-                        uw.VisitingCardDetail.Facebook = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "address")
-                    {
-                        if (model.FieldValue.Length > 400)
-                            return BadRequest(new { error = "Address cannot be longer than 400 characters." });
-
-                        uw.VisitingCardDetail.Address = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "aboutinfo")
-                    {
-                        if (model.FieldValue.Length > 400)
-                            return BadRequest(new { error = "AboutInfo cannot be longer than 400 characters." });
-
-                        uw.VisitingCardDetail.AboutInfo = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "logo")
-                    {
-                        uw.VisitingCardDetail.Logo = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "email")
-                    {
-                        if (model.FieldValue.Length > 150)
-                            return BadRequest(new { error = "Email cannot be longer than 100 characters." });
-                        uw.VisitingCardDetail.Email = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "phone1")
-                    {
-                        if (model.FieldValue.Length > 15)
-                            return BadRequest(new { error = "Phone 1 cannot be longer than 15 characters." });
-                        uw.VisitingCardDetail.Phone1 = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "phone2")
-                    {
-                        if (model.FieldValue.Length > 15)
-                            return BadRequest(new { error = "Phone 2 cannot be longer than 15 characters." });
-                        uw.VisitingCardDetail.Phone2 = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
-                    else if (model.FieldName == "phone3")
-                    {
-                        if (model.FieldValue.Length > 15)
-                            return BadRequest(new { error = "Phone 3 cannot be longer than 15 characters." });
-                        uw.VisitingCardDetail.Phone3 = string.IsNullOrEmpty(model.FieldValue) ? string.Empty : model.FieldValue;
-                    }
+                    uw.VisitingCardDetail.Company = string.IsNullOrWhiteSpace(model.Company) ? string.Empty : model.Company;
+                    uw.VisitingCardDetail.TagLine = string.IsNullOrWhiteSpace(model.TagLine) ? string.Empty : model.TagLine;
+                    uw.VisitingCardDetail.Keywords = string.IsNullOrWhiteSpace(model.Keywords) ? string.Empty : model.Keywords;
+                    uw.VisitingCardDetail.PersonName = string.IsNullOrWhiteSpace(model.PersonName) ? string.Empty : model.PersonName;
+                    uw.VisitingCardDetail.Designation = string.IsNullOrWhiteSpace(model.Designation) ? string.Empty : model.Designation;
+                    uw.VisitingCardDetail.WhatsApp = string.IsNullOrWhiteSpace(model.WhatsApp) ? string.Empty : model.WhatsApp;
+                    uw.VisitingCardDetail.Telegram = string.IsNullOrWhiteSpace(model.Telegram) ? string.Empty : model.Telegram;
+                    uw.VisitingCardDetail.Youtube = string.IsNullOrWhiteSpace(model.Youtube) ? string.Empty : model.Youtube;
+                    uw.VisitingCardDetail.Instagram = string.IsNullOrWhiteSpace(model.Instagram) ? string.Empty : model.Instagram;
+                    uw.VisitingCardDetail.LinkedIn = string.IsNullOrWhiteSpace(model.LinkedIn) ? string.Empty : model.LinkedIn;
+                    uw.VisitingCardDetail.Twitter = string.IsNullOrWhiteSpace(model.Twitter) ? string.Empty : model.Twitter;
+                    uw.VisitingCardDetail.Facebook = string.IsNullOrWhiteSpace(model.Facebook) ? string.Empty : model.Facebook;
+                    uw.VisitingCardDetail.Email = string.IsNullOrWhiteSpace(model.Email) ? string.Empty : model.Email;
+                    uw.VisitingCardDetail.Phone1 = string.IsNullOrWhiteSpace(model.Phone1) ? string.Empty : model.Phone1;
+                    uw.VisitingCardDetail.Phone2 = string.IsNullOrWhiteSpace(model.Phone2) ? string.Empty : model.Phone2;
+                    uw.VisitingCardDetail.Phone3 = string.IsNullOrWhiteSpace(model.Phone3) ? string.Empty : model.Phone3;
+                    uw.VisitingCardDetail.Address = string.IsNullOrWhiteSpace(model.Address) ? string.Empty : model.Address;
+                    uw.VisitingCardDetail.AboutInfo = string.IsNullOrWhiteSpace(model.AboutInfo) ? string.Empty : model.AboutInfo;
+                    uw.VisitingCardDetail.Photos = [];
 
                     uw.Modified = DateTime.UtcNow;
-                    uw.JsonData = JsonSerializer.Serialize(uw);
+                    uw.JsonData = JsonSerializer.Serialize(uw.VisitingCardDetail);
                     db.UserWebsites.Update(uw);
                     db.SaveChanges();
+
                     return Ok(uw);
                 }
                 return NotFound(new { error = "Visiting card details are not available." });

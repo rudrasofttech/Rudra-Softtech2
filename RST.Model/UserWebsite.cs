@@ -20,6 +20,7 @@ namespace RST.Model
         public RecordStatus Status { get; set; } = RecordStatus.Active;
         public WebsiteType WSType { get; set; } = WebsiteType.None;
         [NotMapped]
+        [JsonPropertyName("vcard")]
         public VisitingCardDetail? VisitingCardDetail { get; set; } = null!;
         public string Html { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
@@ -28,44 +29,44 @@ namespace RST.Model
     public class VisitingCardDetail
     {
         [MaxLength(50)]
-        public string? Company { get; set; }
+        public string? Company { get; set; } = string.Empty;
         [MaxLength(250)]
-        public string? Logo { get; set; }
+        public string? Logo { get; set; } = string.Empty;
         [MaxLength(100)]
-        public string? TagLine { get; set; }
+        public string? TagLine { get; set; } = string.Empty;
         [MaxLength(200)]
-        public string? Keywords { get; set; }
+        public string? Keywords { get; set; } = string.Empty;
         [MaxLength(80)]
-        public string? PersonName { get; set; }
+        public string? PersonName { get; set; } = string.Empty;
         [MaxLength(50)]
-        public string? Designation { get; set; }
+        public string? Designation { get; set; } = string.Empty;
         [MaxLength(15)]
-        public string? WhatsApp { get; set; }
+        public string? WhatsApp { get; set; } = string.Empty;
         [MaxLength(50)]
-        public string? Telegram { get; set; }
+        public string? Telegram { get; set; } = string.Empty;
         [MaxLength(300)]
-        public string? Youtube { get; set; }
+        public string? Youtube { get; set; } = string.Empty;
         [MaxLength(300)]
-        public string? Instagram { get; set; }
+        public string? Instagram { get; set; } = string.Empty;
         [MaxLength(300)]
-        public string? LinkedIn { get; set; }
+        public string? LinkedIn { get; set; } = string.Empty;
         [MaxLength(300)]
-        public string? Twitter { get; set; }
+        public string? Twitter { get; set; } = string.Empty;
         [MaxLength(300)]
-        public string? Facebook { get; set; }
+        public string? Facebook { get; set; } = string.Empty;
         [MaxLength(250)]
-        public string? Email { get; set; }
-        
-        [MaxLength(15)]
-        public string? Phone1 { get; set; }
-        [MaxLength(15)]
-        public string? Phone2 { get; set; }
-        [MaxLength(15)]
-        public string? Phone3 { get; set; }
+        public string? Email { get; set; } = string.Empty;
 
-        public string? Address { get; set; }
+        [MaxLength(15)]
+        public string? Phone1 { get; set; } = string.Empty;
+        [MaxLength(15)]
+        public string? Phone2 { get; set; } = string.Empty;
+        [MaxLength(15)]
+        public string? Phone3 { get; set; } = string.Empty;
+
+        public string? Address { get; set; } = string.Empty;
         [MaxLength(500)]
-        public string? AboutInfo { get; set; }
+        public string? AboutInfo { get; set; } = string.Empty;
         public List<VCardPhoto> Photos { get; set; } = [];
     }
 
