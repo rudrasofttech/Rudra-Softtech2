@@ -9,58 +9,6 @@ import Loader from '@/components/loader';
 import "../globals.css";
 import { toast } from 'react-toastify';
 
-const EditCompany = ({ website, onSave }) => {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [company, setCompany] = useState(website.company || '');
-    const [tagLine, setTagLine] = useState(website.tagLine || '');
-    const [logo, setLogo] = useState(website.logo || '');
-
-    useEffect(() => {
-        setCompany(website.company);
-        setTagLine(website.tagLine);
-        setLogo(website.logo);
-    }, [website.company, website.tagLine, website.logo]);
-
-    const handleSave = async (fieldName, fieldValue) => {
-        try {
-            setLoading(true);
-            const data = { fieldName, fieldValue, id: website.id };
-            const response = await postWithAuth(`${APIURLS.updateWebsite}/updatevcard`, data, router);
-            setLoading(false);
-            if (response.result) {
-                toast.success("Changes saved successfully!");
-                onSave && onSave();
-            } else {
-                toast.error("Failed to save changes: " + response.errors.join(', '));
-            }
-        } catch (err) {
-            console.error('Failed to create:', err.message);
-        }
-    }
-
-    return <div className="my-4">
-        <div className="fs-5 mb-2">Edit Company Information</div>
-        <div className="mb-3">
-            <label htmlFor="company" className="form-label">Company Name</label>
-            <input type="text" disabled={loading} maxLength="45" className="form-control" id="company" value={company}
-                onChange={(e) => setCompany(e.target.value)} onBlur={() => { handleSave("company", company); } } />
-        </div>
-    </div>;
-};
-
-const EditContact = ({ personName, designation, email, address, website, onSave }) => {
-
-};
-
-const EditPhoneNumbers = ({ phone1, phone2, phone3, website, onSave }) => {
-
-};
-
-const EditSocialLinks = ({ whatsApp, telegram, youtube, instagram, linkedIn, twitter, facebook, website, onSave }) => { }
-
-const EditTheme = ({ themeId, website, onSave }) => { }
-
 export default function EditSite() {
     const [redirectUrl, setRedirectUrl] = useState("");
     const searchParams = useSearchParams();
@@ -68,15 +16,40 @@ export default function EditSite() {
     const id = searchParams.get('id'); // Access a specific query parameter
 
     const [loading, setLoading] = useState(false);
-    const [saveLoading, setSaveLoading] = useState(false);
     const [error, setError] = useState('');
     const [website, setWebsite] = useState(null);
-    const [showEditCompanyModal, setShowEditCompanyModal] = useState(true);
-    const [showEditContactModal, setShowEditContactModal] = useState(false);
+    const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
+    const [showEditContactModal, setShowEditContactModal] = useState(true);
     const [showEditPhoneModal, setShowEditPhoneModal] = useState(false);
     const [showEditSocialModal, setShowEditSocialModal] = useState(false);
     const [showEditThemeModal, setShowEditThemeModal] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [themes, setThemes] = useState(null);
+    const [loadingTheme, setLoadingTheme] = useState(false);
+    const [themePageIndex, setThemePageIndex] = useState(1);
+
+    useEffect(() => {
+        async function fetchThemes() {
+            setLoadingTheme(true);
+            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}`, router);
+            if (r.result) {
+                if (themes === null) {
+                    setThemes(r.data);
+                } else {
+                    setThemes((prev) => ({
+                        items: [...prev.items, ...r.data.items],
+                        pageIndex: r.data.pageIndex,
+                        pageCount: r.data.pageCount,
+                        totalRecords: r.data.totalRecords
+                    }));
+                }
+            } else {
+                toast.error("Failed to load themes: " + r.errors.join(', '));
+            }
+            setLoadingTheme(false);
+        }
+        fetchThemes();
+    }, [themePageIndex]);
 
     useEffect(() => {
         if (redirectUrl) {
@@ -90,7 +63,6 @@ export default function EditSite() {
             setError('');
             var r = await getWithAuth(`${APIURLS.userWebsite}/${id}`, router);
             if (r.result) {
-                console.log(r.data);
                 setWebsite(r.data);
             } else {
                 setError(r.errors.join(', '));
@@ -102,7 +74,6 @@ export default function EditSite() {
 
     const handleSave = async () => {
         try {
-            setSaveLoading(true);
             const data = {
                 company: website.vcard.company,
                 logo: website.vcard.logo,
@@ -126,7 +97,6 @@ export default function EditSite() {
                 id: website.id
             };
             const response = await postWithAuth(`${APIURLS.userWebsite}/updatevcard`, router, data);
-            setSaveLoading(false);
             if (response.result) {
                 toast.success("Changes saved successfully!");
             } else {
@@ -147,17 +117,7 @@ export default function EditSite() {
                         <div className="position-sticky">
                             <ul className="nav flex-column">
                                 <li className="nav-item my-2">
-                                    <button type="button" className={showEditCompanyModal ? "btn btn-primary" : "btn btn-light"}
-                                        onClick={() => {
-                                            setShowEditCompanyModal(true);
-                                            setShowEditContactModal(false);
-                                            setShowEditPhoneModal(false);
-                                            setShowEditSocialModal(false);
-                                            setShowEditThemeModal(false);
-                                        }}>Business</button>
-                                </li>
-                                <li className="nav-item my-2">
-                                    <a className={showEditContactModal ? "btn btn-primary" : "btn btn-light"} onClick={() => {
+                                    <a className={showEditContactModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
                                         setShowEditCompanyModal(false);
                                         setShowEditContactModal(true);
                                         setShowEditPhoneModal(false);
@@ -166,7 +126,18 @@ export default function EditSite() {
                                     }}>Contact</a>
                                 </li>
                                 <li className="nav-item my-2">
-                                    <a className={showEditPhoneModal ? "btn btn-primary" : "btn btn-light"} onClick={() => {
+                                    <button type="button" className={showEditCompanyModal ? "btn btn-outline-primary" : "btn btn-light"}
+                                        onClick={() => {
+                                            setShowEditCompanyModal(true);
+                                            setShowEditContactModal(false);
+                                            setShowEditPhoneModal(false);
+                                            setShowEditSocialModal(false);
+                                            setShowEditThemeModal(false);
+                                        }}>Business</button>
+                                </li>
+                                
+                                <li className="nav-item my-2">
+                                    <a className={showEditPhoneModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
                                         setShowEditCompanyModal(false);
                                         setShowEditContactModal(false);
                                         setShowEditPhoneModal(true);
@@ -175,7 +146,7 @@ export default function EditSite() {
                                     }}>Phone</a>
                                 </li>
                                 <li className="nav-item my-2">
-                                    <a className={showEditSocialModal ? "btn btn-primary" : "btn btn-light"} onClick={() => {
+                                    <a className={showEditSocialModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
                                         setShowEditCompanyModal(false);
                                         setShowEditContactModal(false);
                                         setShowEditPhoneModal(false);
@@ -184,13 +155,29 @@ export default function EditSite() {
                                     }}>Social</a>
                                 </li>
                                 <li className="nav-item my-2">
-                                    <a className={showEditThemeModal ? "btn btn-primary" : "btn btn-light"} onClick={() => {
+                                    <a className={showEditThemeModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
                                         setShowEditCompanyModal(false);
                                         setShowEditContactModal(false);
                                         setShowEditPhoneModal(false);
                                         setShowEditSocialModal(false);
                                         setShowEditThemeModal(true);
                                     }}>Themes</a>
+                                </li>
+                                <li className="nav-item my-2">
+                                    {website.status === 1 ? <button disabled={loading} title="Site is Inactive, click to activate." type="button" className="btn btn-success" onClick={() => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                status: 0
+                                            }));
+                                            setTimeout(handleSave, 100);
+                                        }}>Activate</button> : null}
+                                    {website.status === 0 ? <button title="Site is active, click to inactivate." disabled={loading} type="button" className="btn btn-danger " onClick={() => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                status: 1
+                                            }));
+                                            setTimeout(handleSave, 100);
+                                        }}>Inactivate</button> : null}
                                 </li>
                             </ul>
                         </div>
@@ -588,7 +575,25 @@ export default function EditSite() {
                             </div>
                         </> : null}
                         {showEditThemeModal ? <>
-                            <EditTheme themeId={website.themeId} website={website} />
+                            {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
+                            {themes !== null ? <>
+                                <div className="row">{themes.items.map((item, index) => {
+                                    return <div className="col-6 col-md-6" key={index}>
+                                        <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
+                                            style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
+                                                setWebsite(prev => ({
+                                                    ...prev,
+                                                    themeId: item.id
+                                                }));
+                                                setTimeout(handleSave, 100);
+                                            }} />
+                                    </div>
+                                })}
+                                </div>
+                            </> : null}
+                            {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
+                                <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) } }>Load More</button>
+                            </div> : null}
                         </> : null}
                     </div>
                 </div>

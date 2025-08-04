@@ -55,7 +55,7 @@ export default function PlyNavbar(props) {
                 const response = {
                     token: event.data.token,
                     name: event.data.name,
-                    email: event.data.email,
+                    email: event.data.email
                 };
 
                 setToken(response.token, event.data.expiry);

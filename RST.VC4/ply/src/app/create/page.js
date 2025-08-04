@@ -102,7 +102,7 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     onChange={(e) => { setName(e.target.value); }}
                     placeholder="Your name" required maxLength={50}
                     className="form-control form-control-lg"
-                    onBlur={() => { setFormData({ name, designation, email }); }}
+                    onBlur={() => { setFormData({ name, designation, email, address }); }}
                 />
                 {name.length === 0 ? <div className="text-end"><small className="text-danger">Required</small></div> : null}
             </div>
@@ -116,7 +116,7 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     placeholder=""
                     className="form-control form-control-lg"
                     maxLength={80}
-                    onBlur={() => { setFormData({ name, designation, email }); }}
+                    onBlur={() => { setFormData({ name, designation, email, address }); }}
                 />
                 <div className="text-end"><small>Example- Designer, Developer, CEO, Director</small></div>
             </div>
@@ -130,7 +130,7 @@ const WizardStepUserInfo = ({ next, prev, formData, setFormData }) => {
                     placeholder=""
                     className="form-control form-control-lg"
                     maxLength={100}
-                    onBlur={() => { setFormData({ name, designation, email }); }}
+                    onBlur={() => { setFormData({ name, designation, email, address }); }}
                 />
                 <div className="text-end"><small>Example- you@example.com</small></div>
             </div>
@@ -384,6 +384,10 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
             <label className="form-label me-2">Email - </label>
             <label className="form-label fw-bold">{email}</label>
         </div> : null}
+        {address.length > 0 ? <div className="mb-2">
+            <label className="form-label me-2">Address - </label>
+            <label className="form-label fw-bold">{address}</label>
+        </div> : null}
         {phoneNumbers && phoneNumbers.length > 0 ? <>
             {phoneNumbers.map((num, index) => {
                 if (!num || num.trim().length === 0) return null; // Skip empty numbers
@@ -483,6 +487,7 @@ export default function Create() {
                         email, address
                     }}
                     setFormData={(d) => {
+                        console.log(d);
                         setName(d.name);
                         setDesignation(d.designation);
                         setEmail(d.email);
@@ -499,7 +504,7 @@ export default function Create() {
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 5 ? <WizardStepTheme next={next} prev={prev} name={name} company={company} logo={logo}
-                    tagLine={tagLine} websiteName={websiteName} wsType={siteType}
+                    tagLine={tagLine} websiteName={websiteName} wsType={siteType} address={address} 
                     designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
 
             </Container>

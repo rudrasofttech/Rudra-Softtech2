@@ -34,7 +34,8 @@ namespace RST.Web.Controllers
                 {
                     if (m.Item2)
                     {
-                        var result = new LoginReturnDTO() { Member = m.Item1, Token = GenerateJSONWebToken(m.Item1) };
+                        var dt = DateTime.UtcNow.AddDays(90);
+                        var result = new LoginReturnDTO() { Member = m.Item1, Token = GenerateJSONWebToken(m.Item1, dt), Expiry = dt };
                         return Ok(result);
                     }
                     else
@@ -60,11 +61,11 @@ namespace RST.Web.Controllers
         //    return Ok();
         //}
 
-        private string GenerateJSONWebToken(Member m)
+        private string GenerateJSONWebToken(Member m, DateTime dt)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var dt = DateTime.UtcNow.AddDays(90);
+            
             var claims = new List<Claim>() {
                 new(ClaimTypes.NameIdentifier,  m.Email),
                 new(ClaimTypes.Email, m.Email),

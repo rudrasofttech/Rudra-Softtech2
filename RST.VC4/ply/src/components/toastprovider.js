@@ -5,10 +5,10 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function ToastProvider() {
     return (
         <ToastContainer
-            position="top-right"
-            autoClose={3000}
+            position="bottom-right"
+            autoClose={2000}
             theme="light"
-            hideProgressBar={false}
+            hideProgressBar={true}
             newestOnTop
             closeOnClick
             pauseOnHover

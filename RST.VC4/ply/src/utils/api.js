@@ -1,8 +1,6 @@
 ﻿import { toast } from 'react-toastify';
 import useAppStore from '../store/useAppStore';
 
-
-
 export const postWithAuth = async (url, router, payload, options = {}) => {
     const store = useAppStore.getState();
     const { token, expiry, clearToken } = store;
