@@ -275,3 +275,4 @@ __pycache__/
 /RST.Web/appsettings.Production.json
 /LiveBackup
 /RST.Admin/.config
+/VC4/Pages/Moriana.cshtml
