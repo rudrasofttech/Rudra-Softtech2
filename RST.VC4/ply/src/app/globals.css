@@ -18,6 +18,56 @@
     --bs-danger: #A26769;*/
 }
 
+.iphone-frame {
+    width: 375px;
+    height: 812px;
+    border: 16px solid #000;
+    border-radius: 60px;
+    position: relative;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 210px;
+    height: 30px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 2;
+}
+
+.screen {
+    position: absolute;
+    top: 30px;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    padding: 10px;
+}
+
+    .screen iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 20px;
+    }
+
+.home-button {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    background: #000;
+    border-radius: 50%;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --background: #0a0a0a;

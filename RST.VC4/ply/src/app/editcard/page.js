@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getWithAuth, postWithAuth } from '@/utils/api';
 import { APIURLS } from '@/utils/config';
 import PlyNavbar from '@/components/plynavbar';
@@ -14,7 +14,7 @@ export default function EditSite() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const id = searchParams.get('id'); // Access a specific query parameter
-
+    const [dummy, setDummy] = useState(Date.now()); // Dummy state to force re-render
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [website, setWebsite] = useState(null);
@@ -94,11 +94,50 @@ export default function EditSite() {
                 twitter: website.vcard.twitter,
                 address: website.vcard.address,
                 aboutInfo: website.vcard.aboutInfo,
+                facebook: website.vcard.facebook,
                 id: website.id
             };
             const response = await postWithAuth(`${APIURLS.userWebsite}/updatevcard`, router, data);
             if (response.result) {
+                setDummy(Date.now()); // Force re-render
                 toast.success("Changes saved successfully!");
+            } else {
+                toast.error("Failed to save changes: " + response.errors.join(', '));
+            }
+        } catch (err) {
+            console.error('Failed to create:', err.message);
+        }
+    }
+
+    const updateTheme = async (id) => {
+        try {
+            const data = {
+                websiteId: website.id,
+                themeId: id
+            };
+            const response = await postWithAuth(`${APIURLS.userWebsite}/updatetheme`, router, data);
+            if (response.result) {
+                setDummy(Date.now()); // Force re-render
+                toast.success("Changes saved successfully!");
+            } else {
+                toast.error("Failed to save changes: " + response.errors.join(', '));
+            }
+        } catch (err) {
+            console.error('Failed to create:', err.message);
+        }
+    }
+
+    const updateStatus = async (status) => {
+        try {
+            
+            const response = await getWithAuth(`${APIURLS.userWebsite}/updatestatus/${website.id}?status=${status}`, router);
+            if (response.result) {
+                setWebsite(prev => ({
+                    ...prev,
+                    status: status
+                }));
+                setDummy(Date.now()); // Force re-render
+                toast.success("Status updated successfully!");
             } else {
                 toast.error("Failed to save changes: " + response.errors.join(', '));
             }
@@ -113,7 +152,7 @@ export default function EditSite() {
         {website !== null ? <div className="border-top g-0">
             <div className="container-fluid">
                 <div className="row">
-                    <nav className="col-md-2 col-lg-1 col-sm-2 d-md-block bg-light sidebar" style={{ minHeight: "calc(100vh - 70px)" }}>
+                    <nav className="col-md-2 col-lg-1 col-sm-2 d-md-block bg-light border-end sidebar" style={{ minHeight: "calc(100vh - 70px)" }}>
                         <div className="position-sticky">
                             <ul className="nav flex-column">
                                 <li className="nav-item my-2">
@@ -135,7 +174,7 @@ export default function EditSite() {
                                             setShowEditThemeModal(false);
                                         }}>Business</button>
                                 </li>
-                                
+
                                 <li className="nav-item my-2">
                                     <a className={showEditPhoneModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
                                         setShowEditCompanyModal(false);
@@ -165,19 +204,11 @@ export default function EditSite() {
                                 </li>
                                 <li className="nav-item my-2">
                                     {website.status === 1 ? <button disabled={loading} title="Site is Inactive, click to activate." type="button" className="btn btn-success" onClick={() => {
-                                            setWebsite(prev => ({
-                                                ...prev,
-                                                status: 0
-                                            }));
-                                            setTimeout(handleSave, 100);
-                                        }}>Activate</button> : null}
+                                        updateStatus(0);
+                                    }}>Activate</button> : null}
                                     {website.status === 0 ? <button title="Site is active, click to inactivate." disabled={loading} type="button" className="btn btn-danger " onClick={() => {
-                                            setWebsite(prev => ({
-                                                ...prev,
-                                                status: 1
-                                            }));
-                                            setTimeout(handleSave, 100);
-                                        }}>Inactivate</button> : null}
+                                        updateStatus(1);
+                                    }}>Inactivate</button> : null}
                                 </li>
                             </ul>
                         </div>
@@ -199,7 +230,7 @@ export default function EditSite() {
                                         setIsDirty(true);
                                     }}
                                     onBlur={() => {
-                                        if(isDirty) {
+                                        if (isDirty) {
                                             handleSave();
                                             setIsDirty(false);
                                         }
@@ -218,7 +249,7 @@ export default function EditSite() {
                                             }
                                         }));
                                         setIsDirty(true);
-                                    }} 
+                                    }}
                                     onBlur={() => {
                                         if (isDirty) {
                                             handleSave();
@@ -248,7 +279,7 @@ export default function EditSite() {
                                     }}
                                 />
                             </div>
-                            
+
                         </> : null}
                         {showEditContactModal ? <>
                             <div className="fw-bold mb-2 fs-5">Contact Information</div>
@@ -585,22 +616,64 @@ export default function EditSite() {
                                                     ...prev,
                                                     themeId: item.id
                                                 }));
-                                                setTimeout(handleSave, 100);
+                                                updateTheme(item.id);
                                             }} />
                                     </div>
                                 })}
                                 </div>
                             </> : null}
                             {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
-                                <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) } }>Load More</button>
+                                <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
                             </div> : null}
                         </> : null}
+                    </div>
+                    <div className="col-md col-lg col-sm">
+                        <div className="iphone-frame mx-auto p-4">
+                            <div className="notch"></div>
+                            <div className="screen">
+                                <HtmlIframe id={website.id} router={router} dummy={dummy} />
+                            </div>
+                            <div className="home-button"></div>
+                        </div>
+
+                        
                     </div>
                 </div>
             </div>
         </div> : null}
-
-
     </>;
 
+}
+
+function HtmlIframe({ id, router, dummy}) {
+    const iframeRef = useRef(null);
+    const [html, setHtml] = useState('');
+    useEffect(() => {
+        async function fetchSite() {
+            //setLoading(true);
+            //setError('');
+            var r = await getWithAuth(`${APIURLS.userWebsite}/html/${id}`, router);
+            if (r.result) {
+                setHtml(r.data.html);
+            }
+            //else {
+            //    setError(r.errors.join(', '));
+            //}
+            //setLoading(false);
+        }
+        fetchSite();
+
+        const iframeDoc = iframeRef.current?.contentWindow?.document;
+        if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(html);
+            iframeDoc.close();
+        }
+    }, [dummy]);
+
+    if (html === '') {
+        return <div className="text-center p-5">Loading...</div>;
+    } else {
+        return <iframe ref={iframeRef} frameBorder="0" className="w-100" style={{ minHeight: "calc(100vh - 70px)" }} />;
+    }
 }

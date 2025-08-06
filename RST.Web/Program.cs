@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RST.Context;
+using RST.Services;
 using RST.Web.Service;
 using Serilog;
 using System.Text;
@@ -68,6 +69,7 @@ builder.Services.AddScoped<DataSourceService>();
 builder.Services.AddScoped<RSTAuthenticationService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<CaptchaService>();
+builder.Services.AddScoped<IUserWebsiteRenderService, UserWebsiteRenderService>();
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));

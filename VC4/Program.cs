@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using RST.Context;
+using RST.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddDbContext<RSTContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("RSTContext")));
+builder.Services.AddScoped<IUserWebsiteRenderService, UserWebsiteRenderService>();
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));

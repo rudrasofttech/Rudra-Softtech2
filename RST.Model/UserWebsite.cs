@@ -68,6 +68,8 @@ namespace RST.Model
         [MaxLength(500)]
         public string? AboutInfo { get; set; } = string.Empty;
         public List<VCardPhoto> Photos { get; set; } = [];
+
+        public bool HasSocialLinks => !string.IsNullOrEmpty(Youtube) || !string.IsNullOrEmpty(Instagram) || !string.IsNullOrEmpty(LinkedIn) || !string.IsNullOrEmpty(Twitter) || !string.IsNullOrEmpty(Facebook) || !string.IsNullOrEmpty(WhatsApp) || !string.IsNullOrEmpty(Telegram);
     }
 
     public class VCardPhoto

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RST.Web", "RST.Web\RST.Web.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VC4", "VC4\VC4.csproj", "{91CE4ABF-D271-434F-A37A-C7D315AF4C02}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RST.Services", "RST.Services\RST.Services.csproj", "{1EA88583-A702-4455-AA1E-272720A91D22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{91CE4ABF-D271-434F-A37A-C7D315AF4C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91CE4ABF-D271-434F-A37A-C7D315AF4C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91CE4ABF-D271-434F-A37A-C7D315AF4C02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EA88583-A702-4455-AA1E-272720A91D22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EA88583-A702-4455-AA1E-272720A91D22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EA88583-A702-4455-AA1E-272720A91D22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EA88583-A702-4455-AA1E-272720A91D22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

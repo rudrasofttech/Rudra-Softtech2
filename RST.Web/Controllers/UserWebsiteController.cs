@@ -4,18 +4,21 @@ using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
+using RST.Services;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class UserWebsiteController(RSTContext context, ILogger<UserWebsiteController> _logger) : ControllerBase
+    public class UserWebsiteController(RSTContext context, ILogger<UserWebsiteController> _logger, IUserWebsiteRenderService _userWebsite) : ControllerBase
     {
         private readonly RSTContext db = context;
         private readonly ILogger<UserWebsiteController> logger = _logger;
+        private readonly IUserWebsiteRenderService userWebsite = _userWebsite;
 
         private bool CheckRole(string roles)
         {
@@ -377,6 +380,7 @@ namespace RST.Web.Controllers
                     }
                     uw.VisitingCardDetail.Company = string.IsNullOrWhiteSpace(model.Company) ? string.Empty : model.Company;
                     uw.VisitingCardDetail.TagLine = string.IsNullOrWhiteSpace(model.TagLine) ? string.Empty : model.TagLine;
+                    uw.VisitingCardDetail.Logo = string.IsNullOrWhiteSpace(model.Logo) ? string.Empty : model.Logo;
                     uw.VisitingCardDetail.Keywords = string.IsNullOrWhiteSpace(model.Keywords) ? string.Empty : model.Keywords;
                     uw.VisitingCardDetail.PersonName = string.IsNullOrWhiteSpace(model.PersonName) ? string.Empty : model.PersonName;
                     uw.VisitingCardDetail.Designation = string.IsNullOrWhiteSpace(model.Designation) ? string.Empty : model.Designation;
@@ -450,5 +454,81 @@ namespace RST.Web.Controllers
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
+
+        [HttpGet]
+        [Route("updatestatus/{id}")]
+        public IActionResult UpdateTheme(Guid id,[FromQuery] RecordStatus status)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                var member = db.Members.FirstOrDefault(d => d.Email == email);
+                if (member == null)
+                    return Unauthorized(new { error = "User not found." });
+
+                var website = db.UserWebsites.Include(t => t.Owner)
+                    .FirstOrDefault(t => t.Id ==id && t.Owner.ID == member.ID);
+
+                if (website == null)
+                    return NotFound(new { error = "Website not found or you do not have permission to update it." });
+
+                website.Status = status;
+                website.Modified = DateTime.UtcNow;
+
+                db.UserWebsites.Update(website);
+                db.SaveChanges();
+
+                return Ok(website);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating website status");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpGet]
+        [Route("html/{id}")]
+        public async Task<IActionResult> GetHtml(Guid id)
+        {
+            try
+            {
+                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                var member = db.Members.FirstOrDefault(d => d.Email == email);
+                if (member == null)
+                    return Unauthorized(new { error = "User not found." });
+
+                var website = db.UserWebsites.Include(t => t.Owner)
+                    .FirstOrDefault(t => t.Id == id);
+
+                if (website == null)
+                    return NotFound(new { error = "Website not found or you do not have permission to update it." });
+                if(website.WSType == WebsiteType.VCard && !string.IsNullOrWhiteSpace(website.JsonData))
+                {
+                    try
+                    {
+                        website.VisitingCardDetail = JsonSerializer.Deserialize<VisitingCardDetail>(website.JsonData) ?? new VisitingCardDetail();
+                        string html = await userWebsite.GetRenderedHtmlAsync(website.Html, website.VisitingCardDetail);
+                        return Ok(new { html });
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        logger.LogError(jsonEx, "Error deserializing VisitingCardDetail for website {WebsiteId}", id);
+                        return BadRequest(new { error = "Invalid data format for Visiting Card details." });
+                    }
+                }
+                
+                return BadRequest(new { error = "Only visiting card website supported at present." });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating website theme");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
     }
 }
+

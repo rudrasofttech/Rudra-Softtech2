@@ -1,18 +1,20 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RST.Context;
 using RST.Model;
+using RST.Services;
 
 namespace VC4.Pages
 {
-    public class IndexModel(RSTContext context, ILogger<IndexModel> logger) : PageModel
+    public class IndexModel(RSTContext context, ILogger<IndexModel> logger, IUserWebsiteRenderService _userWebsite) : PageModel
     {
         private readonly ILogger<IndexModel> _logger = logger;
         private readonly RSTContext _context = context;
+        private readonly IUserWebsiteRenderService userWebsite = _userWebsite;
 
         public string? Subdomain { get; private set; }
         public UserWebsite? UserWebsite { get; private set; }
         public string PageHtml { get; set; } = string.Empty;
-        public void OnGet()
+        public async void OnGet()
         {
             try
             {
@@ -33,7 +35,8 @@ namespace VC4.Pages
                         if (UserWebsite.WSType == WebsiteType.VCard)
                         {
                             UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
-                            PageHtml = VCardHtmlRenderer.RenderTemplate(UserWebsite.Html, UserWebsite.VisitingCardDetail ?? new VisitingCardDetail());
+                            //PageHtml = await VCardHtmlRenderer.RenderTemplateAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail ?? new VisitingCardDetail());
+                            PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
                         }
                     }
                 }
