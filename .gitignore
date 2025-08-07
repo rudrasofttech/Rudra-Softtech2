@@ -276,3 +276,8 @@ __pycache__/
 /LiveBackup
 /RST.Admin/.config
 /VC4/Pages/Moriana.cshtml
+/VC4/Pages/vcardtemplate.cshtml
+/VC4/Pages/Olivia.cshtml
+/VC4/Pages/Olivia.cshtml.cs
+/VC4/Pages/vcardtemplate.cshtml.cs
+/VC4/wwwroot/logs
