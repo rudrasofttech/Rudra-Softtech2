@@ -13,7 +13,6 @@ namespace RST.Model.DTO.UserWebsite
         public Guid Id { get; set; }
         [MaxLength(50)]
         public string? Company { get; set; }
-        [MaxLength(250)]
         public string? Logo { get; set; }
         [MaxLength(100)]
         public string? TagLine { get; set; }

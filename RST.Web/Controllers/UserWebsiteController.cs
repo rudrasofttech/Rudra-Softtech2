@@ -7,12 +7,11 @@ using RST.Model.DTO.UserWebsite;
 using RST.Services;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace RST.Web.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class UserWebsiteController(RSTContext context, ILogger<UserWebsiteController> _logger, IUserWebsiteRenderService _userWebsite) : ControllerBase
     {
@@ -171,9 +170,6 @@ namespace RST.Web.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
                 if (db.UserWebsites.Any(t => t.Name == model.Name))
                     return BadRequest(new { error = "Website with this name already exists." });
 
@@ -216,9 +212,6 @@ namespace RST.Web.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
                 // Check for duplicate website name
                 if (db.UserWebsites.Any(t => t.Name == model.WebsiteName))
                     return BadRequest(new { error = "Website name already exists." });
@@ -350,10 +343,6 @@ namespace RST.Web.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
                 var m = db.Members.First(d => d.Email == email);
                 var uw = db.UserWebsites.Include(t => t.Owner).FirstOrDefault(t => t.Id == model.Id && t.Owner.ID == m.ID);

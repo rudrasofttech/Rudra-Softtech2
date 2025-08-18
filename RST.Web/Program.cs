@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -70,6 +71,23 @@ builder.Services.AddScoped<RSTAuthenticationService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<CaptchaService>();
 builder.Services.AddScoped<IUserWebsiteRenderService, UserWebsiteRenderService>();
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(ms => ms.Value.Errors.Any())
+            .SelectMany(kvp => kvp.Value.Errors.Select(e => e.ErrorMessage))
+            .ToList();
+
+        var response = new
+        {
+            errors
+        };
+
+        return new BadRequestObjectResult(response);
+    };
+});
 
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));

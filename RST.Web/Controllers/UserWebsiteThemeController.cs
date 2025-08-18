@@ -9,8 +9,8 @@ using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     [Authorize]
     public class UserWebsiteThemeController(RSTContext context, ILogger<UserWebsiteThemeController> _logger) : ControllerBase
     {
