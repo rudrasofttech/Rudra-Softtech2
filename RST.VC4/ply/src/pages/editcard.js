@@ -1,25 +1,27 @@
-﻿'use client'
+'use client'
 
-export const dynamic = "force-dynamic";
-
-import {useParams, useRouter } from 'next/navigation';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { getWithAuth, postWithAuth } from '@/utils/api';
-import { APIURLS } from '@/utils/config';
-import PlyNavbar from '@/components/plynavbar';
-import Loader from '@/components/loader';
-import "@/styles/globals.css";
+import { getWithAuth, postWithAuth } from '../utils/api';
+import { APIURLS } from '../utils/config';
+import PlyNavbar from '../components/plynavbar';
+import Loader from '../components/loader';
+import "../styles/globals.css";
+import Nav from 'react-bootstrap/Nav';
+
 import { toast } from 'react-toastify';
+import useScreenSize from '../hooks/useScreenSize';
+import ResponsivePreview from '../components/responsivepreview';
+import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
 
 export default function EditCard() {
-    const [redirectUrl, setRedirectUrl] = useState("");
-    
-    const router = useRouter();
+    //const [redirectUrl, setRedirectUrl] = useState("");
+    const isMobile = useScreenSize();
+    const navigate = useNavigate();
     const params = useParams();
-const id = params.id; //searchParams.get('id'); // Access a specific query parameter
+    const id = params.id;
     const [dummy, setDummy] = useState(Date.now()); // Dummy state to force re-render
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [website, setWebsite] = useState(null);
     const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
     const [showEditContactModal, setShowEditContactModal] = useState(true);
@@ -30,11 +32,26 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
     const [themes, setThemes] = useState(null);
     const [loadingTheme, setLoadingTheme] = useState(false);
     const [themePageIndex, setThemePageIndex] = useState(1);
+    const [croppedImage, setCroppedImage] = useState(null);
+
+    const handleImageCropped = (base64Image) => {
+        setCroppedImage(base64Image);
+        setWebsite(prev => ({
+            ...prev,
+            vcard: {
+                ...prev.vcard,
+                logo: base64Image
+            }
+        }));
+        handleSave();
+        console.log('Base64 Image:', base64Image);
+    };
+
 
     useEffect(() => {
         async function fetchThemes() {
             setLoadingTheme(true);
-            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}`, router);
+            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}`, navigate);
             if (r.result) {
                 if (themes === null) {
                     setThemes(r.data);
@@ -52,28 +69,27 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
             setLoadingTheme(false);
         }
         fetchThemes();
-    }, [themePageIndex]);
+    }, [themePageIndex, navigate]);
 
-    useEffect(() => {
-        if (redirectUrl) {
-            router.push(redirectUrl);
-        }
-    }, [redirectUrl, router]);
+    // useEffect(() => {
+    //     if (redirectUrl) {
+    //         navigate(redirectUrl);
+    //     }
+    // }, [redirectUrl]);
 
     useEffect(() => {
         async function fetchSite() {
             setLoading(true);
-            setError('');
-            var r = await getWithAuth(`${APIURLS.userWebsite}/${id}`, router);
+            var r = await getWithAuth(`${APIURLS.userWebsite}/${id}`, navigate);
             if (r.result) {
                 setWebsite(r.data);
             } else {
-                setError(r.errors.join(', '));
+                toast.error(r.errors.join(', '));
             }
             setLoading(false);
         }
         fetchSite();
-    }, [id]);
+    }, [id, navigate]);
 
     const handleSave = async () => {
         try {
@@ -95,12 +111,11 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
                 instagram: website.vcard.instagram,
                 linkedIn: website.vcard.linkedIn,
                 twitter: website.vcard.twitter,
-                address: website.vcard.address,
                 aboutInfo: website.vcard.aboutInfo,
                 facebook: website.vcard.facebook,
                 id: website.id
             };
-            const response = await postWithAuth(`${APIURLS.userWebsite}/updatevcard`, router, data);
+            const response = await postWithAuth(`${APIURLS.userWebsite}/updatevcard`, navigate, data);
             if (response.result) {
                 setDummy(Date.now()); // Force re-render
                 toast.success("Changes saved successfully!");
@@ -118,7 +133,7 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
                 websiteId: website.id,
                 themeId: id
             };
-            const response = await postWithAuth(`${APIURLS.userWebsite}/updatetheme`, router, data);
+            const response = await postWithAuth(`${APIURLS.userWebsite}/updatetheme`, navigate, data);
             if (response.result) {
                 setDummy(Date.now()); // Force re-render
                 toast.success("Changes saved successfully!");
@@ -132,8 +147,8 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
 
     const updateStatus = async (status) => {
         try {
-            
-            const response = await getWithAuth(`${APIURLS.userWebsite}/updatestatus/${website.id}?status=${status}`, router);
+
+            const response = await getWithAuth(`${APIURLS.userWebsite}/updatestatus/${website.id}?status=${status}`, navigate);
             if (response.result) {
                 setWebsite(prev => ({
                     ...prev,
@@ -150,73 +165,61 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
     }
 
     return <>
-        <PlyNavbar showLoginPopup={null} />
+        <PlyNavbar showLoginPopup={null}>
+            {website !== null ?
+                <Nav className="justify-content-end flex-grow-1 pe-3">
+                    <Nav.Link className={showEditContactModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(false);
+                        setShowEditContactModal(true);
+                        setShowEditPhoneModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditThemeModal(false);
+                    }}>Contact</Nav.Link>
+                    <Nav.Link className={showEditCompanyModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(true);
+                        setShowEditContactModal(false);
+                        setShowEditPhoneModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditThemeModal(false);
+                    }}>Business</Nav.Link>
+                    <Nav.Link className={showEditPhoneModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(false);
+                        setShowEditContactModal(false);
+                        setShowEditPhoneModal(true);
+                        setShowEditSocialModal(false);
+                        setShowEditThemeModal(false);
+                    }}>Phone</Nav.Link>
+                    <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(false);
+                        setShowEditContactModal(false);
+                        setShowEditPhoneModal(false);
+                        setShowEditSocialModal(true);
+                        setShowEditThemeModal(false);
+                    }}>Social</Nav.Link>
+                    <Nav.Link className={showEditThemeModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(false);
+                        setShowEditContactModal(false);
+                        setShowEditPhoneModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditThemeModal(true);
+                    }}>Themes</Nav.Link>
+                    {website.status === 1 ? <Nav.Link disabled={loading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
+                        updateStatus(0);
+                    }}>Activate</Nav.Link> : null}
+                    {website.status === 0 ? <Nav.Link title="Site is active, click to inactivate." disabled={loading} className="text-danger " onClick={() => {
+                        updateStatus(1);
+                    }}>Inactivate</Nav.Link> : null}
+                    <Nav.Link title="Site is active, click to inactivate." target="_blank" className="text-primary " href={`https://${website.name}.vc4.in` }>Preview</Nav.Link>
+                </Nav> : null}
+        </PlyNavbar>
         {loading ? <Loader /> : null}
         {website !== null ? <div className="border-top g-0">
             <div className="container-fluid">
                 <div className="row">
-                    <nav className="col-md-2 col-lg-1 col-sm-2 d-md-block bg-light border-end sidebar" style={{ minHeight: "calc(100vh - 70px)" }}>
-                        <div className="position-sticky">
-                            <ul className="nav flex-column">
-                                <li className="nav-item my-2">
-                                    <a className={showEditContactModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
-                                        setShowEditCompanyModal(false);
-                                        setShowEditContactModal(true);
-                                        setShowEditPhoneModal(false);
-                                        setShowEditSocialModal(false);
-                                        setShowEditThemeModal(false);
-                                    }}>Contact</a>
-                                </li>
-                                <li className="nav-item my-2">
-                                    <button type="button" className={showEditCompanyModal ? "btn btn-outline-primary" : "btn btn-light"}
-                                        onClick={() => {
-                                            setShowEditCompanyModal(true);
-                                            setShowEditContactModal(false);
-                                            setShowEditPhoneModal(false);
-                                            setShowEditSocialModal(false);
-                                            setShowEditThemeModal(false);
-                                        }}>Business</button>
-                                </li>
-
-                                <li className="nav-item my-2">
-                                    <a className={showEditPhoneModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
-                                        setShowEditCompanyModal(false);
-                                        setShowEditContactModal(false);
-                                        setShowEditPhoneModal(true);
-                                        setShowEditSocialModal(false);
-                                        setShowEditThemeModal(false);
-                                    }}>Phone</a>
-                                </li>
-                                <li className="nav-item my-2">
-                                    <a className={showEditSocialModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
-                                        setShowEditCompanyModal(false);
-                                        setShowEditContactModal(false);
-                                        setShowEditPhoneModal(false);
-                                        setShowEditSocialModal(true);
-                                        setShowEditThemeModal(false);
-                                    }}>Social</a>
-                                </li>
-                                <li className="nav-item my-2">
-                                    <a className={showEditThemeModal ? "btn btn-outline-primary" : "btn btn-light"} onClick={() => {
-                                        setShowEditCompanyModal(false);
-                                        setShowEditContactModal(false);
-                                        setShowEditPhoneModal(false);
-                                        setShowEditSocialModal(false);
-                                        setShowEditThemeModal(true);
-                                    }}>Themes</a>
-                                </li>
-                                <li className="nav-item my-2">
-                                    {website.status === 1 ? <button disabled={loading} title="Site is Inactive, click to activate." type="button" className="btn btn-success" onClick={() => {
-                                        updateStatus(0);
-                                    }}>Activate</button> : null}
-                                    {website.status === 0 ? <button title="Site is active, click to inactivate." disabled={loading} type="button" className="btn btn-danger " onClick={() => {
-                                        updateStatus(1);
-                                    }}>Inactivate</button> : null}
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
-                    <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2">
+                    {!isMobile ? <div className="col-md-6 col-lg-8 col-sm">
+                        <HtmlIframe id={website.id} navigate={navigate} dummy={dummy} />
+                    </div> : null}
+                    <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2 bg-light border-start">
                         {showEditCompanyModal ? <>
                             <div className="fw-bold mb-2 fs-5">Business Information</div>
                             <div className="mb-2">
@@ -281,6 +284,15 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
                                         }
                                     }}
                                 />
+                                <ImageUploaderWithCrop onImageCropped={handleImageCropped} />
+
+                                {croppedImage && (
+                                    <div className="mt-4">
+                                        <h5>Cropped Image Preview:</h5>
+                                        <img src={croppedImage} alt="Cropped" style={{ border: '1px solid #ccc' }} />
+                                    </div>
+                                )}
+
                             </div>
 
                         </> : null}
@@ -630,54 +642,56 @@ const id = params.id; //searchParams.get('id'); // Access a specific query param
                             </div> : null}
                         </> : null}
                     </div>
-                    <div className="col-md col-lg col-sm">
-                        <div className="iphone-frame mx-auto p-4">
-                            <div className="notch"></div>
-                            <div className="screen">
-                                <HtmlIframe id={website.id} router={router} dummy={dummy} />
-                            </div>
-                            <div className="home-button"></div>
-                        </div>
-
-                        
-                    </div>
                 </div>
             </div>
         </div> : null}
     </>;
 }
 
- function HtmlIframe({ id, router, dummy}) {
+function HtmlIframe({ id, navigate, dummy }) {
     const iframeRef = useRef(null);
     const [html, setHtml] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Fetch HTML
     useEffect(() => {
         async function fetchSite() {
-            //setLoading(true);
-            //setError('');
-            var r = await getWithAuth(`${APIURLS.userWebsite}/html/${id}`, router);
-            if (r.result) {
-                setHtml(r.data.html);
+            setLoading(true);
+            try {
+                const r = await getWithAuth(`${APIURLS.userWebsite}/html/${id}`, navigate);
+                if (r.result) {
+                    setHtml(r.data.html);
+                } else {
+                    toast.error(r.errors.join(', '));
+                }
+            } catch (err) {
+                toast.error('Unexpected error occurred.');
+            } finally {
+                setLoading(false);
             }
-            //else {
-            //    setError(r.errors.join(', '));
-            //}
-            //setLoading(false);
         }
+
         fetchSite();
+    }, [id, navigate, dummy]);
 
-        const iframeDoc = iframeRef.current?.contentWindow?.document;
-        if (iframeDoc) {
-            iframeDoc.open();
-            iframeDoc.write(html);
-            iframeDoc.close();
-        }
-    }, [dummy]);
+    // Write to iframe whenever html changes
+    useEffect(() => {
+        const iframe = iframeRef.current;
+        if (!iframe || !html) return;
 
-    if (html === '') {
-        return <div className="text-center p-5">Loading...</div>;
-    } else {
-        return <iframe ref={iframeRef} frameBorder="0" className="w-100" style={{ minHeight: "calc(100vh - 70px)" }} />;
-    }
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) return;
+
+        // Clear and write fresh HTML
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+    }, [html]);
+
+    return (
+        <>
+            <ResponsivePreview html={html} />
+            {loading ? <Loader /> : null}
+        </>
+    );
 }
-
-

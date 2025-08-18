@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import useAppStore from '../store/useAppStore'
+import useAppStore from '../store/useAppStore';
 
 const AuthContext = createContext()
 

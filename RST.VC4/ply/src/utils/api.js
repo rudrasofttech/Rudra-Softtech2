@@ -1,6 +1,6 @@
 ﻿'use client'
 import { toast } from 'react-toastify';
-import useAppStore from '@/store/useAppStore';
+import useAppStore from '../store/useAppStore';
 
 export const postWithAuth = async (url, router, payload, options = {}) => {
     const store = useAppStore.getState();
@@ -10,9 +10,9 @@ export const postWithAuth = async (url, router, payload, options = {}) => {
     if (!token || !expiry || Date.now() >= expiry) {
         clearToken();
         toast.warn('Session expired. Please log in again.');
-        router.push(redirectUrl);
-        //return { result: false, errors: ['Session expired. Please log in again.'] };
-        throw new Error('Expired token');
+        router(redirectUrl);
+        return { result: false, errors: ['Session expired. Please log in again.'] };
+        //throw new Error('Expired token');
     }
 
     let attempt = 0;
@@ -68,8 +68,9 @@ export const getWithAuth = async (url, router, options = {}) => {
     if (!token || !expiry || Date.now() >= expiry) {
         clearToken();
         toast.warn('Session expired. Please log in again.');
-        router.push(redirectUrl);
-        throw new Error('Token expired');
+        router(redirectUrl);
+        return { result: false, errors: ['Session expired. Please log in again.'] };
+        //throw new Error('Token expired');
     }
 
     let attempt = 0;

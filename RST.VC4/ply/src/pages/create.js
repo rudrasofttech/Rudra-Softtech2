@@ -1,23 +1,17 @@
-﻿'use client'
-import React from 'react';
-import { Merienda } from 'next/font/google';
+'use client'
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Container } from "react-bootstrap";
-import PlyNavbar from "@/components/plynavbar";
-import "@/styles/globals.css";
-import Loader from '@/components/loader';
-import { APIURLS } from '@/utils/config';
-import { postWithAuth } from '@/utils/api';
+import PlyNavbar from "../components/plynavbar";
+import "../styles/globals.css";
+import Loader from '../components/loader';
+import { APIURLS } from '../utils/config';
+import { postWithAuth } from '../utils/api';
 import { toast } from 'react-toastify';
 
-const ds = Merienda({
-    subsets: ['latin'],
-});
-
 const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [type, setType] = useState(wsType); // Local state for name input
     const [name, setName] = useState(websiteName); // Local state for name input
     const [errors, setErrors] = useState([]); // Local state for error messages
@@ -36,7 +30,7 @@ const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
     const handleNext = async () => {
         try {
             setLoading(true);
-            const r = await postWithAuth(`${APIURLS.userWebsite}/isuniquename`, router, { name }, { retries: 0 });
+            const r = await postWithAuth(`${APIURLS.userWebsite}/isuniquename`, navigate, { name }, { retries: 0 });
             setLoading(false);
             if (r.result) {
                 onSelectType?.(type, name); // Expose selected value to parent
@@ -338,7 +332,7 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
 };
 
 const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, email, company, tagLine, phoneNumbers, socialLinks,address,wsType }) => {
-    const router = useRouter();
+    const navigate = useNavigate();
     const [errors, setErrors] = useState([]); // Local state for error messages
     const [loading, setLoading] = useState(false);
 
@@ -349,7 +343,7 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
             if (wsType === 'vc') {
                 url = `${APIURLS.userWebsite}/createvcard`;
             }
-            const r = await postWithAuth(url, router,
+            const r = await postWithAuth(url, navigate,
                 {
                     websiteName, themeId: "593e47a0-efe5-4432-afb4-013e802bfe30", logo, company, tagLine, personName: name, designation,
                     whatsApp: socialLinks.whatsapp,
@@ -420,7 +414,7 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
 
 export default function Create() {
     const [redirectUrl, setRedirectUrl] = useState("");
-    const router = useRouter();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [websiteName, setWebsiteName] = useState('');
@@ -458,9 +452,9 @@ export default function Create() {
 
     useEffect(() => {
         if (redirectUrl) {
-            router.push(redirectUrl);
+            navigate(redirectUrl);
         }
-    }, [redirectUrl, router]);
+    }, [redirectUrl]);
 
     return (
         <>
