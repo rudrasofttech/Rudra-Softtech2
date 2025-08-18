@@ -10,6 +10,7 @@ import { APIURLS } from '../utils/config';
 import { StatusDisplay } from '../components/statusdisplay';
 import Swal from 'sweetalert2';
 import useAppStore from '../store/useAppStore';
+import Nav from 'react-bootstrap/Nav';
 
 function Home() {
   const [redirectUrl, setRedirectUrl] = useState("");
@@ -81,7 +82,9 @@ function Home() {
 
   return (
     <>
-      <PlyNavbar showLoginPopup={dummy} />
+          <PlyNavbar showLoginPopup={dummy}>
+              <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>
+      </PlyNavbar>
       {!isLoggedIn ? <div className="p-lg-4 p-2 text-center">
         <div className="my-md-5 my-4 hero-text merienda">Get your website for free!</div>
         <div className="text-center mb-4">
@@ -92,7 +95,7 @@ function Home() {
       </div> : <div>
         <Container className="my-5">
           {loading ? <Loader /> : null}
-          {error ? <div className="text-danger text-center my-2">{error}</div> : null}
+          {error !== "" ? <div className="text-danger text-center my-2">{error}</div> : null}
           {!loading ? <>{designs.length > 0 ? (
             <>
               <div className="mb-4 d-flex "><h1 className="me-auto">My Sites</h1>
@@ -114,7 +117,7 @@ function Home() {
                 <tbody>
                   {designs.map((site, index) => (
                     <tr key={index}>
-                      <td><a href={`https://${site.name}.vc4.in`} target="_blank">{site.name}</a></td>
+                      <td><a rel="noreferrer" href={`https://${site.name}.vc4.in`} target="_blank">{site.name}</a></td>
                       <td>
                         {new Date(site.created).toLocaleDateString()}
                         {site.modified ? <div className="text-muted"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}

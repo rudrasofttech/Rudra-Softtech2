@@ -27,11 +27,10 @@ export default function ResponsivePreview({ html }) {
                     <button
                         key={key}
                         className={`tab-button ${device === key ? 'active' : ''}`}
-                        onClick={() => setDevice(key)}
-                    >
-                        {key.charAt(0).toUpperCase() + key.slice(1) === "Mobile" ? <i className="bi bi-phone"></i> : null}
-                        {key.charAt(0).toUpperCase() + key.slice(1) === "Tablet" ? <i className="bi bi-tablet-landscape"></i> : null}
-                        {key.charAt(0).toUpperCase() + key.slice(1) === "Desktop" ? <i className="bi bi-laptop"></i> : null}
+                        onClick={() => setDevice(key)}>
+                        {key.charAt(0).toUpperCase() + key.slice(1) === "Mobile" ? <i className="bi bi-phone" title="iPhones, Android etc"></i> : null}
+                        {key.charAt(0).toUpperCase() + key.slice(1) === "Tablet" ? <i className="bi bi-tablet-landscape" title="Tablets , iPad etc."></i> : null}
+                        {key.charAt(0).toUpperCase() + key.slice(1) === "Desktop" ? <i className="bi bi-laptop" title="Laptop, desktops and large screens."></i> : null}
                     </button>
                 ))}
             </div>
@@ -42,7 +41,7 @@ export default function ResponsivePreview({ html }) {
                     title="Responsive Preview"
                     style={{
                         width: `${DEVICE_SIZES[device]}px`,
-                        height: '90vh',
+                        height: 'calc(100vh - 110px)',
                         border: '1px solid #ccc',
                         borderRadius: '8px',
                         boxShadow: '0 0 12px rgba(0,0,0,0.1)',

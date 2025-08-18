@@ -2,17 +2,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem;
+    padding: 0.5rem;
 }
 
 .device-tabs {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .tab-button {
-    padding: 0.5rem 1rem;
+    padding:  0.3rem 0.8rem;
     border: none;
     background: #eee;
     border-radius: 6px;

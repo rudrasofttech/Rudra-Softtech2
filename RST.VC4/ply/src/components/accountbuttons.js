@@ -38,7 +38,7 @@ export default function AccountButtons(props) {
 
     useEffect(() => {
         const handleMessage = (event) => {
-            // Replace with your IdP origin
+            // Replace with your Id origin
             if (event.origin !== 'https://www.rudrasofttech.com') return;
             //console.log('Message received from IdP:', event.data);
             if (event.data !== null && event.data !== undefined) {

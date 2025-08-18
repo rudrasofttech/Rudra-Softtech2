@@ -35,9 +35,8 @@ const ImageUploaderWithCrop = ({ onImageCropped }) => {
     };
 
     return (
-        <Container className="mt-4">
+        <Container>
             <Form.Group controlId="formFile">
-                <Form.Label>Upload Image</Form.Label>
                 <Form.Control type="file" accept="image/*" onChange={handleFileChange} />
             </Form.Group>
 
@@ -68,7 +67,7 @@ const ImageUploaderWithCrop = ({ onImageCropped }) => {
                         </Col>
                         <Col xs={4}>
                             <Button variant="primary" onClick={handleCrop}>
-                                Crop & Convert
+                                Save
                             </Button>
                         </Col>
                     </Row>

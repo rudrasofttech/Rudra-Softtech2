@@ -8,11 +8,12 @@ import PlyNavbar from '../components/plynavbar';
 import Loader from '../components/loader';
 import "../styles/globals.css";
 import Nav from 'react-bootstrap/Nav';
-
 import { toast } from 'react-toastify';
 import useScreenSize from '../hooks/useScreenSize';
 import ResponsivePreview from '../components/responsivepreview';
 import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
+import Modal from 'react-bootstrap/Modal';
+
 
 export default function EditCard() {
     //const [redirectUrl, setRedirectUrl] = useState("");
@@ -32,10 +33,13 @@ export default function EditCard() {
     const [themes, setThemes] = useState(null);
     const [loadingTheme, setLoadingTheme] = useState(false);
     const [themePageIndex, setThemePageIndex] = useState(1);
-    const [croppedImage, setCroppedImage] = useState(null);
+    const [showLogoModal, setShowLogoModal] = useState(false);
+
+    const handleLogoModalClose = () => setShowLogoModal(false);
+    const handleLogoModalShow = () => setShowLogoModal(true);
 
     const handleImageCropped = (base64Image) => {
-        setCroppedImage(base64Image);
+        
         setWebsite(prev => ({
             ...prev,
             vcard: {
@@ -43,8 +47,9 @@ export default function EditCard() {
                 logo: base64Image
             }
         }));
-        handleSave();
-        console.log('Base64 Image:', base64Image);
+        setTimeout(handleSave, 100);
+        
+        //console.log('Base64 Image:', base64Image);
     };
 
 
@@ -209,8 +214,8 @@ export default function EditCard() {
                     {website.status === 0 ? <Nav.Link title="Site is active, click to inactivate." disabled={loading} className="text-danger " onClick={() => {
                         updateStatus(1);
                     }}>Inactivate</Nav.Link> : null}
-                    <Nav.Link title="Site is active, click to inactivate." target="_blank" className="text-primary " href={`https://${website.name}.vc4.in` }>Preview</Nav.Link>
-                </Nav> : null}
+                    <Nav.Link title="Site is active, click to inactivate." target="_blank" className="text-primary link-underline-primary" href={`https://${website.name}.vc4.in`}>Visit {website.name}</Nav.Link>
+                </Nav> : <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>}
         </PlyNavbar>
         {loading ? <Loader /> : null}
         {website !== null ? <div className="border-top g-0">
@@ -266,35 +271,41 @@ export default function EditCard() {
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="logoTxt" className="form-label">Logo URL</label>
-                                <input type="text" className="form-control" id="logoTxt" value={website.vcard.logo} maxLength={200}
-                                    onChange={(e) => {
-                                        setWebsite(prev => ({
-                                            ...prev,
-                                            vcard: {
-                                                ...prev.vcard,
-                                                logo: e.target.value
-                                            }
-                                        }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => {
-                                        if (isDirty) {
-                                            handleSave();
-                                            setIsDirty(false);
-                                        }
-                                    }}
-                                />
-                                <ImageUploaderWithCrop onImageCropped={handleImageCropped} />
 
-                                {croppedImage && (
-                                    <div className="mt-4">
-                                        <h5>Cropped Image Preview:</h5>
-                                        <img src={croppedImage} alt="Cropped" style={{ border: '1px solid #ccc' }} />
+                                {website.vcard.logo !== "" ? <div>
+                                    <img alt="" src={website.vcard.logo} className="img-fluid " />
+                                    <div className="my-2">
+                                        <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                vcard: {
+                                                    ...prev.vcard,
+                                                    logo: ""
+                                                }
+                                            }));
+                                            setTimeout(handleSave, 100);
+                                        }}>Remove</button>
+                                        <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogoModalShow}>Change</button>
                                     </div>
-                                )}
-
+                                </div> : <div>
+                                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogoModalShow}>Upload Logo</button>
+                                </div>}
+                                <div className="text-end"><small>Upload a logo in jpeg or png format</small></div>
+                                <Modal show={showLogoModal} onHide={handleLogoModalClose}>
+                                    <Modal.Header closeButton>
+                                        <Modal.Title>Upload Logo</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body>
+                                        <ImageUploaderWithCrop onImageCropped={handleImageCropped} />
+                                    </Modal.Body>
+                                </Modal>
+                                {/*{croppedImage && (*/}
+                                {/*    <div className="mt-4">*/}
+                                {/*        <h5>Cropped Image Preview:</h5>*/}
+                                {/*        <img src={croppedImage} alt="Cropped" style={{ border: '1px solid #ccc' }} />*/}
+                                {/*    </div>*/}
+                                {/*)}*/}
                             </div>
-
                         </> : null}
                         {showEditContactModal ? <>
                             <div className="fw-bold mb-2 fs-5">Contact Information</div>
@@ -318,6 +329,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Your full name</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="DesignationTxt" className="form-label">Designation</label>
@@ -339,6 +351,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>CEO, Owner, Propreiter, Director etc</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="EmailTxt" className="form-label">Email</label>
@@ -360,6 +373,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Your official or primary email address. e.g. myemail@gmail.com</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="AddressTxt" className="form-label">Address</label>
@@ -381,6 +395,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Provide full address including zipcode, disctrict, state name.</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="BioTxt" className="form-label">Bio</label>
@@ -402,6 +417,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Write something about the business/company/yourself.</small></div>
                             </div>
                         </> : null}
                         {showEditPhoneModal ? <>
@@ -426,6 +442,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>It is recommended to include 1 phone number. <br/>Example: +91 9876543210</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="phone2Txt" className="form-label">Phone 2</label>
@@ -447,6 +464,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example: +91 9876543210</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="phone3Txt" className="form-label">Phone 3</label>
@@ -468,10 +486,12 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example: +91 9876543210</small></div>
                             </div>
                         </> : null}
                         {showEditSocialModal ? <>
                             <div className="fw-bold mb-2 fs-5">Social Media Links</div>
+                            <div className="text-start mb-2"><small>These will show as icons on your digital visiting card.</small></div>
                             <div className="mb-2">
                                 <label htmlFor="whatsAppTxt" className="form-label">Whats App</label>
                                 <input type="text" className="form-control" id="whatsAppTxt" value={website.vcard.whatsApp} maxLength={15}
@@ -492,6 +512,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Whatsapp number that you want to share.</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="TelegramTxt" className="form-label">Telegram</label>
@@ -513,6 +534,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Your telegram username</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="YoutubeTxt" className="form-label">Youtube</label>
@@ -534,6 +556,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example- https://www.youtube.com/@Bookwormfrom1983</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="InstagramTxt" className="form-label">Instagram</label>
@@ -555,6 +578,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example- https://www.instagram.com/Bookwormfrom1983/</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="LinkedInTxt" className="form-label">LinkedIn</label>
@@ -576,6 +600,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example- https://www.linkedin.com/in/rajkiran/</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="TwitterTxt" className="form-label">Twitter</label>
@@ -597,6 +622,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Your twitter handle e.g. @rajkiransingh</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="FacebookTxt" className="form-label">Facebook</label>
@@ -618,6 +644,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
+                                <div className="text-end"><small>Example- https://www.facebook.com/singhrajkiran</small></div>
                             </div>
                         </> : null}
                         {showEditThemeModal ? <>

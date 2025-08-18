@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Container } from "react-bootstrap";
 import PlyNavbar from "../components/plynavbar";
 import "../styles/globals.css";
-import Loader from '../components/loader';
+import Nav from 'react-bootstrap/Nav';
 import { APIURLS } from '../utils/config';
 import { postWithAuth } from '../utils/api';
 import { toast } from 'react-toastify';
@@ -54,13 +54,13 @@ const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
                 <label className="form-label fw-bold">Choose type of website</label>
                 <div className="options-grid">
                     <div
-                        className={type == "vc" ? "option-card active" : "option-card"}
+                        className={type === "vc" ? "option-card active" : "option-card"}
                         onClick={() => handleSelect('vc')}>
                         <h3>💼 Visiting Card</h3>
                         <p>Minimal profile to showcase your identity with punch.</p>
                     </div>
                     <div
-                        className={type == "ll" ? "option-card active" : "option-card"}
+                        className={type === "ll" ? "option-card active" : "option-card"}
                         onClick={() => handleSelect('ll')}>
                         <h3>🔗 Link List</h3>
                         <p>Curated list of links—perfect for creators and professionals.</p>
@@ -331,7 +331,7 @@ const WizardStepMoreSocialLinks = ({ next, prev, socialLinks, setSocialLinks }) 
     );
 };
 
-const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, email, company, tagLine, phoneNumbers, socialLinks,address,wsType }) => {
+const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, email, company, tagLine, phoneNumbers, socialLinks, address, wsType }) => {
     const navigate = useNavigate();
     const [errors, setErrors] = useState([]); // Local state for error messages
     const [loading, setLoading] = useState(false);
@@ -352,7 +352,7 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
                     linkedin: socialLinks.linkedin, twitter: socialLinks.twitter, facebook: socialLinks.facebook,
                     email, address, phone1: phoneNumbers[0], phone2: phoneNumbers[1], phone3: phoneNumbers[2]
                 }, { retries: 0 });
-            
+
             if (r.result) {
                 toast.success('Website created successfully!');
                 next();
@@ -415,8 +415,6 @@ const WizardStepTheme = ({ prev, next, websiteName, name, logo, designation, ema
 export default function Create() {
     const [redirectUrl, setRedirectUrl] = useState("");
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [websiteName, setWebsiteName] = useState('');
     const [siteType, setSiteType] = useState('');
     const [step, setStep] = useState(0);
@@ -424,7 +422,7 @@ export default function Create() {
     const [designation, setDesignation] = useState('');
     const [email, setEmail] = useState('');
     const [address, setAddress] = useState('');
-    const [logo, setLogo] = useState(''); 
+    const [logo, setLogo] = useState('');
     const [company, setCompany] = useState('');
     const [tagLine, setTagLine] = useState('');
     const [phoneNumbers, setPhoneNumbers] = useState(['', '', '']);
@@ -458,10 +456,11 @@ export default function Create() {
 
     return (
         <>
-            <PlyNavbar showLoginPopup={null} />
+            <PlyNavbar showLoginPopup={null}>
+                <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>
+            </PlyNavbar>
             <Container className="my-5">
-                {loading ? <Loader /> : null}
-                {error ? <div className="text-danger text-center my-2">{error}</div> : null}
+
                 {step === 0 ? <WSSiteType
                     next={next}
                     onSelectType={(type, name) => {
@@ -498,7 +497,7 @@ export default function Create() {
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
                 {step === 5 ? <WizardStepTheme next={next} prev={prev} name={name} company={company} logo={logo}
-                    tagLine={tagLine} websiteName={websiteName} wsType={siteType} address={address} 
+                    tagLine={tagLine} websiteName={websiteName} wsType={siteType} address={address}
                     designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
 
             </Container>

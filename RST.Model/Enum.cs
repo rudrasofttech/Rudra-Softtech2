@@ -4,7 +4,7 @@
     {
         None = 0,
         VCard = 1,
-        Personal = 2,
+        LinkList = 2,
         Blog = 3,
         Portfolio = 4,
         ECommerce = 5,
