@@ -1,12 +1,12 @@
 ﻿'use client'
 import React from 'react';
 import { Merienda } from 'next/font/google';
-import { useAuth } from '@/context/authprovider';
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Container } from "react-bootstrap";
 import PlyNavbar from "@/components/plynavbar";
-import "../globals.css";
+import "@/styles/globals.css";
 import Loader from '@/components/loader';
 import { APIURLS } from '@/utils/config';
 import { postWithAuth } from '@/utils/api';

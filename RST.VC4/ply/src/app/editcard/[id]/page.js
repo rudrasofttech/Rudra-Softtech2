@@ -1,19 +1,22 @@
 ﻿'use client'
 
-import { useSearchParams, useRouter } from 'next/navigation';
+export const dynamic = "force-dynamic";
+
+import {useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { getWithAuth, postWithAuth } from '@/utils/api';
 import { APIURLS } from '@/utils/config';
 import PlyNavbar from '@/components/plynavbar';
 import Loader from '@/components/loader';
-import "../globals.css";
+import "@/styles/globals.css";
 import { toast } from 'react-toastify';
 
-export default function EditSite() {
+export default function EditCard() {
     const [redirectUrl, setRedirectUrl] = useState("");
-    const searchParams = useSearchParams();
+    
     const router = useRouter();
-    const id = searchParams.get('id'); // Access a specific query parameter
+    const params = useParams();
+const id = params.id; //searchParams.get('id'); // Access a specific query parameter
     const [dummy, setDummy] = useState(Date.now()); // Dummy state to force re-render
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -642,10 +645,9 @@ export default function EditSite() {
             </div>
         </div> : null}
     </>;
-
 }
 
-function HtmlIframe({ id, router, dummy}) {
+ function HtmlIframe({ id, router, dummy}) {
     const iframeRef = useRef(null);
     const [html, setHtml] = useState('');
     useEffect(() => {
@@ -677,3 +679,5 @@ function HtmlIframe({ id, router, dummy}) {
         return <iframe ref={iframeRef} frameBorder="0" className="w-100" style={{ minHeight: "calc(100vh - 70px)" }} />;
     }
 }
+
+

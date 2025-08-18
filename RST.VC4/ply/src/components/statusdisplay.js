@@ -1,3 +1,4 @@
+'use client'
 export function StatusDisplay({ status }) {
     if (status === 0)
         return "Active";

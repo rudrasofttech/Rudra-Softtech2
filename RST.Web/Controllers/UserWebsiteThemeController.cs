@@ -195,7 +195,7 @@ namespace RST.Web.Controllers
                 }
                 db.UserWebsiteThemes.Remove(theme);
                 db.SaveChanges();
-                return NoContent();
+                return Ok();
             }
             catch (Exception ex)
             {

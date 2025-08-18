@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Container } from "react-bootstrap";
 import PlyNavbar from "@/components/plynavbar";
-import "./globals.css";
+import "@/styles/globals.css";
 import Loader from '@/components/loader';
 import { getWithAuth } from '@/utils/api';
 import { APIURLS } from '@/utils/config';
@@ -122,7 +122,7 @@ export default function Home() {
                                                 </td>
                                                 <td><StatusDisplay status={site.status} /></td>
                                                 <td>
-                                                    <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => setRedirectUrl(`/editcard?id=${site.id}`)}><i className="bi bi-pencil-square"></i></button>
+                                                    <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => setRedirectUrl(`/editcard/${site.id}`)}><i className="bi bi-pencil-square"></i></button>
                                                 </td>
                                                 <td><button type="button" className="btn btn-link text-danger" disabled={loading || loadingDelete} onClick={() => { handleDelete(site.id); }}><i className="bi bi-trash3"></i></button></td>
                                             </tr>

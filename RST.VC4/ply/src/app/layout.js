@@ -1,7 +1,8 @@
+'use client'
 import { Geist, Geist_Mono } from "next/font/google";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import "./globals.css";
+import "@/styles/globals.css";
 import { AuthProvider } from "@/context/authprovider";
 import ToastProvider from "@/components/toastprovider";
 
@@ -16,10 +17,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "Ply",
-  description: "Create and manage your websites effortlessly with Ply, the ultimate website builder by Rudra Softtech.",
-};
+// export const metadata = {
+//   title: "Ply",
+//   description: "Create and manage your websites effortlessly with Ply, the ultimate website builder by Rudra Softtech.",
+// };
 
 export default function RootLayout({ children }) {
   return (

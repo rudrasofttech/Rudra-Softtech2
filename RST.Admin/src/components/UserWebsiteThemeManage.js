@@ -18,7 +18,7 @@ export class UserWebsiteThemeManage extends Component {
             tags: '', html: '', wstype: 0, thumbnail: '',
             token: localStorage.getItem("token"),
             loading: false, loggedin: localStorage.getItem("token") === null ? false : true,
-            error : '', success : '',
+            error : '', success : '', redirect:'',
             id: this.props.match.params.id !== undefined && this.props.match.params.id !== null ? this.props.match.params.id : ''
         };
     }
@@ -84,7 +84,7 @@ export class UserWebsiteThemeManage extends Component {
         })
             .then(response => {
                 if (response.status === 200) {
-                    this.setState({ loading: false, success: "Theme saved." });
+                    this.setState({ loading: false, success: "Theme saved.", redirect: `/UserWebsiteTheme/${this.state.id}` });
                 } else if (response.status === 401) {
                     this.setState({ loggedin: false, loading: false });
                 } else {
@@ -105,6 +105,9 @@ export class UserWebsiteThemeManage extends Component {
     render() {
         if (!this.state.loggedin) {
             return <Redirect to="/loginform" />;
+        }
+        else if (this.state.redirect !== '') {
+            return <Redirect to={this.state.redirect} />;
         }
         else {
             return (

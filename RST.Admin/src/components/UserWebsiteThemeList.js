@@ -72,15 +72,14 @@ class UserWebsiteThemeList extends Component {
                 .then(response => {
                     console.log(response.status);
                     if (response.status === 200) {
-                        response.json().then(data => {
-                            let list = this.state.item.filter(t => t.id !== data.id);
-                            this.setState({ items: list });
-                        });
+                        let list = this.state.themes.filter(t => t.id !== e);
+                        this.setState({ themes: list });
                     }
                     else {
                         response.json().then(data => {
                             this.setState({ error: data.error });
-                        }).catch(err => {
+                        }).catch(err2 => {
+                            console.log(err2);
                             this.setState({ error: "Unable to process request." });
                         });
                     }
@@ -108,6 +107,11 @@ class UserWebsiteThemeList extends Component {
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
                         <h1 className="h2"><img src={template} className="img-fluid icon-large me-2" /> User Website Themes</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" className="btn btn-secondary me-2" onClick={() => {
+                                this.setState({ page: 1 }, () => { this.fetchThemes() });
+                            }}>
+                                Refresh
+                            </button>
                             <Link to={'/userwebsitethememanage'} className="btn btn-primary">Create Theme</Link>
                         </div>
                     </div>
@@ -116,38 +120,34 @@ class UserWebsiteThemeList extends Component {
                     </div>
                     {loading ? <Spinner /> : null}
                     {!loading && !error && (
-                        <div>
-                            <Table responsive striped bordered condensed hover>
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: "150px" }}></th>
-                                        <th>Name</th>
-                                        <th>Tags</th>
-                                        <th>Created</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {themes.map(theme => (
-                                        <tr key={theme.id}>
-                                            <td><img src={theme.thumbnail} className="img-fluid" /></td>
-                                            <td>{theme.name}</td>
-                                            <td>{theme.tags}</td>
-                                            <td>{new Date(theme.createDate).toLocaleString()}</td>
-                                            <td>
-                                                <Link className='btn btn-link' to={`/userwebsitethememanage/${theme.id}`}>
-                                                    <img src={editicon} className="img-fluid icon-extra-small" />
-                                                </Link>
-                                            </td>
-                                            <td>
-                                                <button type='button' className='btn btn-link' onClick={() => { this.handleDeleteTheme(theme.id) }}>
-                                                    <img src={deleteicon} className="img-fluid icon-extra-small" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {themes.length === 0 ? <tr><td colspan={6}>No themes found.</td></tr> : null}
-                                </tbody>
-                            </Table>
+                        <div className="row row-cols-1 row-cols-md-2 g-4">
+                            {themes.map(theme => (
+                                <div className="col">
+                                    <div className="card">
+                                        <div className="row g-0">
+                                            <div className="col-md-4">
+                                                <img src={theme.thumbnail} className="img-fluid rounded-start" alt="" />
+                                            </div>
+                                            <div className="col-md-8">
+                                                <div className="card-body">
+                                                    <h5 className="card-title">{theme.name}</h5>
+                                                    <p className="card-text">{theme.tags}</p>
+                                                    <p className="card-text"><small className="text-body-secondary">{new Date(theme.createDate).toLocaleString()}</small></p>
+                                                    <p className="card-text">
+                                                        <Link className='btn btn-link' to={`/userwebsitethememanage/${theme.id}`}>
+                                                            <img src={editicon} className="img-fluid icon-extra-small me-2" />
+                                                        </Link>
+                                                        <button type='button' className='btn btn-link' onClick={() => { this.handleDeleteTheme(theme.id) }}>
+                                                            <img src={deleteicon} className="img-fluid icon-extra-small" />
+                                                        </button>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {themes.length === 0 ? <div>No themes found.</div> : null}
                             {pageCount > 1 ? <div>
                                 <button className="btn btn-sm btn-light" type="button"
                                     disabled={page <= 1}
