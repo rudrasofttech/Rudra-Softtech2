@@ -39,7 +39,7 @@ export default function EditCard() {
     const handleLogoModalShow = () => setShowLogoModal(true);
 
     const handleImageCropped = (base64Image) => {
-        
+        //console.log('Base64 Image:', base64Image);
         setWebsite(prev => ({
             ...prev,
             vcard: {
@@ -49,7 +49,7 @@ export default function EditCard() {
         }));
         setTimeout(handleSave, 100);
         
-        //console.log('Base64 Image:', base64Image);
+        handleLogoModalClose();
     };
 
 
@@ -273,7 +273,7 @@ export default function EditCard() {
                                 <label htmlFor="logoTxt" className="form-label">Logo URL</label>
 
                                 {website.vcard.logo !== "" ? <div>
-                                    <img alt="" src={website.vcard.logo} className="img-fluid " />
+                                    <img alt="" src={website.vcard.logo} className="img-fluid" style={{maxWidth:"200px"} } />
                                     <div className="my-2">
                                         <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
                                             setWebsite(prev => ({
@@ -296,7 +296,10 @@ export default function EditCard() {
                                         <Modal.Title>Upload Logo</Modal.Title>
                                     </Modal.Header>
                                     <Modal.Body>
-                                        <ImageUploaderWithCrop onImageCropped={handleImageCropped} />
+                                        <ImageUploaderWithCrop maxWidth={300}
+                                            maxHeight={300}
+
+                                            onImageLoaded={handleImageCropped} />
                                     </Modal.Body>
                                 </Modal>
                                 {/*{croppedImage && (*/}

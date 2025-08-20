@@ -24,13 +24,15 @@ function Home() {
   const { setDesigns, designs, deleteDesign } = useAppStore();
 
   useEffect(() => {
-    const loadDesigns = async () => {
-      const res = await getWithAuth(`${APIURLS.userWebsite}/mywebsites`, navigate);
-      if (res.result && res.data) {
-        setDesigns(res.data);
-      } else {
-        setError(res.errors.join(', '));
-      }
+      const loadDesigns = async () => {
+          if (isLoggedIn) {
+              const res = await getWithAuth(`${APIURLS.userWebsite}/mywebsites`, navigate);
+              if (res.result && res.data) {
+                  setDesigns(res.data);
+              } else {
+                  setError(res.errors.join(', '));
+              }
+          }
     };
     setLoading(true);
     setError('');
@@ -38,7 +40,7 @@ function Home() {
     setLoading(false);
     const interval = setInterval(loadDesigns, 20000); // background refresh every 20s
     return () => clearInterval(interval);
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (redirectUrl) {

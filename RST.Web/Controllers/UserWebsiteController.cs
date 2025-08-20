@@ -446,7 +446,7 @@ namespace RST.Web.Controllers
 
         [HttpGet]
         [Route("updatestatus/{id}")]
-        public IActionResult UpdateTheme(Guid id,[FromQuery] RecordStatus status)
+        public IActionResult UpdateStatus(Guid id,[FromQuery] RecordStatus status)
         {
             try
             {
@@ -509,12 +509,158 @@ namespace RST.Web.Controllers
                         return BadRequest(new { error = "Invalid data format for Visiting Card details." });
                     }
                 }
-                
-                return BadRequest(new { error = "Only visiting card website supported at present." });
+                else if (website.WSType == WebsiteType.LinkList && !string.IsNullOrWhiteSpace(website.JsonData))
+                {
+                    try
+                    {
+                        website.LinkListDetail = JsonSerializer.Deserialize<LinkListDetail>(website.JsonData) ?? new LinkListDetail();
+                        string html = await userWebsite.GetRenderedHtmlAsync(website.Html, website.LinkListDetail);
+                        return Ok(new { html });
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        logger.LogError(jsonEx, "Error deserializing LinkListDetail for website {WebsiteId}", id);
+                        return BadRequest(new { error = "Invalid data format for LinkList details." });
+                    }
+                }
+
+                return BadRequest(new { error = "Only visiting card and link list websites are supported at present." });
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error updating website theme");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpPost]
+        [Route("createlinklist")]
+        public IActionResult CreateLinkList([FromBody] CreateLinkListWebsiteDTO model)
+        {
+            try
+            {
+                // Check for duplicate website name
+                if (db.UserWebsites.Any(t => t.Name == model.WebsiteName))
+                    return BadRequest(new { error = "Website name already exists." });
+
+                // Validate theme
+                var theme = db.UserWebsiteThemes.FirstOrDefault(t => t.Id == model.ThemeId);
+                if (theme == null)
+                    return BadRequest(new { error = "Theme not found." });
+
+                // Extract email from user claims
+                var emailClaim = User.Claims.FirstOrDefault(t => t.Type == ClaimTypes.Email);
+                if (emailClaim == null)
+                    return Unauthorized(new { error = "Email claim missing." });
+
+                var member = db.Members.FirstOrDefault(d => d.Email == emailClaim.Value);
+                if (member == null)
+                    return Unauthorized(new { error = "User not registered." });
+
+                // Assemble LinkList details
+                var linkListDetail = new LinkListDetail
+                {
+                    Name = model.Name,
+                    Line = model.Line,
+                    Photo = model.Photo,
+                    Links = model.Links ?? [],
+                    Youtube = model.Youtube,
+                    Instagram = model.Instagram,
+                    LinkedIn = model.LinkedIn,
+                    Twitter = model.Twitter,
+                    Facebook = model.Facebook,
+                    Telegram = model.Telegram,
+                    WhatsApp = model.WhatsApp
+                };
+
+                var userWebsite = new UserWebsite
+                {
+                    Created = DateTime.UtcNow,
+                    Name = model.WebsiteName,
+                    Owner = member,
+                    WSType = WebsiteType.LinkList,
+                    Status = RecordStatus.Inactive,
+                    ThemeId = theme.Id,
+                    Html = theme.Html,
+                    LinkListDetail = linkListDetail,
+                    JsonData = System.Text.Json.JsonSerializer.Serialize(linkListDetail)
+                };
+
+                db.UserWebsites.Add(userWebsite);
+                db.SaveChanges();
+
+                return Ok(userWebsite);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating LinkList website");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpPost]
+        [Route("updatelinklist")]
+        public IActionResult UpdateLinkList([FromBody] UpdateLinkListModel model)
+        {
+            try
+            {
+                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
+                var member = db.Members.FirstOrDefault(d => d.Email == email);
+                if (member == null)
+                    return Unauthorized(new { error = "User not found." });
+
+                var uw = db.UserWebsites
+                    .Include(t => t.Owner)
+                    .FirstOrDefault(t => t.Id == model.Id && t.Owner.ID == member.ID);
+
+                if (uw == null)
+                    return NotFound(new { error = "Website not found or you do not have permission to update it." });
+
+                if (uw.WSType == WebsiteType.LinkList)
+                {
+                    // Deserialize existing data if present
+                    if (!string.IsNullOrWhiteSpace(uw.JsonData))
+                    {
+                        try
+                        {
+                            uw.LinkListDetail = JsonSerializer.Deserialize<LinkListDetail>(uw.JsonData) ?? new LinkListDetail();
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            logger.LogError(jsonEx, "Error deserializing LinkListDetail for website {WebsiteId}", uw.Id);
+                            uw.LinkListDetail = new LinkListDetail(); // Reset to default if deserialization fails
+                        }
+                    }
+                    else
+                    {
+                        uw.LinkListDetail = new LinkListDetail();
+                    }
+
+                    // Update properties
+                    uw.LinkListDetail.Name = model.Name ?? string.Empty;
+                    uw.LinkListDetail.Line = model.Line ?? string.Empty;
+                    uw.LinkListDetail.Photo = model.Photo ?? string.Empty;
+                    uw.LinkListDetail.Links = model.Links ?? [];
+                    uw.LinkListDetail.Youtube = model.Youtube ?? string.Empty;
+                    uw.LinkListDetail.Instagram = model.Instagram ?? string.Empty;
+                    uw.LinkListDetail.LinkedIn = model.LinkedIn ?? string.Empty;
+                    uw.LinkListDetail.Twitter = model.Twitter ?? string.Empty;
+                    uw.LinkListDetail.Facebook = model.Facebook ?? string.Empty;
+                    uw.LinkListDetail.Telegram = model.Telegram ?? string.Empty;
+                    uw.LinkListDetail.WhatsApp = model.WhatsApp ?? string.Empty;
+
+                    uw.Modified = DateTime.UtcNow;
+                    uw.JsonData = JsonSerializer.Serialize(uw.LinkListDetail);
+                    db.UserWebsites.Update(uw);
+                    db.SaveChanges();
+
+                    return Ok(uw);
+                }
+                return NotFound(new { error = "LinkList details are not available." });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating LinkList website");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }

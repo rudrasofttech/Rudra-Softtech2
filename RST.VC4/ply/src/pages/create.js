@@ -73,9 +73,73 @@ const WSSiteType = ({ next, onSelectType, wsType, websiteName }) => {
                 </ul>
             </div> : null}
             <div className="text-end pt-5">
-                {type.length === 0 || name.length === 0 ? null : <button onClick={handleNext} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={loading}>
+                <button onClick={handleNext} type="button" className="btn btn-primary" style={{ width: "80px" }} disabled={loading || type.length === 0 || name.length === 0}>
                     {loading ? <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> : null}
-                    Next</button>}
+                    Next</button>
+            </div>
+        </div>
+    );
+};
+
+const WizardStepCompanyInfo = ({ next, prev, formData, setFormData }) => {
+    const [company, setCompany] = useState(formData.company || '');
+    const [tagLine, setTagLine] = useState(formData.tagLine || '');
+
+    // Update parent formData on blur or change
+    const handleBlur = () => {
+        setFormData({ company, tagLine });
+    };
+
+    return (
+        <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
+            <h2 className="title mb-3">🏢 Tell us about your company</h2>
+            <div className="mb-3">
+                <label className="form-label">Company Name *</label>
+                <input
+                    type="text"
+                    name="company"
+                    value={company}
+                    onChange={e => setCompany(e.target.value)}
+                    placeholder="Your company name"
+                    required
+                    maxLength={80}
+                    className="form-control form-control-lg"
+                    onBlur={handleBlur}
+                />
+                {company.length === 0 && (
+                    <div className="text-end">
+                        <small className="text-danger">Required</small>
+                    </div>
+                )}
+                <div className="text-end"><small>Write your organization / business name here.</small></div>
+            </div>
+            <div className="mb-3">
+                <label className="form-label">Tagline</label>
+                <input
+                    type="text"
+                    name="tagLine"
+                    value={tagLine}
+                    onChange={e => setTagLine(e.target.value)}
+                    placeholder="e.g. We build the future"
+                    className="form-control form-control-lg"
+                    maxLength={120}
+                    onBlur={handleBlur}
+                    disabled={company.length === 0}
+                />
+                <div className="text-end">
+                    <small>Describe your company in one line.</small>
+                </div>
+            </div>
+            <div className="wizard-controls pt-4">
+                <button onClick={prev} type="button" className="btn btn-secondary">Back</button>
+                <button
+                    onClick={next}
+                    disabled={company.length === 0}
+                    type="button"
+                    className="btn btn-primary"
+                >
+                    Next
+                </button>
             </div>
         </div>
     );
@@ -464,14 +528,25 @@ export default function Create() {
                 {step === 0 ? <WSSiteType
                     next={next}
                     onSelectType={(type, name) => {
-                        console.log('Parent received type:', type);
                         setSiteType(type);
                         setWebsiteName(name); // Update website name in parent state
                     }}
                     wsType={siteType}
                     websiteName={websiteName}
                 /> : null}
-                {step === 1 ? <WizardStepUserInfo
+                {step === 1 ? <WizardStepCompanyInfo
+                    next={next}
+                    prev={prev}
+                    formData={{
+                        company,
+                        tagLine
+                    }}
+                    setFormData={(d) => {
+                        setCompany(d.company);
+                        setTagLine(d.tagLine);
+                    }}
+                /> : null}
+                {step === 2 ? <WizardStepUserInfo
                     next={next}
                     prev={prev}
                     formData={{
@@ -487,16 +562,16 @@ export default function Create() {
                         setAddress(d.address);
                     }}
                 /> : null}
-                {step === 2 ? <WizardStepPhoneNumbers
+                {step === 3 ? <WizardStepPhoneNumbers
                     next={next}
                     prev={prev}
                     phoneNumbers={phoneNumbers}
                     setPhoneNumbers={setPhoneNumbers}
                 /> : null}
-                {step === 3 ? <WizardStepSocialLinks next={next}
+                {step === 4 ? <WizardStepSocialLinks next={next}
                     prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
-                {step === 4 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
-                {step === 5 ? <WizardStepTheme next={next} prev={prev} name={name} company={company} logo={logo}
+                {step === 5 ? <WizardStepMoreSocialLinks next={next} prev={prev} socialLinks={socialLinks} setSocialLinks={setSocialLinks} /> : null}
+                {step === 6 ? <WizardStepTheme next={next} prev={prev} name={name} company={company} logo={logo}
                     tagLine={tagLine} websiteName={websiteName} wsType={siteType} address={address}
                     designation={designation} email={email} phoneNumbers={phoneNumbers} socialLinks={socialLinks} /> : null}
 

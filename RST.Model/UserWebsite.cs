@@ -22,6 +22,9 @@ namespace RST.Model
         [NotMapped]
         [JsonPropertyName("vcard")]
         public VisitingCardDetail? VisitingCardDetail { get; set; } = null!;
+        [NotMapped]
+        [JsonPropertyName("linklist")]
+        public LinkListDetail? LinkListDetail { get; set; } = null!;
         public string Html { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
     }

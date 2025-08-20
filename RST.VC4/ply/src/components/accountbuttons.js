@@ -69,8 +69,8 @@ export default function AccountButtons(props) {
             <Nav.Link onClick={resetStore}><i className="bi bi-box-arrow-right"></i></Nav.Link>
         </Nav> : null}
         {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
-            <Button type="button" className="me-2" variant="outline-primary" onClick={openLoginPopup}>Login</Button>
-            <Button type="button" variant="outline-primary" onClick={openRegisterPopup}>Sign Up</Button>
+            <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={openLoginPopup}>Login</Button>
+            <Button type="button" className=" btn-sm" variant="outline-primary" onClick={openRegisterPopup}>Sign Up</Button>
         </div>}
     </Form>;
 }
