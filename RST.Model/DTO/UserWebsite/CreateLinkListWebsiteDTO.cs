@@ -20,7 +20,6 @@ namespace RST.Model.DTO.UserWebsite
         [MaxLength(250)]
         public string Line { get; set; } = string.Empty;
 
-        [MaxLength(250)]
         public string Photo { get; set; } = string.Empty;
 
         public List<LinkListItem> Links { get; set; } = new();

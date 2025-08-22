@@ -37,11 +37,16 @@ namespace RST.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get([FromQuery] string k = "", [FromQuery] int page = 1, [FromQuery] int psize = 20)
+        public IActionResult Get([FromQuery] string k = "", [FromQuery] int page = 1, [FromQuery] int psize = 20, [FromQuery] WebsiteType? wstype = WebsiteType.None)
         {
             try
             {
                 var query = db.UserWebsiteThemes.AsQueryable();
+
+                if (wstype.HasValue)
+                {
+                    query = query.Where(t => t.WSType == wstype.Value);
+                }
 
                 if (!string.IsNullOrWhiteSpace(k))
                 {

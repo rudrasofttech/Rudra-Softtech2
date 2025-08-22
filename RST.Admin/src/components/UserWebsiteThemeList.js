@@ -120,7 +120,7 @@ class UserWebsiteThemeList extends Component {
                     </div>
                     {loading ? <Spinner /> : null}
                     {!loading && !error && (
-                        <div className="row row-cols-1 row-cols-md-2 g-4">
+                        <div className="row row-cols-1 row-cols-md-3 g-4">
                             {themes.map(theme => (
                                 <div className="col">
                                     <div className="card">

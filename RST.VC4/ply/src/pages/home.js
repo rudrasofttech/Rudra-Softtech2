@@ -24,15 +24,15 @@ function Home() {
   const { setDesigns, designs, deleteDesign } = useAppStore();
 
   useEffect(() => {
-      const loadDesigns = async () => {
-          if (isLoggedIn) {
-              const res = await getWithAuth(`${APIURLS.userWebsite}/mywebsites`, navigate);
-              if (res.result && res.data) {
-                  setDesigns(res.data);
-              } else {
-                  setError(res.errors.join(', '));
-              }
-          }
+    const loadDesigns = async () => {
+      if (isLoggedIn) {
+        const res = await getWithAuth(`${APIURLS.userWebsite}/mywebsites`, navigate);
+        if (res.result && res.data) {
+          setDesigns(res.data);
+        } else {
+          setError(res.errors.join(', '));
+        }
+      }
     };
     setLoading(true);
     setError('');
@@ -84,8 +84,8 @@ function Home() {
 
   return (
     <>
-          <PlyNavbar showLoginPopup={dummy}>
-              <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>
+      <PlyNavbar showLoginPopup={dummy}>
+        <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>
       </PlyNavbar>
       {!isLoggedIn ? <div className="p-lg-4 p-2 text-center">
         <div className="my-md-5 my-4 hero-text merienda">Get your website for free!</div>
@@ -103,9 +103,13 @@ function Home() {
               <div className="mb-4 d-flex "><h1 className="me-auto">My Sites</h1>
                 <div className="p-2 flex-shrink-1">
                   <button type="button" onClick={() => {
-                    setRedirectUrl('/create');
-                  }} className="btn btn-success">Create A Site</button>
-                </div></div>
+                    setRedirectUrl('/createvcard');
+                  }} className="btn btn-success me-2">Create Visiting Card</button>
+                  <button type="button" onClick={() => {
+                    setRedirectUrl('/createlinklist');
+                  }} className="btn btn-success">Create Link List</button>
+                </div>
+                </div>
 
               <table className="table">
                 <thead >

@@ -38,8 +38,8 @@ export default function EditCard() {
     const handleLogoModalClose = () => setShowLogoModal(false);
     const handleLogoModalShow = () => setShowLogoModal(true);
 
+    const [logoChanged, setLogoChanged] = useState(false);  
     const handleImageCropped = (base64Image) => {
-        //console.log('Base64 Image:', base64Image);
         setWebsite(prev => ({
             ...prev,
             vcard: {
@@ -47,16 +47,27 @@ export default function EditCard() {
                 logo: base64Image
             }
         }));
-        setTimeout(handleSave, 100);
-        
+        setLogoChanged(true);
         handleLogoModalClose();
     };
 
+    // Save when logo changes, but not on initial load
+    const isFirstLogoLoad = useRef(true);
+    useEffect(() => {
+        if (!website || !logoChanged) return;
+        if (isFirstLogoLoad.current) {
+            isFirstLogoLoad.current = false;
+            setLogoChanged(false);
+            return;
+        }
+        handleSave();
+        setLogoChanged(false);
+    }, [website && website.vcard && website.vcard.logo]);
 
     useEffect(() => {
         async function fetchThemes() {
             setLoadingTheme(true);
-            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}`, navigate);
+            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=1`, navigate);
             if (r.result) {
                 if (themes === null) {
                     setThemes(r.data);
@@ -283,7 +294,7 @@ export default function EditCard() {
                                                     logo: ""
                                                 }
                                             }));
-                                            setTimeout(handleSave, 100);
+                                            setLogoChanged(true);
                                         }}>Remove</button>
                                         <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogoModalShow}>Change</button>
                                     </div>

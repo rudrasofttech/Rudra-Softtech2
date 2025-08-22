@@ -12,7 +12,6 @@ export class UserWebsiteThemeManage extends Component {
         super(props);
 
         this.saveData = this.saveData.bind(this);
-
         this.state = {
             name: '',
             tags: '', html: '', wstype: 0, thumbnail: '',
@@ -84,7 +83,7 @@ export class UserWebsiteThemeManage extends Component {
         })
             .then(response => {
                 if (response.status === 200) {
-                    this.setState({ loading: false, success: "Theme saved.", redirect: `/UserWebsiteTheme/${this.state.id}` });
+                    this.setState({ loading: false, success: "Theme saved.", redirect: `/userwebsitethemes` });
                 } else if (response.status === 401) {
                     this.setState({ loggedin: false, loading: false });
                 } else {
@@ -138,14 +137,8 @@ export class UserWebsiteThemeManage extends Component {
                             <select id="wsTypeSelect" disabled={this.state.loading} className="form-select" required name="Status"
                                 value={this.state.wstype} onChange={(e) => { this.setState({ wstype: parseInt(e.target.value, 10) }); }}>
                                 <option value="0"></option>
-                                <option value="1">VCard</option>
-                                <option value="2">Personal</option>
-                                <option value="3">Blog</option>
-                                <option value="4">Portfolio</option>
-                                <option value="5">ECommerce</option>
-                                <option value="6">Educational</option>
-                                <option value="7">NonProfit</option>
-                                <option value="8">Resume</option>
+                                <option value="1">Visiting Card</option>
+                                <option value="2">Link List</option>
                             </select>
                         </div>
                         <div className="mb-3" >
@@ -157,6 +150,7 @@ export class UserWebsiteThemeManage extends Component {
                             <textarea className="form-control" disabled={this.state.loading} id="htmlTxt" required name="htmlTxt" rows="5"
                                 value={this.state.html} onChange={(e) => { this.setState({ html: e.target.value }); }}>
                             </textarea>
+                           
                         </div>
                         <button type="submit" disabled={this.state.loading} className="btn btn-primary" >Save</button>
                     </form>

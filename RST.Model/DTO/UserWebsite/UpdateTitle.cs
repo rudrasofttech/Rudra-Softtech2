@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace RST.Model.DTO.UserWebsite
 {
+    /// <summary>
+    /// Represents a model for updating a virtual business card (vCard) with various personal, professional, and contact
+    /// details.
+    /// </summary>
+    /// <remarks>This model is used to update the details of an existing vCard. It includes fields for
+    /// personal information,  company details, social media links, and contact information. Some fields have length
+    /// constraints,  and certain fields are required for a valid update.</remarks>
     public class UpdateVCardModel
     {
         [Required]

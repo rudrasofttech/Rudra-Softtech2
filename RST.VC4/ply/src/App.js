@@ -4,6 +4,8 @@ import Create from './pages/create';
 import { Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import EditCard from "./pages/editcard";
+import CreateLinkList from "./pages/createlinklist";
+import CreateVCard from "./pages/createvcard";
 
 function App() {
 
@@ -11,7 +13,8 @@ function App() {
     <>
       <Routes>
         <Route exact path='/' element={<Home />} />
-        <Route path='/create' element={<Create />} />
+        <Route path='/createvcard' element={<CreateVCard />} />
+        <Route path='/createlinklist' element={<CreateLinkList />} />
         <Route path='/editcard/:id' element={<EditCard />} />
       </Routes>
       <ToastContainer />

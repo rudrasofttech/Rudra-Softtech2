@@ -34,6 +34,7 @@ namespace RST.Model
         [MaxLength(50)]
         public string? Company { get; set; } = string.Empty;
         public string? Logo { get; set; } = string.Empty;
+
         [MaxLength(100)]
         public string? TagLine { get; set; } = string.Empty;
         [MaxLength(200)]

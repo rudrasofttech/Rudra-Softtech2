@@ -17,7 +17,7 @@ namespace RST.Model
         [Required]
         public DateTime DateCreated { get; set; }
         [Required]
-        public Member CreatedBy { get; set; }
+        public Member CreatedBy { get; set; } = null!;
         public DateTime? DateModified { get; set; }
         public Member? ModifiedBy { get; set; }
         public PostStatus Status { get; set; } = PostStatus.Draft;

@@ -1,0 +1,192 @@
+﻿@page
+
+@{
+    Layout = null;
+    var Model = new RST.Model.LinkListDetail
+    {
+        Name = "Rudra Softtech LLP",
+        Line = "All My Links & Socials",
+        Photo = "https://www.rudrasofttech.com/l/img/rst-logo-small.png",
+        Links = new List<RST.Model.LinkListItem>
+        {
+            new RST.Model.LinkListItem
+            {
+                Title = "Official Website",
+                Url = "https://www.rudrasofttech.com",
+                Description = "Visit our official website",
+                Icon = "bi-globe"
+            },
+            new RST.Model.LinkListItem
+            {
+                Title = "Contact Us",
+                Url = "mailto:info@rudrasofttech.com",
+                Description = "Send us an email",
+                Icon = "bi-envelope"
+            },
+            new RST.Model.LinkListItem
+            {
+                Title = "Our Blog",
+                Url = "https://blog.rudrasofttech.com",
+                Description = "Read our latest articles",
+                Icon = "bi-journal-text"
+            }
+        },
+        Youtube = "https://www.youtube.com/channel/yourchannel",
+        Instagram = "https://www.instagram.com/yourprofile",
+        LinkedIn = "https://www.linkedin.com/in/yourprofile",
+        Twitter = "https://twitter.com/yourprofile",
+        Facebook = "https://www.facebook.com/yourprofile",
+        Telegram = "yourtelegramusername",
+        WhatsApp = "1234567890"
+    };
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@Model.Name - @Model.Line</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: "Open Sans", Arial;
+        }
+
+        .text-primary {
+            color: #504c4c !important;
+        }
+
+        .text-secondary {
+            color: #505050 !important;
+        }
+
+        .dual-bg {
+            max-width: 760px;
+            min-height: 100vh;
+            background-image: url('https://www.rudrasofttech.com/drive/uwstheme/Elegant-top-banner.jpg'), url('https://www.rudrasofttech.com/drive/uwstheme/Elegant-bottom-banner.jpg');
+            background-position: top, bottom;
+            background-repeat: no-repeat, no-repeat;
+            background-size: contain, contain;
+        }
+
+        .linklist-photo {
+            max-width: 160px;
+            max-height: 160px;
+            border-radius: 50%;
+            border: 4px solid #c6ad7e;
+            margin-bottom: 1.5rem;
+        }
+
+        .linklist-link {
+            background: #fff;
+            border-radius: 1.5rem;
+            box-shadow: 0 2px 8px #0001;
+            margin-bottom: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+
+            .linklist-link:hover {
+                box-shadow: 0 4px 16px #0002;
+            }
+
+            .linklist-link .bi {
+                font-size: 1.5rem;
+                margin-right: 1rem;
+                color: #c6ad7e;
+            }
+
+        .social-icons a {
+            color: #504c4c;
+            font-size: 2rem;
+            margin: 0 0.5rem;
+            transition: color 0.2s;
+        }
+
+            .social-icons a:hover {
+                color: #c6ad7e;
+            }
+    </style>
+</head>
+<body class="py-lg-4">
+    <div class="mx-auto main dual-bg border d-flex flex-column align-items-center py-5">
+        @if (!string.IsNullOrEmpty(Model.Photo))
+        {
+            <img src="@Model.Photo" alt="Profile Photo" class="linklist-photo" />
+        }
+        @if (!string.IsNullOrEmpty(Model.Name))
+        {
+            <div class="text-center mb-2 fs-1 text-primary text-uppercase">@Model.Name</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.Line))
+        {
+            <div class="text-center mb-4 fs-4 text-secondary fw-light">@Model.Line</div>
+        }
+
+        <div class="w-100 mb-4" style="background:#c6ad7e; height:3px;"></div>
+
+        @if (Model.Links != null && Model.Links.Count > 0)
+        {
+            <div class="w-100" style="max-width: 500px;">
+                @foreach (var link in Model.Links)
+                {
+                    <a href="@link.Url" class="linklist-link d-flex align-items-center text-decoration-none mb-3" target="_blank" rel="noopener">
+                        @if (!string.IsNullOrEmpty(link.Icon))
+                        {
+                            <i class="bi @link.Icon"></i>
+                        }
+                        <div>
+                            <div class="fw-bold fs-5 text-primary">@link.Title</div>
+                            @if (!string.IsNullOrEmpty(link.Description))
+                            {
+                                <div class="text-secondary small">@link.Description</div>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+        @if (Model.HasSocialLinks)
+        {
+            <div class="fs-5 mb-2 mt-5">Connect with us</div>
+            <div style="background:#c6ad7e; height:3px;" class="w-50"></div>
+            <div class="social-icons d-flex align-items-center justify-content-center mt-3">
+                @if (!string.IsNullOrEmpty(Model.WhatsApp))
+                {
+                    <a href="https://wa.me/@Model.WhatsApp" title="WhatsApp" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Telegram))
+                {
+                    <a href="https://t.me/@Model.Telegram" title="Telegram" target="_blank" rel="noopener"><i class="bi bi-telegram"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Facebook))
+                {
+                    <a href="@Model.Facebook" title="Facebook" target="_blank" rel="noopener"><i class="bi bi-facebook"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Youtube))
+                {
+                    <a href="@Model.Youtube" title="YouTube" target="_blank" rel="noopener"><i class="bi bi-youtube"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Twitter))
+                {
+                    <a href="@Model.Twitter" title="Twitter" target="_blank" rel="noopener"><i class="bi bi-twitter"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.LinkedIn))
+                {
+                    <a href="@Model.LinkedIn" title="LinkedIn" target="_blank" rel="noopener"><i class="bi bi-linkedin"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(Model.Instagram))
+                {
+                    <a href="@Model.Instagram" title="Instagram" target="_blank" rel="noopener"><i class="bi bi-instagram"></i></a>
+                }
+            </div>
+        }
+    </div>
+</body>
+</html>

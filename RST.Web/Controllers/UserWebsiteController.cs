@@ -10,6 +10,17 @@ using System.Text.Json;
 
 namespace RST.Web.Controllers
 {
+    /// <summary>
+    /// Provides API endpoints for managing user websites, including operations such as creation, retrieval, updating,
+    /// and deletion of websites. Supports multiple website types, including VCard and LinkList.
+    /// </summary>
+    /// <remarks>This controller is secured with authorization and requires the user to be authenticated. It
+    /// provides functionality for managing user-specific websites, including checking for unique names, updating
+    /// themes, and rendering HTML for specific website types. The controller also handles role-based access control for
+    /// certain operations.</remarks>
+    /// <param name="context"></param>
+    /// <param name="_logger"></param>
+    /// <param name="_userWebsite"></param>
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -292,6 +303,19 @@ namespace RST.Web.Controllers
                 if (uw == null)
                     return NotFound(new { error = "Website not found or you do not have permission to delete it." });
 
+                // Remove associated folder (drive/uwpics/{id})
+                try
+                {
+                    var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    var folderPath = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
+                    if (Directory.Exists(folderPath))
+                        Directory.Delete(folderPath, true);
+                }
+                catch (Exception dirEx)
+                {
+                    logger.LogWarning(dirEx, "Failed to delete folder for website {WebsiteId}", uw.Id);
+                }
+
                 db.UserWebsites.Remove(uw);
                 db.SaveChanges();
                 return Ok();
@@ -303,42 +327,22 @@ namespace RST.Web.Controllers
             }
         }
 
-        //[HttpPost]
-        //[Route("updatename/{id}")]
-        //public IActionResult UpdateName(Guid id,[FromForm] string name)
-        //{
-        //    try
-        //    {
-        //        if(!string.IsNullOrEmpty(name))
-        //            return BadRequest(new { error = "Name is required." });
-        //        else if(name.Length > 250)
-        //            return BadRequest(new { error = "Name cannot be longer than 250 characters." });
-
-        //        var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-        //        var m = db.Members.First(d => d.Email == email);
-        //        var uw = db.UserWebsites.Include(t => t.Owner).FirstOrDefault(t => t.Id == id && t.Owner.ID == m.ID);
-
-        //        if(uw == null)
-        //            return NotFound(new { error = "Website not found or you do not have permission to update it." });
-
-        //        if(db.UserWebsites.Any(t => t.Name == name && t.Id != id))
-        //            return BadRequest(new { error = "Website with this name already exists." });
-
-        //        uw.Name = name;
-        //        uw.Modified = DateTime.UtcNow;
-        //        db.UserWebsites.Update(uw);
-        //        db.SaveChanges();
-        //        return Ok(uw);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        logger.LogError(ex, "Error updating user website");
-        //        return StatusCode(500, new { error = Utility.ServerErrorMessage });
-        //    }
-        //}
-
+        /// <summary>
+        /// Updates the visiting card details for a specified user website.
+        /// </summary>
+        /// <remarks>This method allows authenticated users to update the visiting card details of their
+        /// websites.  The visiting card details include fields such as company name, tagline, contact information, and
+        /// social media links.  If a logo is provided as a base64-encoded string, it is saved as an image file and
+        /// resized to 300x300 pixels.  If the logo is removed, any existing logo files are deleted.  The method ensures
+        /// that only the owner of the website can update its details.</remarks>
+        /// <param name="model">An object containing the updated visiting card details, including optional logo data and other fields.</param>
+        /// <returns>An <see cref="IActionResult"/> indicating the result of the operation.  Returns <see cref="OkObjectResult"/>
+        /// with the updated website details if the operation is successful.  Returns <see cref="NotFoundObjectResult"/>
+        /// if the website is not found or the user does not have permission to update it.  Returns <see
+        /// cref="StatusCodeResult"/> with a status code of 500 if an internal server error occurs.</returns>
         [HttpPost]
         [Route("updatevcard")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public IActionResult UpdateVCard([FromBody] UpdateVCardModel model)
         {
             try
@@ -367,9 +371,112 @@ namespace RST.Web.Controllers
                     {
                         uw.VisitingCardDetail = new VisitingCardDetail();
                     }
+
+                    // Get host url (scheme + host + port if present)
+                    var request = HttpContext.Request;
+                    var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+
+                    // Handle Logo file logic
+                    var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    var logoFolder = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
+                    var logoPngPath = Path.Combine(logoFolder, "logo.png");
+                    var logoJpgPath = Path.Combine(logoFolder, "logo.jpg");
+
+                    // If model.Logo is null or empty and DB has a logo, delete the file and clear the field
+                    if (string.IsNullOrWhiteSpace(model.Logo) && !string.IsNullOrWhiteSpace(uw.VisitingCardDetail.Logo))
+                    {
+                        try
+                        {
+                            if (System.IO.File.Exists(logoPngPath))
+                                System.IO.File.Delete(logoPngPath);
+                            if (System.IO.File.Exists(logoJpgPath))
+                                System.IO.File.Delete(logoJpgPath);
+                        }
+                        catch (Exception fileEx)
+                        {
+                            logger.LogWarning(fileEx, "Failed to delete logo file for website {WebsiteId}", uw.Id);
+                        }
+                        uw.VisitingCardDetail.Logo = string.Empty;
+                    }
+                    // If model.Logo is base64, save it as logo.png or logo.jpg and resize to 200x200
+                    else if (!string.IsNullOrWhiteSpace(model.Logo) && model.Logo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            // Parse base64 header
+                            var base64Data = model.Logo;
+                            string fileExt = ".png";
+                            if (base64Data.StartsWith("data:image/png"))
+                                fileExt = ".png";
+                            else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
+                                fileExt = ".jpg";
+
+                            var base64Parts = base64Data.Split(',');
+                            if (base64Parts.Length == 2)
+                            {
+                                var bytes = Convert.FromBase64String(base64Parts[1]);
+                                if (!Directory.Exists(logoFolder))
+                                    Directory.CreateDirectory(logoFolder);
+
+                                var logoFilePath = Path.Combine(logoFolder, "logo" + fileExt);
+
+                                // Resize image to 300x300 maintaining aspect ratio
+                                using (var inputStream = new MemoryStream(bytes))
+                                using (var image = System.Drawing.Image.FromStream(inputStream))
+                                {
+                                    int targetSize = 300;
+                                    int width, height;
+                                    if (image.Width > image.Height)
+                                    {
+                                        width = targetSize;
+                                        height = (int)(image.Height * (targetSize / (double)image.Width));
+                                    }
+                                    else
+                                    {
+                                        height = targetSize;
+                                        width = (int)(image.Width * (targetSize / (double)image.Height));
+                                    }
+
+                                    using (var bmp = new System.Drawing.Bitmap(width, height))
+                                    using (var graphics = System.Drawing.Graphics.FromImage(bmp))
+                                    {
+                                        graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                                        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                                        graphics.Clear(System.Drawing.Color.Transparent);
+                                        graphics.DrawImage(image, 0, 0, width, height);
+
+                                        if (fileExt == ".png")
+                                            bmp.Save(logoFilePath, System.Drawing.Imaging.ImageFormat.Png);
+                                        else
+                                            bmp.Save(logoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                    }
+                                }
+
+                                // Set the logo path relative to wwwroot and prepend host url
+                                uw.VisitingCardDetail.Logo = $"{hostUrl}/drive/uwpics/{uw.Id}/logo{fileExt}";
+
+                                // Optionally, delete the other format if it exists
+                                if (fileExt == ".png" && System.IO.File.Exists(logoJpgPath))
+                                    System.IO.File.Delete(logoJpgPath);
+                                if (fileExt == ".jpg" && System.IO.File.Exists(logoPngPath))
+                                    System.IO.File.Delete(logoPngPath);
+                            }
+                        }
+                        catch (Exception fileEx)
+                        {
+                            logger.LogWarning(fileEx, "Failed to save or resize logo file for website {WebsiteId}", uw.Id);
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(model.Logo))
+                    {
+                        // If model.Logo is a URL or path, just set it
+                        uw.VisitingCardDetail.Logo = model.Logo;
+                    }
+
+                    // Update other fields as before
                     uw.VisitingCardDetail.Company = string.IsNullOrWhiteSpace(model.Company) ? string.Empty : model.Company;
                     uw.VisitingCardDetail.TagLine = string.IsNullOrWhiteSpace(model.TagLine) ? string.Empty : model.TagLine;
-                    uw.VisitingCardDetail.Logo = string.IsNullOrWhiteSpace(model.Logo) ? string.Empty : model.Logo;
                     uw.VisitingCardDetail.Keywords = string.IsNullOrWhiteSpace(model.Keywords) ? string.Empty : model.Keywords;
                     uw.VisitingCardDetail.PersonName = string.IsNullOrWhiteSpace(model.PersonName) ? string.Empty : model.PersonName;
                     uw.VisitingCardDetail.Designation = string.IsNullOrWhiteSpace(model.Designation) ? string.Empty : model.Designation;
@@ -557,12 +664,91 @@ namespace RST.Web.Controllers
                 if (member == null)
                     return Unauthorized(new { error = "User not registered." });
 
+                // Generate the website ID first so it can be used for the folder
+                var websiteId = Guid.NewGuid();
+
+                // Get host url (scheme + host + port if present)
+                var request = HttpContext.Request;
+                var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+
+                // Handle Photo: save as PNG/JPG, max 300x300, maintain aspect ratio
+                string photoPath = string.Empty;
+                if (!string.IsNullOrWhiteSpace(model.Photo) && model.Photo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var base64Data = model.Photo;
+                        string fileExt = ".png";
+                        if (base64Data.StartsWith("data:image/png"))
+                            fileExt = ".png";
+                        else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
+                            fileExt = ".jpg";
+
+                        var base64Parts = base64Data.Split(',');
+                        if (base64Parts.Length == 2)
+                        {
+                            var bytes = Convert.FromBase64String(base64Parts[1]);
+                            var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                            var photoFolder = Path.Combine(webRootPath, "drive", "uwpics", websiteId.ToString());
+                            if (!Directory.Exists(photoFolder))
+                                Directory.CreateDirectory(photoFolder);
+
+                            var photoFilePath = Path.Combine(photoFolder, "photo" + fileExt);
+
+                            // Resize image to 300x300 maintaining aspect ratio
+                            using (var inputStream = new MemoryStream(bytes))
+                            using (var image = System.Drawing.Image.FromStream(inputStream))
+                            {
+                                int targetSize = 300;
+                                int width, height;
+                                if (image.Width > image.Height)
+                                {
+                                    width = targetSize;
+                                    height = (int)(image.Height * (targetSize / (double)image.Width));
+                                }
+                                else
+                                {
+                                    height = targetSize;
+                                    width = (int)(image.Width * (targetSize / (double)image.Height));
+                                }
+
+                                using (var bmp = new System.Drawing.Bitmap(width, height))
+                                using (var graphics = System.Drawing.Graphics.FromImage(bmp))
+                                {
+                                    graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                                    graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                    graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                                    graphics.Clear(System.Drawing.Color.Transparent);
+                                    graphics.DrawImage(image, 0, 0, width, height);
+
+                                    if (fileExt == ".png")
+                                        bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Png);
+                                    else
+                                        bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                }
+                            }
+
+                            // Set the photo path relative to wwwroot
+                            photoPath = $"{hostUrl}/drive/uwpics/{websiteId}/photo{fileExt}";
+                        }
+                    }
+                    catch (Exception fileEx)
+                    {
+                        logger.LogWarning(fileEx, "Failed to save or resize photo for LinkList website");
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(model.Photo))
+                {
+                    // If Photo is a URL or path, just set it
+                    photoPath = model.Photo;
+                }
+
                 // Assemble LinkList details
                 var linkListDetail = new LinkListDetail
                 {
                     Name = model.Name,
                     Line = model.Line,
-                    Photo = model.Photo,
+                    Photo = photoPath,
                     Links = model.Links ?? [],
                     Youtube = model.Youtube,
                     Instagram = model.Instagram,
@@ -575,6 +761,7 @@ namespace RST.Web.Controllers
 
                 var userWebsite = new UserWebsite
                 {
+                    Id = websiteId,
                     Created = DateTime.UtcNow,
                     Name = model.WebsiteName,
                     Owner = member,
@@ -635,11 +822,111 @@ namespace RST.Web.Controllers
                     {
                         uw.LinkListDetail = new LinkListDetail();
                     }
+                    // Get host url (scheme + host + port if present)
+                    var request = HttpContext.Request;
+                    var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+
+                    // Handle Photo upload
+                    string photoPath = uw.LinkListDetail.Photo ?? string.Empty;
+                    var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    var photoFolder = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
+                    var photoPngPath = Path.Combine(photoFolder, "photo.png");
+                    var photoJpgPath = Path.Combine(photoFolder, "photo.jpg");
+
+                    if (string.IsNullOrWhiteSpace(model.Photo))
+                    {
+                        // If model.Photo is empty and DB has a photo, delete the file and clear the field
+                        try
+                        {
+                            if (System.IO.File.Exists(photoPngPath))
+                                System.IO.File.Delete(photoPngPath);
+                            if (System.IO.File.Exists(photoJpgPath))
+                                System.IO.File.Delete(photoJpgPath);
+                        }
+                        catch (Exception fileEx)
+                        {
+                            logger.LogWarning(fileEx, "Failed to delete photo file for website {WebsiteId}", uw.Id);
+                        }
+                        photoPath = string.Empty;
+                    }
+                    else if (model.Photo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var base64Data = model.Photo;
+                            string fileExt = ".png";
+                            if (base64Data.StartsWith("data:image/png"))
+                                fileExt = ".png";
+                            else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
+                                fileExt = ".jpg";
+
+                            var base64Parts = base64Data.Split(',');
+                            if (base64Parts.Length == 2)
+                            {
+                                var bytes = Convert.FromBase64String(base64Parts[1]);
+                                if (!Directory.Exists(photoFolder))
+                                    Directory.CreateDirectory(photoFolder);
+
+                                var photoFilePath = Path.Combine(photoFolder, "photo" + fileExt);
+
+                                // Resize image to 300x300 maintaining aspect ratio
+                                using (var inputStream = new MemoryStream(bytes))
+                                using (var image = System.Drawing.Image.FromStream(inputStream))
+                                {
+                                    int targetSize = 300;
+                                    int width, height;
+                                    if (image.Width > image.Height)
+                                    {
+                                        width = targetSize;
+                                        height = (int)(image.Height * (targetSize / (double)image.Width));
+                                    }
+                                    else
+                                    {
+                                        height = targetSize;
+                                        width = (int)(image.Width * (targetSize / (double)image.Height));
+                                    }
+
+                                    using (var bmp = new System.Drawing.Bitmap(width, height))
+                                    using (var graphics = System.Drawing.Graphics.FromImage(bmp))
+                                    {
+                                        graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                                        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                                        graphics.Clear(System.Drawing.Color.Transparent);
+                                        graphics.DrawImage(image, 0, 0, width, height);
+
+                                        if (fileExt == ".png")
+                                            bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Png);
+                                        else
+                                            bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                    }
+                                }
+
+                                // Set the photo path relative to wwwroot
+                                photoPath = $"{hostUrl}/drive/uwpics/{uw.Id}/photo{fileExt}";
+
+                                // Optionally, delete the other format if it exists
+                                if (fileExt == ".png" && System.IO.File.Exists(photoJpgPath))
+                                    System.IO.File.Delete(photoJpgPath);
+                                if (fileExt == ".jpg" && System.IO.File.Exists(photoPngPath))
+                                    System.IO.File.Delete(photoPngPath);
+                            }
+                        }
+                        catch (Exception fileEx)
+                        {
+                            logger.LogWarning(fileEx, "Failed to save or resize photo for LinkList website {WebsiteId}", uw.Id);
+                        }
+                    }
+                    else
+                    {
+                        // If model.Photo is a URL or path, just set it
+                        photoPath = model.Photo;
+                    }
 
                     // Update properties
                     uw.LinkListDetail.Name = model.Name ?? string.Empty;
                     uw.LinkListDetail.Line = model.Line ?? string.Empty;
-                    uw.LinkListDetail.Photo = model.Photo ?? string.Empty;
+                    uw.LinkListDetail.Photo = photoPath;
                     uw.LinkListDetail.Links = model.Links ?? [];
                     uw.LinkListDetail.Youtube = model.Youtube ?? string.Empty;
                     uw.LinkListDetail.Instagram = model.Instagram ?? string.Empty;

@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace RST.Model
 {
@@ -14,6 +16,8 @@ namespace RST.Model
         // Main profile or cover photo
         [MaxLength(250)]
         public string Photo { get; set; } = string.Empty;
+
+        
 
         // List of links to display on the page
         public List<LinkListItem> Links { get; set; } = [];
