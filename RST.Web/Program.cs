@@ -71,6 +71,8 @@ builder.Services.AddScoped<RSTAuthenticationService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<CaptchaService>();
 builder.Services.AddScoped<IUserWebsiteRenderService, UserWebsiteRenderService>();
+builder.Services.AddScoped<IUserWebsiteThemeService, UserWebsiteThemeService>();
+builder.Services.AddScoped<IUserWebsiteService, UserWebsiteService>();
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
