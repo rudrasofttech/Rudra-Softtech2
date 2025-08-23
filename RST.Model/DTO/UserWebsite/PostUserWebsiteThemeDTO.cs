@@ -12,7 +12,6 @@ namespace RST.Model.DTO.UserWebsite
         public string Tags { get; set; } = string.Empty;
         public string Html { get; set; } = string.Empty;
         public WebsiteType WSType { get; set; } = WebsiteType.None;
-        [MaxLength(250)]
         [Required]
         public string? Thumbnail { get; set; } = string.Empty;
     }

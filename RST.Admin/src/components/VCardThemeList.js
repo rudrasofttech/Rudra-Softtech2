@@ -3,12 +3,12 @@ import { API } from './api';
 import { MessageStrip } from './MessageStrip';
 import Spinner from './shared/Spinner';
 import { Link, Redirect } from 'react-router-dom';
-import { Table } from 'react-bootstrap';
+
 import template from '../template.png';
 import deleteicon from '../delete.png';
 import editicon from '../edit.png';
 
-class UserWebsiteThemeList extends Component {
+class VCardThemeList extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -30,7 +30,7 @@ class UserWebsiteThemeList extends Component {
 
     fetchThemes = (page = this.state.page) => {
         this.setState({ loading: true, error: null });
-        fetch(`${API.GetURL()}/UserWebsiteTheme?page=${page}&psize=${this.state.pageSize}`, {
+        fetch(`${API.GetURL()}/UserWebsiteTheme?page=${page}&psize=${this.state.pageSize}&wstype=1`, {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ class UserWebsiteThemeList extends Component {
                 <div>
 
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
-                        <h1 className="h2"><img src={template} className="img-fluid icon-large me-2" /> User Website Themes</h1>
+                        <h1 className="h2"><img src={template} className="img-fluid icon-large me-2" /> Visiting Card Themes</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
                             <button type="button" className="btn btn-secondary me-2" onClick={() => {
                                 this.setState({ page: 1 }, () => { this.fetchThemes() });
@@ -173,4 +173,4 @@ class UserWebsiteThemeList extends Component {
     }
 }
 
-export default UserWebsiteThemeList;
+export default VCardThemeList;

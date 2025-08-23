@@ -97,9 +97,14 @@ export class NavMenu extends Component {
                             Emails</Link>
                     </li>
                     <li className="nav-item mb-2">
-                        <Link className="nav-link text-dark" to={'/UserWebsiteThemes'}>
+                        <Link className="nav-link text-dark" to={'/VCardThemes'}>
                             <img src={template} className="img-fluid icon-small me-2" />
-                            Website Themes</Link>
+                            VCard Themes</Link>
+                    </li>
+                    <li className="nav-item mb-2">
+                        <Link className="nav-link text-dark" to={'/LinkListThemes'}>
+                            <img src={template} className="img-fluid icon-small me-2" />
+                            LinkList Themes</Link>
                     </li>
                     <li className="nav-item mb-2">
                         <Link className="nav-link text-dark" to={'/UserWebsites'}>

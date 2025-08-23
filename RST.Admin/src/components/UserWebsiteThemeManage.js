@@ -11,10 +11,13 @@ export class UserWebsiteThemeManage extends Component {
     constructor(props) {
         super(props);
 
-        this.saveData = this.saveData.bind(this);
+    this.saveData = this.saveData.bind(this);
+    this.handleImageChange = this.handleImageChange.bind(this);
+    this.handleRemoveImage = this.handleRemoveImage.bind(this);
         this.state = {
             name: '',
             tags: '', html: '', wstype: 0, thumbnail: '',
+            thumbnailBase64: '',
             token: localStorage.getItem("token"),
             loading: false, loggedin: localStorage.getItem("token") === null ? false : true,
             error : '', success : '', redirect:'',
@@ -73,7 +76,10 @@ export class UserWebsiteThemeManage extends Component {
         fetch(saveurl, {
             method: 'post',
             body: JSON.stringify({
-                name: this.state.name, html: this.state.html, tags: this.state.tags, thumbnail: this.state.thumbnail,
+                name: this.state.name,
+                html: this.state.html,
+                tags: this.state.tags,
+                thumbnail: this.state.thumbnailBase64 ? this.state.thumbnailBase64 : this.state.thumbnail,
                 wsType: this.state.wstype
             }),
             headers: {
@@ -83,7 +89,8 @@ export class UserWebsiteThemeManage extends Component {
         })
             .then(response => {
                 if (response.status === 200) {
-                    this.setState({ loading: false, success: "Theme saved.", redirect: `/userwebsitethemes` });
+                    this.setState({ loading: false, success: "Theme saved.", 
+                        redirect: this.state.wstype === 1 ? `/vcardthemes` : `/linklistthemes` });
                 } else if (response.status === 401) {
                     this.setState({ loggedin: false, loading: false });
                 } else {
@@ -100,6 +107,21 @@ export class UserWebsiteThemeManage extends Component {
             });
     }
 
+    handleImageChange(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                this.setState({ thumbnailBase64: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    handleRemoveImage() {
+        this.setState({ thumbnailBase64: '' });
+    }
+
    
     render() {
         if (!this.state.loggedin) {
@@ -112,7 +134,7 @@ export class UserWebsiteThemeManage extends Component {
             return (
                 <div>
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
-                        <h1 className="h2"><img src={template} className="img-fluid icon-large me-2" /> User Website Theme</h1>
+                        <h1 className="h2"><img src={template} className="img-fluid icon-large me-2" alt="template" /> User Website Theme</h1>
                         <div className="btn-toolbar mb-2 mb-md-0">
                         </div>
                     </div>
@@ -124,16 +146,16 @@ export class UserWebsiteThemeManage extends Component {
 
                     <form className="mb-4" onSubmit={(e) => { e.preventDefault(); this.saveData(); }}>
                         <div className="mb-3">
-                            <label htmlFor="nameTxt" class="form-label">Name (Required)</label>
+                            <label htmlFor="nameTxt" className="form-label">Name (Required)</label>
                             <input type="text" disabled={this.state.loading} className="form-control" name="Name" id="nameTxt" value={this.state.name}
                                 onChange={(e) => { this.setState({ name: e.target.value }); }} required maxLength="100" />
                         </div>
                         <div className="mb-3" >
-                            <label htmlFor="tagsTxt" class="form-label">Tags</label>
+                            <label htmlFor="tagsTxt" className="form-label">Tags</label>
                             <input id="tagsTxt" className="form-control" disabled={this.state.loading} name="Tags" type="text" maxLength="500" value={this.state.tags} onChange={(e) => { this.setState({ tags: e.target.value }); }} />
                         </div>
                         <div className="mb-3">
-                            <label htmlFor="wsTypeSelect" class="form-label">Website Type (Required)</label>
+                            <label htmlFor="wsTypeSelect" className="form-label">Website Type (Required)</label>
                             <select id="wsTypeSelect" disabled={this.state.loading} className="form-select" required name="Status"
                                 value={this.state.wstype} onChange={(e) => { this.setState({ wstype: parseInt(e.target.value, 10) }); }}>
                                 <option value="0"></option>
@@ -142,15 +164,26 @@ export class UserWebsiteThemeManage extends Component {
                             </select>
                         </div>
                         <div className="mb-3" >
-                            <label htmlFor="thumbnailTxt" class="form-label">Thumbnail</label>
-                            <input id="thumbnailTxt" className="form-control" disabled={this.state.loading} name="Thumbnail" type="url" maxLength="250" value={this.state.thumbnail} onChange={(e) => { this.setState({ thumbnail: e.target.value }); }} />
+                            <label htmlFor="thumbnailUpload" className="form-label">Thumbnail (Image Upload)</label>
+                            <input id="thumbnailUpload" className="form-control" disabled={this.state.loading} name="ThumbnailUpload" type="file" accept="image/*" onChange={this.handleImageChange} />
+                            {this.state.thumbnailBase64 ? (
+                                <div className="mt-2">
+                                    <img src={this.state.thumbnailBase64} alt="Thumbnail Preview" style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginBottom: '10px' }} />
+                                    <button type="button" className="btn btn-danger btn-sm" onClick={this.handleRemoveImage}>Remove Image</button>
+                                </div>
+                            ) : (
+                                this.state.thumbnail ? (
+                                    <div className="mt-2">
+                                        <img src={this.state.thumbnail} alt="Thumbnail Preview" style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginBottom: '10px' }} />
+                                    </div>
+                                ) : null
+                            )}
                         </div>
                         <div className="mb-3">
                             <label htmlFor="htmlTxt" className="form-label">HTML (Required)</label>
                             <textarea className="form-control" disabled={this.state.loading} id="htmlTxt" required name="htmlTxt" rows="5"
                                 value={this.state.html} onChange={(e) => { this.setState({ html: e.target.value }); }}>
                             </textarea>
-                           
                         </div>
                         <button type="submit" disabled={this.state.loading} className="btn btn-primary" >Save</button>
                     </form>

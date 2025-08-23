@@ -49,6 +49,92 @@ namespace RST.Web.Controllers
             return allowedRoles.Any(ar => userRoles.Any(ur => string.Equals(ar, ur, StringComparison.OrdinalIgnoreCase)));
         }
 
+        /// <summary>
+        /// Saves a Base64-encoded image to a file, resizing it to fit within the specified maximum dimensions, and
+        /// returns the relative file path.
+        /// </summary>
+        /// <remarks>The method supports PNG and JPEG image formats. If the input Base64 string is
+        /// invalid, does not represent an image, or the operation fails, the method returns <see
+        /// langword="null"/>.</remarks>
+        /// <param name="base64Image">The Base64-encoded string representing the image. The string must include the data URI scheme (e.g.,
+        /// "data:image/png;base64,...").</param>
+        /// <param name="folderRelativePath">The relative path to the folder where the image file will be saved. The folder will be created if it does
+        /// not exist.</param>
+        /// <param name="fileNameNoExt">The desired file name without the extension. The appropriate extension will be appended based on the image
+        /// type.</param>
+        /// <param name="maxSize">The maximum width or height, in pixels, to which the image will be resized while maintaining its aspect
+        /// ratio.</param>
+        /// <param name="fileExt">When the method returns, contains the file extension of the saved image (e.g., ".png" or ".jpg"), or <see
+        /// langword="null"/> if the operation fails.</param>
+        /// <returns>The relative file path of the saved image (e.g., "/folder/image.png"), or <see langword="null"/> if the
+        /// operation fails.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+        private string? SaveBase64ImageToFile(string base64Image, string folderRelativePath, string fileNameNoExt, int maxSize, out string? fileExt)
+        {
+            fileExt = null;
+            if (string.IsNullOrWhiteSpace(base64Image) || !base64Image.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            try
+            {
+                fileExt = ".png";
+                if (base64Image.StartsWith("data:image/png"))
+                    fileExt = ".png";
+                else if (base64Image.StartsWith("data:image/jpeg") || base64Image.StartsWith("data:image/jpg"))
+                    fileExt = ".jpg";
+
+                var base64Parts = base64Image.Split(',');
+                if (base64Parts.Length != 2)
+                    return null;
+
+                var bytes = Convert.FromBase64String(base64Parts[1]);
+                var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var folderPath = Path.Combine(webRootPath, folderRelativePath);
+                if (!Directory.Exists(folderPath))
+                    Directory.CreateDirectory(folderPath);
+
+                var fileName = $"{fileNameNoExt}{fileExt}";
+                var filePath = Path.Combine(folderPath, fileName);
+
+                // Resize image to maxSize x maxSize maintaining aspect ratio
+                using (var inputStream = new MemoryStream(bytes))
+                using (var image = System.Drawing.Image.FromStream(inputStream))
+                {
+                    int width = image.Width;
+                    int height = image.Height;
+                    if (width > maxSize || height > maxSize)
+                    {
+                        double ratio = Math.Min(maxSize / (double)width, maxSize / (double)height);
+                        width = (int)(image.Width * ratio);
+                        height = (int)(image.Height * ratio);
+                    }
+
+                    using (var bmp = new System.Drawing.Bitmap(width, height))
+                    using (var graphics = System.Drawing.Graphics.FromImage(bmp))
+                    {
+                        graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                        graphics.Clear(System.Drawing.Color.Transparent);
+                        graphics.DrawImage(image, 0, 0, width, height);
+
+                        if (fileExt == ".png")
+                            bmp.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+                        else
+                            bmp.Save(filePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    }
+                }
+
+                // Return the relative path for use in the database (without host)
+                return $"/{folderRelativePath.Replace("\\", "/")}/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to save or resize image for {Folder}", folderRelativePath);
+                return null;
+            }
+        }
+
         [HttpGet]
         public IActionResult Get([FromQuery]int page = 1, [FromQuery] int psize = 20)
         {
@@ -241,11 +327,35 @@ namespace RST.Web.Controllers
                 if (member == null)
                     return Unauthorized(new { error = "User not registered." });
 
+                // Generate the website ID first so it can be used for the folder
+                var websiteId = Guid.NewGuid();
+
+                // Get host url (scheme + host + port if present)
+                var request = HttpContext.Request;
+                var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+
+                // Handle Logo: save as PNG/JPG, max 300x300, maintain aspect ratio
+                string logoPath = string.Empty;
+                if (!string.IsNullOrWhiteSpace(model.Logo) && model.Logo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    string? fileExt;
+                    var relativePath = SaveBase64ImageToFile(model.Logo, $"drive/uwpics/{websiteId}", "logo", 300, out fileExt);
+                    if (relativePath != null)
+                    {
+                        logoPath = $"{hostUrl}{relativePath}";
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(model.Logo))
+                {
+                    // If Logo is a URL or path, just set it
+                    logoPath = model.Logo;
+                }
+
                 // Assemble VCard details
                 var vcardDetail = new VisitingCardDetail
                 {
                     Company = model.Company,
-                    Logo = model.Logo,
+                    Logo = logoPath,
                     TagLine = model.TagLine,
                     Keywords = model.Keywords,
                     PersonName = model.PersonName,
@@ -268,6 +378,7 @@ namespace RST.Web.Controllers
 
                 var userWebsite = new UserWebsite
                 {
+                    Id = websiteId,
                     Created = DateTime.UtcNow,
                     Name = model.WebsiteName,
                     Owner = member,
@@ -377,12 +488,10 @@ namespace RST.Web.Controllers
                     var hostUrl = $"{request.Scheme}://{request.Host.Value}";
 
                     // Handle Logo file logic
-                    var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                    var logoFolder = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
-                    var logoPngPath = Path.Combine(logoFolder, "logo.png");
-                    var logoJpgPath = Path.Combine(logoFolder, "logo.jpg");
+                    var folderRelativePath = $"drive/uwpics/{uw.Id}";
+                    var logoPngPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "logo.png");
+                    var logoJpgPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "logo.jpg");
 
-                    // If model.Logo is null or empty and DB has a logo, delete the file and clear the field
                     if (string.IsNullOrWhiteSpace(model.Logo) && !string.IsNullOrWhiteSpace(uw.VisitingCardDetail.Logo))
                     {
                         try
@@ -398,79 +507,29 @@ namespace RST.Web.Controllers
                         }
                         uw.VisitingCardDetail.Logo = string.Empty;
                     }
-                    // If model.Logo is base64, save it as logo.png or logo.jpg and resize to 200x200
                     else if (!string.IsNullOrWhiteSpace(model.Logo) && model.Logo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        string? fileExt;
+                        var relativePath = SaveBase64ImageToFile(model.Logo, folderRelativePath, "logo", 300, out fileExt);
+                        if (relativePath != null)
                         {
-                            // Parse base64 header
-                            var base64Data = model.Logo;
-                            string fileExt = ".png";
-                            if (base64Data.StartsWith("data:image/png"))
-                                fileExt = ".png";
-                            else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
-                                fileExt = ".jpg";
-
-                            var base64Parts = base64Data.Split(',');
-                            if (base64Parts.Length == 2)
+                            // Optionally, delete the other format if it exists
+                            try
                             {
-                                var bytes = Convert.FromBase64String(base64Parts[1]);
-                                if (!Directory.Exists(logoFolder))
-                                    Directory.CreateDirectory(logoFolder);
-
-                                var logoFilePath = Path.Combine(logoFolder, "logo" + fileExt);
-
-                                // Resize image to 300x300 maintaining aspect ratio
-                                using (var inputStream = new MemoryStream(bytes))
-                                using (var image = System.Drawing.Image.FromStream(inputStream))
-                                {
-                                    int targetSize = 300;
-                                    int width, height;
-                                    if (image.Width > image.Height)
-                                    {
-                                        width = targetSize;
-                                        height = (int)(image.Height * (targetSize / (double)image.Width));
-                                    }
-                                    else
-                                    {
-                                        height = targetSize;
-                                        width = (int)(image.Width * (targetSize / (double)image.Height));
-                                    }
-
-                                    using (var bmp = new System.Drawing.Bitmap(width, height))
-                                    using (var graphics = System.Drawing.Graphics.FromImage(bmp))
-                                    {
-                                        graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                                        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                                        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                                        graphics.Clear(System.Drawing.Color.Transparent);
-                                        graphics.DrawImage(image, 0, 0, width, height);
-
-                                        if (fileExt == ".png")
-                                            bmp.Save(logoFilePath, System.Drawing.Imaging.ImageFormat.Png);
-                                        else
-                                            bmp.Save(logoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                    }
-                                }
-
-                                // Set the logo path relative to wwwroot and prepend host url
-                                uw.VisitingCardDetail.Logo = $"{hostUrl}/drive/uwpics/{uw.Id}/logo{fileExt}";
-
-                                // Optionally, delete the other format if it exists
                                 if (fileExt == ".png" && System.IO.File.Exists(logoJpgPath))
                                     System.IO.File.Delete(logoJpgPath);
                                 if (fileExt == ".jpg" && System.IO.File.Exists(logoPngPath))
                                     System.IO.File.Delete(logoPngPath);
                             }
-                        }
-                        catch (Exception fileEx)
-                        {
-                            logger.LogWarning(fileEx, "Failed to save or resize logo file for website {WebsiteId}", uw.Id);
+                            catch (Exception fileEx)
+                            {
+                                logger.LogWarning(fileEx, "Failed to delete alternate logo file for website {WebsiteId}", uw.Id);
+                            }
+                            uw.VisitingCardDetail.Logo = $"{hostUrl}{relativePath}";
                         }
                     }
                     else if (!string.IsNullOrWhiteSpace(model.Logo))
                     {
-                        // If model.Logo is a URL or path, just set it
                         uw.VisitingCardDetail.Logo = model.Logo;
                     }
 
@@ -675,66 +734,11 @@ namespace RST.Web.Controllers
                 string photoPath = string.Empty;
                 if (!string.IsNullOrWhiteSpace(model.Photo) && model.Photo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
                 {
-                    try
+                    string? fileExt;
+                    var relativePath = SaveBase64ImageToFile(model.Photo, $"drive/uwpics/{websiteId}", "photo", 300, out fileExt);
+                    if (relativePath != null)
                     {
-                        var base64Data = model.Photo;
-                        string fileExt = ".png";
-                        if (base64Data.StartsWith("data:image/png"))
-                            fileExt = ".png";
-                        else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
-                            fileExt = ".jpg";
-
-                        var base64Parts = base64Data.Split(',');
-                        if (base64Parts.Length == 2)
-                        {
-                            var bytes = Convert.FromBase64String(base64Parts[1]);
-                            var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                            var photoFolder = Path.Combine(webRootPath, "drive", "uwpics", websiteId.ToString());
-                            if (!Directory.Exists(photoFolder))
-                                Directory.CreateDirectory(photoFolder);
-
-                            var photoFilePath = Path.Combine(photoFolder, "photo" + fileExt);
-
-                            // Resize image to 300x300 maintaining aspect ratio
-                            using (var inputStream = new MemoryStream(bytes))
-                            using (var image = System.Drawing.Image.FromStream(inputStream))
-                            {
-                                int targetSize = 300;
-                                int width, height;
-                                if (image.Width > image.Height)
-                                {
-                                    width = targetSize;
-                                    height = (int)(image.Height * (targetSize / (double)image.Width));
-                                }
-                                else
-                                {
-                                    height = targetSize;
-                                    width = (int)(image.Width * (targetSize / (double)image.Height));
-                                }
-
-                                using (var bmp = new System.Drawing.Bitmap(width, height))
-                                using (var graphics = System.Drawing.Graphics.FromImage(bmp))
-                                {
-                                    graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                                    graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                                    graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                                    graphics.Clear(System.Drawing.Color.Transparent);
-                                    graphics.DrawImage(image, 0, 0, width, height);
-
-                                    if (fileExt == ".png")
-                                        bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Png);
-                                    else
-                                        bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                }
-                            }
-
-                            // Set the photo path relative to wwwroot
-                            photoPath = $"{hostUrl}/drive/uwpics/{websiteId}/photo{fileExt}";
-                        }
-                    }
-                    catch (Exception fileEx)
-                    {
-                        logger.LogWarning(fileEx, "Failed to save or resize photo for LinkList website");
+                        photoPath = $"{hostUrl}{relativePath}";
                     }
                 }
                 else if (!string.IsNullOrWhiteSpace(model.Photo))
@@ -822,16 +826,16 @@ namespace RST.Web.Controllers
                     {
                         uw.LinkListDetail = new LinkListDetail();
                     }
+
                     // Get host url (scheme + host + port if present)
                     var request = HttpContext.Request;
                     var hostUrl = $"{request.Scheme}://{request.Host.Value}";
 
                     // Handle Photo upload
                     string photoPath = uw.LinkListDetail.Photo ?? string.Empty;
-                    var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                    var photoFolder = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
-                    var photoPngPath = Path.Combine(photoFolder, "photo.png");
-                    var photoJpgPath = Path.Combine(photoFolder, "photo.jpg");
+                    var folderRelativePath = $"drive/uwpics/{uw.Id}";
+                    var photoPngPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "photo.png");
+                    var photoJpgPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "photo.jpg");
 
                     if (string.IsNullOrWhiteSpace(model.Photo))
                     {
@@ -851,70 +855,24 @@ namespace RST.Web.Controllers
                     }
                     else if (model.Photo.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        string? fileExt;
+                        var relativePath = SaveBase64ImageToFile(model.Photo, folderRelativePath, "photo", 300, out fileExt);
+                        if (relativePath != null)
                         {
-                            var base64Data = model.Photo;
-                            string fileExt = ".png";
-                            if (base64Data.StartsWith("data:image/png"))
-                                fileExt = ".png";
-                            else if (base64Data.StartsWith("data:image/jpeg") || base64Data.StartsWith("data:image/jpg"))
-                                fileExt = ".jpg";
-
-                            var base64Parts = base64Data.Split(',');
-                            if (base64Parts.Length == 2)
+                            // Optionally, delete the other format if it exists
+                            try
                             {
-                                var bytes = Convert.FromBase64String(base64Parts[1]);
-                                if (!Directory.Exists(photoFolder))
-                                    Directory.CreateDirectory(photoFolder);
-
-                                var photoFilePath = Path.Combine(photoFolder, "photo" + fileExt);
-
-                                // Resize image to 300x300 maintaining aspect ratio
-                                using (var inputStream = new MemoryStream(bytes))
-                                using (var image = System.Drawing.Image.FromStream(inputStream))
-                                {
-                                    int targetSize = 300;
-                                    int width, height;
-                                    if (image.Width > image.Height)
-                                    {
-                                        width = targetSize;
-                                        height = (int)(image.Height * (targetSize / (double)image.Width));
-                                    }
-                                    else
-                                    {
-                                        height = targetSize;
-                                        width = (int)(image.Width * (targetSize / (double)image.Height));
-                                    }
-
-                                    using (var bmp = new System.Drawing.Bitmap(width, height))
-                                    using (var graphics = System.Drawing.Graphics.FromImage(bmp))
-                                    {
-                                        graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                                        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                                        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                                        graphics.Clear(System.Drawing.Color.Transparent);
-                                        graphics.DrawImage(image, 0, 0, width, height);
-
-                                        if (fileExt == ".png")
-                                            bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Png);
-                                        else
-                                            bmp.Save(photoFilePath, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                    }
-                                }
-
-                                // Set the photo path relative to wwwroot
-                                photoPath = $"{hostUrl}/drive/uwpics/{uw.Id}/photo{fileExt}";
-
-                                // Optionally, delete the other format if it exists
                                 if (fileExt == ".png" && System.IO.File.Exists(photoJpgPath))
                                     System.IO.File.Delete(photoJpgPath);
                                 if (fileExt == ".jpg" && System.IO.File.Exists(photoPngPath))
                                     System.IO.File.Delete(photoPngPath);
                             }
-                        }
-                        catch (Exception fileEx)
-                        {
-                            logger.LogWarning(fileEx, "Failed to save or resize photo for LinkList website {WebsiteId}", uw.Id);
+                            catch (Exception fileEx)
+                            {
+                                logger.LogWarning(fileEx, "Failed to delete alternate photo file for website {WebsiteId}", uw.Id);
+                            }
+                            // Prepend host url
+                            photoPath = $"{hostUrl}{relativePath}";
                         }
                     }
                     else

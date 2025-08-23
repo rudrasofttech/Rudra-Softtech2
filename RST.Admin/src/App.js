@@ -17,9 +17,10 @@ import { EmailList } from './components/EmailList';
 import { NewsletterDesign } from './components/NewsletterDesign';
 import { ChangePassword } from './components/ChangePassword';
 import { Logout } from './components/Logout';
-import UserWebsiteThemeList from './components/UserWebsiteThemeList';
 import { UserWebsiteThemeManage } from './components/UserWebsiteThemeManage';
 import UserWebsiteList from './components/UserWebsiteList';
+import LinkListThemeList from './components/LinkListThemeList';
+import VCardThemeList from './components/VCardThemeList';
 
 export default class App extends Component {
     displayName = App.name
@@ -43,7 +44,8 @@ export default class App extends Component {
                 <Route path='/DataSourceManage/:id?' component={DataSourceManage} />
                 <Route path='/CategoryManage/:id?' component={CategoryManage} />
                 <Route path='/ChangePassword/:id?' component={ChangePassword} />
-                <Route path='/UserWebsiteThemes' component={UserWebsiteThemeList} />
+                <Route path='/VCardThemes' component={VCardThemeList} />
+                <Route path='/LinkListThemes' component={LinkListThemeList} />
                 <Route path='/UserWebsiteThemeManage/:id?' component={UserWebsiteThemeManage} />
                 <Route path='/UserWebsites' component={UserWebsiteList} />
             </Layout>
