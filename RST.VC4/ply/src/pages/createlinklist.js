@@ -319,7 +319,7 @@ export default function CreateLinkList() {
                 navigate,
                 {
                     WebsiteName: formData.websiteName,
-                    ThemeId: formData.themeId || "00000000-0000-0000-0000-000000000000", // Replace with actual theme selection if needed
+                    ThemeId: formData.themeId || "cd45863e-b020-41d2-ac4b-a3b3ef22925a", // Replace with actual theme selection if needed
                     Name: formData.name,
                     Line: formData.line,
                     Photo: formData.photo,

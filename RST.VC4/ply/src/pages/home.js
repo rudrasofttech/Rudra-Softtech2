@@ -141,8 +141,11 @@ function Home() {
             <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
             <div className="text-center mt-3">
               <button type="button" onClick={() => {
-                setRedirectUrl('/create');
-              }} className="btn btn-success btn-lg fs-1">Create Your First Site</button>
+                setRedirectUrl('/createvcard');
+              }} className="btn btn-success btn-lg fs-3 me-4">Create Visiting Card</button>
+              <button type="button" onClick={() => {
+                setRedirectUrl('/createlinklist');
+              }} className="btn btn-primary btn-lg fs-3">Create Link List</button>
             </div>
           </>}</> : <>Loading websites...</>}
 

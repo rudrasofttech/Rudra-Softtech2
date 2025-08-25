@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { getWithAuth, postWithAuth } from '../utils/api';
 import { APIURLS } from '../utils/config';
 import PlyNavbar from '../components/plynavbar';
@@ -139,31 +140,54 @@ export default function EditLinkList() {
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Links</label>
-                                {(website.linklist.links || []).map((item, idx) => (
-                                    <div key={idx} className="d-flex mb-1">
-                                        <input type="text" className="form-control me-2" placeholder="Title" value={item.title}
-                                            onChange={e => {
-                                                const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, title: e.target.value } : l);
-                                                setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                                setIsDirty(true);
-                                            }}
-                                            onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                        />
-                                        <input type="text" className="form-control me-2" placeholder="URL" value={item.url}
-                                            onChange={e => {
-                                                const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, url: e.target.value } : l);
-                                                setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                                setIsDirty(true);
-                                            }}
-                                            onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                        />
-                                        <button className="btn btn-danger btn-sm" onClick={() => {
-                                            const updated = website.linklist.links.filter((_, i) => i !== idx);
-                                            setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                            setIsDirty(true);
-                                        }}>🗑️</button>
-                                    </div>
-                                ))}
+                                <DragDropContext onDragEnd={result => {
+                                    if (!result.destination) return;
+                                    const reordered = Array.from(website.linklist.links);
+                                    const [removed] = reordered.splice(result.source.index, 1);
+                                    reordered.splice(result.destination.index, 0, removed);
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: reordered } }));
+                                    setIsDirty(true);
+                                    handleSave();
+                                    setIsDirty(false);
+                                }}>
+                                    <Droppable droppableId="links-droppable">
+                                        {(provided) => (
+                                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                {(website.linklist.links || []).map((item, idx) => (
+                                                    <Draggable key={idx} draggableId={"link-"+idx} index={idx}>
+                                                        {(provided, snapshot) => (
+                                                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="d-flex mb-1 align-items-center" style={{background: snapshot.isDragging ? '#e9ecef' : undefined, ...provided.draggableProps.style}}>
+                                                                <span className="me-2" style={{cursor:'grab'}}>☰</span>
+                                                                <input type="text" className="form-control me-2" placeholder="Title" value={item.title}
+                                                                    onChange={e => {
+                                                                        const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, title: e.target.value } : l);
+                                                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
+                                                                        setIsDirty(true);
+                                                                    }}
+                                                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                                                                />
+                                                                <input type="text" className="form-control me-2" placeholder="URL" value={item.url}
+                                                                    onChange={e => {
+                                                                        const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, url: e.target.value } : l);
+                                                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
+                                                                        setIsDirty(true);
+                                                                    }}
+                                                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                                                                />
+                                                                <button className="btn btn-danger btn-sm" onClick={() => {
+                                                                    const updated = website.linklist.links.filter((_, i) => i !== idx);
+                                                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
+                                                                    setIsDirty(true);
+                                                                }}>🗑️</button>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
+                                </DragDropContext>
                                 <button className="btn btn-secondary btn-sm mt-2" onClick={() => {
                                     setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: [...(prev.linklist.links || []), { title: '', url: '' }] } }));
                                     setIsDirty(true);
