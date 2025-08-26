@@ -24,6 +24,7 @@ export default function EditLinkList() {
     const [showEditInfoModal, setShowEditInfoModal] = useState(false);
     const [showEditLinksModal, setShowEditLinksModal] = useState(true);
     const [showEditSocialModal, setShowEditSocialModal] = useState(false);
+    const [showEditThemeModal, setShowEditThemeModal] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
     const [photoChanged, setPhotoChanged] = useState(false);
@@ -105,6 +106,51 @@ export default function EditLinkList() {
         }
     }
 
+    const [themes, setThemes] = useState(null);
+    const [loadingTheme, setLoadingTheme] = useState(false);
+    const [themePageIndex, setThemePageIndex] = useState(1);
+
+    useEffect(() => {
+        async function fetchThemes() {
+            setLoadingTheme(true);
+            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=2`, navigate);
+            if (r.result) {
+                if (themes === null) {
+                    setThemes(r.data);
+                } else {
+                    setThemes((prev) => ({
+                        items: [...prev.items, ...r.data.items],
+                        pageIndex: r.data.pageIndex,
+                        pageCount: r.data.pageCount,
+                        totalRecords: r.data.totalRecords
+                    }));
+                }
+            } else {
+                toast.error("Failed to load themes: " + r.errors.join(', '));
+            }
+            setLoadingTheme(false);
+        }
+        fetchThemes();
+    }, [themePageIndex, navigate]);
+
+    const updateTheme = async (id) => {
+        try {
+            const data = {
+                websiteId: website.id,
+                themeId: id
+            };
+            const response = await postWithAuth(`${APIURLS.userWebsite}/updatetheme`, navigate, data);
+            if (response.result) {
+                setDummy(Date.now());
+                toast.success("Theme updated successfully!");
+            } else {
+                toast.error("Failed to save changes: " + response.errors.join(', '));
+            }
+        } catch (err) {
+            console.error('Failed to update theme:', err.message);
+        }
+    }
+
     return <>
         <PlyNavbar showLoginPopup={null}>
             {website !== null ?
@@ -113,17 +159,26 @@ export default function EditLinkList() {
                         setShowEditLinksModal(true);
                         setShowEditSocialModal(false);
                         setShowEditInfoModal(false);
+                        setShowEditThemeModal(false);
                     }}>Links</Nav.Link>
                     <Nav.Link className={showEditInfoModal ? "active" : ""} onClick={() => {
                         setShowEditLinksModal(false);
                         setShowEditSocialModal(false);
                         setShowEditInfoModal(true);
+                        setShowEditThemeModal(false);
                     }}>Personal Info</Nav.Link>
                     <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
                         setShowEditLinksModal(false);
                         setShowEditSocialModal(true);
                         setShowEditInfoModal(false);
+                        setShowEditThemeModal(false);
                     }}>Social</Nav.Link>
+                    <Nav.Link className={showEditThemeModal ? "active" : ""} onClick={() => {
+                        setShowEditLinksModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditInfoModal(false);
+                        setShowEditThemeModal(true);
+                    }}>Themes</Nav.Link>
                     {website.status === 1 ? <Nav.Link disabled={statusLoading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
                         updateStatus(0);
                     }}>Activate</Nav.Link> : null}
@@ -314,6 +369,27 @@ export default function EditLinkList() {
                                 />
                                 <small className="form-text text-muted">Your WhatsApp number (with country code) or click-to-chat link.</small>
                             </div>
+                        </> : null}
+                        {showEditThemeModal ? <>
+                            {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
+                            {themes !== null ? <>
+                                <div className="row">{themes.items.map((item, index) => {
+                                    return <div className="col-6 col-md-6" key={index}>
+                                        <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
+                                            style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
+                                                setWebsite(prev => ({
+                                                    ...prev,
+                                                    themeId: item.id
+                                                }));
+                                                updateTheme(item.id);
+                                            }} />
+                                    </div>
+                                })}
+                                </div>
+                            </> : null}
+                            {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
+                                <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
+                            </div> : null}
                         </> : null}
                     </div>
                 </div>
