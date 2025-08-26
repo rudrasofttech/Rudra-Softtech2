@@ -29,14 +29,50 @@ namespace VC4.Pages
                     if (UserWebsite == null)
                     {
                         _logger.LogWarning("No UserWebsite found for subdomain: {Subdomain}", Subdomain);
+                        // Read NotFound.html from Pages folder
+                        var notFoundPath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "NotFound.html");
+                        if (System.IO.File.Exists(notFoundPath))
+                        {
+                            var html = System.IO.File.ReadAllText(notFoundPath);
+                            var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
+                            PageHtml = html.Replace("[fullurl]", fullUrl);
+                        }
+                        else
+                        {
+                            PageHtml = "<h1>404 - Not Found</h1><p>The page you are looking for does not exist.</p>";
+                        }
+                    }
+                    else if(UserWebsite.Status != RecordStatus.Active)
+                    {
+                        _logger.LogWarning("UserWebsite found for subdomain: {Subdomain} but status is not Active", Subdomain);
+                        // Read Inactive.html from Pages folder
+                        var inactivePath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "Inactive.html");
+                        if (System.IO.File.Exists(inactivePath))
+                        {
+                            var html = System.IO.File.ReadAllText(inactivePath);
+                            var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
+                            PageHtml = html.Replace("[fullurl]", fullUrl);
+                        }
+                        else
+                        {
+                            PageHtml = "<h1>Site Inactive</h1><p>The site you are looking for is currently inactive.</p>";
+                        }
                     }
                     else
                     {
                         if (UserWebsite.WSType == WebsiteType.VCard)
                         {
                             UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
-                            //PageHtml = await VCardHtmlRenderer.RenderTemplateAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail ?? new VisitingCardDetail());
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
+                        }
+                        else if (UserWebsite.WSType == WebsiteType.LinkList)
+                        {
+                            UserWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(UserWebsite.JsonData);
+                            PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.LinkListDetail);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Unsupported WebsiteType: {WSType} for UserWebsite: {Subdomain}", UserWebsite.WSType, Subdomain);
                         }
                     }
                 }

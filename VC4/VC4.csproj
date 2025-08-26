@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Pages\NotFound.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="RazorLight" Version="2.3.1" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />

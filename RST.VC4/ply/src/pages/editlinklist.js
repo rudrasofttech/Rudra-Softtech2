@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import LinkListForm from '../components/linklistform';
 import { getWithAuth, postWithAuth } from '../utils/api';
 import { APIURLS } from '../utils/config';
 import PlyNavbar from '../components/plynavbar';
@@ -10,6 +10,8 @@ import Nav from 'react-bootstrap/Nav';
 import { toast } from 'react-toastify';
 import useScreenSize from '../hooks/useScreenSize';
 import ResponsivePreview from '../components/responsivepreview';
+import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
+import Modal from 'react-bootstrap/Modal';
 
 export default function EditLinkList() {
     const isMobile = useScreenSize();
@@ -19,9 +21,47 @@ export default function EditLinkList() {
     const [dummy, setDummy] = useState(Date.now());
     const [loading, setLoading] = useState(false);
     const [website, setWebsite] = useState(null);
+    const [showEditInfoModal, setShowEditInfoModal] = useState(false);
     const [showEditLinksModal, setShowEditLinksModal] = useState(true);
     const [showEditSocialModal, setShowEditSocialModal] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [photoChanged, setPhotoChanged] = useState(false);
+    const isFirstPhotoLoad = useRef(true);
+
+    // Save when photo changes, but not on initial load
+    useEffect(() => {
+        if (!website || !photoChanged) return;
+        if (isFirstPhotoLoad.current) {
+            isFirstPhotoLoad.current = false;
+            setPhotoChanged(false);
+            return;
+        }
+        handleSave();
+        setPhotoChanged(false);
+    }, [website && website.linklist && website.linklist.photo]);
+
+    const [statusLoading, setStatusLoading] = useState(false);
+    const updateStatus = async (status) => {
+        try {
+            setStatusLoading(true);
+            const response = await getWithAuth(`${APIURLS.userWebsite}/updatestatus/${website.id}?status=${status}`, navigate);
+            if (response.result) {
+                setWebsite(prev => ({
+                    ...prev,
+                    status: status
+                }));
+                setDummy(Date.now());
+                toast.success("Status updated successfully!");
+            } else {
+                toast.error("Failed to save changes: " + response.errors.join(', '));
+            }
+        } catch (err) {
+            console.error('Failed to update status:', err.message);
+        } finally {
+            setStatusLoading(false);
+        }
+    };
 
     useEffect(() => {
         async function fetchSite() {
@@ -72,11 +112,24 @@ export default function EditLinkList() {
                     <Nav.Link className={showEditLinksModal ? "active" : ""} onClick={() => {
                         setShowEditLinksModal(true);
                         setShowEditSocialModal(false);
+                        setShowEditInfoModal(false);
                     }}>Links</Nav.Link>
+                    <Nav.Link className={showEditInfoModal ? "active" : ""} onClick={() => {
+                        setShowEditLinksModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditInfoModal(true);
+                    }}>Personal Info</Nav.Link>
                     <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
                         setShowEditLinksModal(false);
                         setShowEditSocialModal(true);
+                        setShowEditInfoModal(false);
                     }}>Social</Nav.Link>
+                    {website.status === 1 ? <Nav.Link disabled={statusLoading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
+                        updateStatus(0);
+                    }}>Activate</Nav.Link> : null}
+                    {website.status === 0 ? <Nav.Link title="Site is active, click to inactivate." disabled={statusLoading} className="text-danger " onClick={() => {
+                        updateStatus(1);
+                    }}>Inactivate</Nav.Link> : null}
                     <Nav.Link target="_blank" className="text-primary link-underline-primary" href={`https://${website.name}.vc4.in`}>Visit {website.name}</Nav.Link>
                 </Nav> : <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>}
         </PlyNavbar>
@@ -90,6 +143,22 @@ export default function EditLinkList() {
                     <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2 bg-light border-start">
                         {showEditLinksModal ? <>
                             <div className="fw-bold mb-2 fs-5">Link List Information</div>
+                            <div className="mb-2">
+                                <LinkListForm
+                                    links={website.linklist.links}
+                                    setLinks={links => setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links } }))}
+                                    handleSave={handleSave}
+                                    isDirty={isDirty}
+                                    setIsDirty={setIsDirty}
+                                />
+                                <button className="btn btn-secondary btn-sm mt-2" onClick={() => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: [...(prev.linklist.links || []), { title: '', url: '', description: '' }] } }));
+                                    setIsDirty(true);
+                                }}>Add Link</button>
+                            </div>
+                        </> : null}
+                        {showEditInfoModal ? <>
+                            <div className="fw-bold mb-2 fs-5">Personal Information</div>
                             <div className="mb-2">
                                 <label className="form-label">Your Name</label>
                                 <input type="text" className="form-control" value={website.linklist.name} maxLength={100}
@@ -105,6 +174,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Displayed as the main heading on your LinkList page.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Tag Line</label>
@@ -121,77 +191,48 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">A short tagline or description under your name (max 250 characters).</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Photo</label>
-                                <input type="text" className="form-control" value={website.linklist.photo} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({
-                                            ...prev,
-                                            linklist: {
-                                                ...prev.linklist,
-                                                photo: e.target.value
-                                            }
-                                        }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Links</label>
-                                <DragDropContext onDragEnd={result => {
-                                    if (!result.destination) return;
-                                    const reordered = Array.from(website.linklist.links);
-                                    const [removed] = reordered.splice(result.source.index, 1);
-                                    reordered.splice(result.destination.index, 0, removed);
-                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: reordered } }));
-                                    setIsDirty(true);
-                                    handleSave();
-                                    setIsDirty(false);
-                                }}>
-                                    <Droppable droppableId="links-droppable">
-                                        {(provided) => (
-                                            <div ref={provided.innerRef} {...provided.droppableProps}>
-                                                {(website.linklist.links || []).map((item, idx) => (
-                                                    <Draggable key={idx} draggableId={"link-"+idx} index={idx}>
-                                                        {(provided, snapshot) => (
-                                                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="d-flex mb-1 align-items-center" style={{background: snapshot.isDragging ? '#e9ecef' : undefined, ...provided.draggableProps.style}}>
-                                                                <span className="me-2" style={{cursor:'grab'}}>☰</span>
-                                                                <input type="text" className="form-control me-2" placeholder="Title" value={item.title}
-                                                                    onChange={e => {
-                                                                        const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, title: e.target.value } : l);
-                                                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                                                        setIsDirty(true);
-                                                                    }}
-                                                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                                                />
-                                                                <input type="text" className="form-control me-2" placeholder="URL" value={item.url}
-                                                                    onChange={e => {
-                                                                        const updated = website.linklist.links.map((l, i) => i === idx ? { ...l, url: e.target.value } : l);
-                                                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                                                        setIsDirty(true);
-                                                                    }}
-                                                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                                                />
-                                                                <button className="btn btn-danger btn-sm" onClick={() => {
-                                                                    const updated = website.linklist.links.filter((_, i) => i !== idx);
-                                                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: updated } }));
-                                                                    setIsDirty(true);
-                                                                }}>🗑️</button>
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </div>
-                                        )}
-                                    </Droppable>
-                                </DragDropContext>
-                                <button className="btn btn-secondary btn-sm mt-2" onClick={() => {
-                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: [...(prev.linklist.links || []), { title: '', url: '' }] } }));
-                                    setIsDirty(true);
-                                }}>Add Link</button>
+                                {website.linklist.photo !== "" ? <div>
+                                    <img alt="" src={website.linklist.photo} className="img-fluid" style={{maxWidth:"200px"}} />
+                                    <div className="my-2">
+                                        <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                linklist: {
+                                                    ...prev.linklist,
+                                                    photo: ""
+                                                }
+                                            }));
+                                            setPhotoChanged(true);
+                                        }}>Remove</button>
+                                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Change</button>
+                                    </div>
+                                </div> : <div>
+                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Upload Photo</button>
+                                </div>}
+                                <small className="form-text text-muted">Recommended: Square image, max 300x300px. JPEG or PNG only.</small>
+                                <div className="text-end"><small>Upload a photo in jpeg or png format</small></div>
+                                <Modal show={showPhotoModal} onHide={() => setShowPhotoModal(false)}>
+                                    <Modal.Header closeButton>
+                                        <Modal.Title>Upload Photo</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body>
+                                        <ImageUploaderWithCrop maxWidth={300} maxHeight={300} onImageLoaded={base64 => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                linklist: {
+                                                    ...prev.linklist,
+                                                    photo: base64
+                                                }
+                                            }));
+                                            setPhotoChanged(true);
+                                            setShowPhotoModal(false);
+                                        }} />
+                                    </Modal.Body>
+                                </Modal>
                             </div>
                         </> : null}
                         {showEditSocialModal ? <>
@@ -205,6 +246,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Paste your YouTube channel or video URL.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Instagram</label>
@@ -215,6 +257,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your Instagram profile URL (e.g., https://instagram.com/yourname).</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">LinkedIn</label>
@@ -225,6 +268,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your LinkedIn profile URL.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Twitter</label>
@@ -235,6 +279,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your Twitter/X profile URL.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Facebook</label>
@@ -245,6 +290,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your Facebook profile or page URL.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Telegram</label>
@@ -255,6 +301,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your Telegram username or channel link.</small>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">WhatsApp</label>
@@ -265,6 +312,7 @@ export default function EditLinkList() {
                                     }}
                                     onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
                                 />
+                                <small className="form-text text-muted">Your WhatsApp number (with country code) or click-to-chat link.</small>
                             </div>
                         </> : null}
                     </div>

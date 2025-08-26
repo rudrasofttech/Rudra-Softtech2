@@ -130,7 +130,13 @@ function Home() {
                       </td>
                       <td><StatusDisplay status={site.status} /></td>
                       <td>
-                        <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => setRedirectUrl(`/editcard/${site.id}`)}><i className="bi bi-pencil-square"></i></button>
+                        <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
+                          if(site.wsType === 1) {
+                            setRedirectUrl(`/editcard/${site.id}`);
+                          }else if(site.wsType === 2) {
+                            setRedirectUrl(`/editlinklist/${site.id}`);
+                          } 
+                        }}><i className="bi bi-pencil-square"></i></button>
                       </td>
                       <td><button type="button" className="btn btn-link text-danger" disabled={loading || loadingDelete} onClick={() => { handleDelete(site.id); }}><i className="bi bi-trash3"></i></button></td>
                     </tr>

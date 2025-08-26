@@ -106,6 +106,19 @@ namespace RST.Web.Controllers
                             return BadRequest(new { error = "Invalid data format for Visiting Card details." });
                         }
                     }
+                    else if (obj.WSType == WebsiteType.LinkList && !string.IsNullOrWhiteSpace(obj.JsonData))
+                    {
+                        try
+                        {
+                            obj.LinkListDetail = JsonSerializer.Deserialize<LinkListDetail>(obj.JsonData) ?? new LinkListDetail();
+                            return Ok(obj);
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            _logger.LogError(jsonEx, "Error deserializing LinkListDetail for website {WebsiteId}", id);
+                            return BadRequest(new { error = "Invalid data format for Link list details." });
+                        }
+                    }
                 }
                 return NotFound(new { error = "Website not found." });
             }
