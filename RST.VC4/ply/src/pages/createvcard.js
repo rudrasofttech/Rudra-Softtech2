@@ -51,21 +51,20 @@ const WizardStepWebsiteInfo = ({ next, formData, setFormData }) => {
         reader.onload = function (event) {
             const img = new window.Image();
             img.onload = function () {
+                // Calculate new size while maintaining aspect ratio
+                let targetW = 300, targetH = 300;
+                let scale = Math.min(targetW / img.width, targetH / img.height, 1);
+                let newW = Math.round(img.width * scale);
+                let newH = Math.round(img.height * scale);
+                // Center the image on a 300x300 canvas
                 const canvas = document.createElement('canvas');
-                canvas.width = 300;
-                canvas.height = 300;
+                canvas.width = targetW;
+                canvas.height = targetH;
                 const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, 300, 300);
-                // Draw image centered and cover
-                let sx = 0, sy = 0, sw = img.width, sh = img.height;
-                if (img.width > img.height) {
-                    sx = (img.width - img.height) / 2;
-                    sw = sh = img.height;
-                } else if (img.height > img.width) {
-                    sy = (img.height - img.width) / 2;
-                    sw = sh = img.width;
-                }
-                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 300, 300);
+                ctx.clearRect(0, 0, targetW, targetH);
+                const dx = Math.round((targetW - newW) / 2);
+                const dy = Math.round((targetH - newH) / 2);
+                ctx.drawImage(img, 0, 0, img.width, img.height, dx, dy, newW, newH);
                 const base64 = canvas.toDataURL('image/png');
                 setLogo(base64);
                 setFormData({ ...formData, logo: base64 });
