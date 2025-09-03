@@ -113,6 +113,7 @@ provider.Mappings[".ts"] = "video/vnd.dlna.mpeg-tts";
 provider.Mappings[".mpd"] = "application/dash+xml";
 provider.Mappings[".m4s"] = "video/iso.segment";
 provider.Mappings[".vtt"] = "text/vtt";
+provider.Mappings[".ttf"] = "font/ttf";
 
 app.UseStaticFiles(new StaticFileOptions
 {
