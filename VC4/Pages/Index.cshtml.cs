@@ -16,6 +16,7 @@ namespace VC4.Pages
         public string PageHtml { get; set; } = string.Empty;
         public async void OnGet()
         {
+            DateTime start = DateTime.UtcNow;
             try
             {
                 var host = Request.Host.Host; // e.g., "user1.vc4.in"
@@ -42,7 +43,7 @@ namespace VC4.Pages
                             PageHtml = "<h1>404 - Not Found</h1><p>The page you are looking for does not exist.</p>";
                         }
                     }
-                    else if(UserWebsite.Status != RecordStatus.Active)
+                    else if (UserWebsite.Status != RecordStatus.Active)
                     {
                         _logger.LogWarning("UserWebsite found for subdomain: {Subdomain} but status is not Active", Subdomain);
                         // Read Inactive.html from Pages folder
@@ -76,12 +77,25 @@ namespace VC4.Pages
                         }
                     }
                 }
+                else
+                {
+                    // Read main.html from Pages folder and set PageHtml
+                    var mainHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "main.html");
+                    if (System.IO.File.Exists(mainHtmlPath))
+                    {
+                        PageHtml = System.IO.File.ReadAllText(mainHtmlPath);
+                    }
+                    else
+                    {
+                        PageHtml = "<h1>Main Page</h1><p>main.html not found.</p>";
+                    }
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error parsing subdomain from host: {Host}", Request.Host.Host);
             }
-
+            _logger.LogInformation("Request for host: {Host} handled in {Duration} ms", Request.Host.Host, (DateTime.UtcNow - start).TotalSeconds);
         }
     }
 }
