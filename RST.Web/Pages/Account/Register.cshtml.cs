@@ -29,7 +29,7 @@ namespace RST.Web.Pages.Account
         [Required(ErrorMessage = "Your name is required.")]
         [MaxLength(150)]
         [BindProperty]
-        public string MemberName { get; set; }
+        public string MemberName { get; set; } = string.Empty;
         public string CaptchaImage { get; set; } = string.Empty;
         [BindProperty]
         public Guid CaptchaKey { get; set; }

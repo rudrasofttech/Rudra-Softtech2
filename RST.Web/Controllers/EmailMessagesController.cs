@@ -52,7 +52,7 @@ namespace RST.Web.Controllers
             }
             try
             {
-                var rs = db.WebsiteSettings.FirstOrDefault(t => t.KeyName == "NewsletterDesign");
+                var rs = db.WebsiteSettings.First(t => t.KeyName == "NewsletterDesign");
                 int count = 0;
                 List<Member> list = [.. db.Members];
                 string newsletteremail = _wsService.NewsletterEmail;

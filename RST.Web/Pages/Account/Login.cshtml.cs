@@ -66,7 +66,6 @@ namespace RST.Web.Pages.Account
 
         public async void OnPost()
         {
-            LoginReturn = null;
             if (!ModelState.IsValid)
                 return;
             Error = string.Empty;

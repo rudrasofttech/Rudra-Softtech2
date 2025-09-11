@@ -40,14 +40,14 @@
                         <script>
                             sessionStorage.setItem("token", "@Model.LoginReturn.Token");
                             try{
-                                window.opener.postMessage({token : "@Model.LoginReturn.Token", 
-                                email : "@Model.LoginReturn.Member.Email", 
+                                window.opener.postMessage({token : "@Model.LoginReturn.Token",
+                                email : "@Model.LoginReturn.Member.Email",
                                 name: "@Model.LoginReturn.Member.FirstName",
                                 expiry: "@Model.LoginReturn.Expiry"}, "*");
                             }catch(e){
                                 console.error("Error posting message to opener:", e);
                             }
-                         </script>
+                        </script>
                         @if (!string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))
                         {
                             <script type="text/javascript">
@@ -62,12 +62,19 @@
                         <h2 class="mb-3">Sign in</h2>
                         <form method="post">
                             <div class="mb-4">
-                                <label for="emailTxt" class="form-label">Email</label>
+                                <div class="d-flex justify-content-between">
+                                    <label for="emailTxt" class="form-label fw-bold">Email</label>
+                                    <small>Required</small>
+                                </div>
                                 <input asp-for="Email" class="form-control" />
                                 <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
                             <div class="mb-4">
-                                <label for="passwordTxt" class="form-label">Password</label>
+                                <div class="d-flex justify-content-between">
+                                    <label for="passwordTxt" class="form-label fw-bold">Password</label>
+                                    <small>Required</small>
+                                </div>
+
                                 <input asp-for="Password" class="form-control" />
                                 <span asp-validation-for="Password" class="text-danger"></span>
                             </div>
@@ -98,20 +105,21 @@
                             <script>
                                 try{
                                     window.opener.postMessage({
-                                        token : "@Model.LoginReturn.Token", 
-                                        email : "@Model.LoginReturn.Member.Email", 
+                                        token : "@Model.LoginReturn.Token",
+                                        email : "@Model.LoginReturn.Member.Email",
                                         name: "@Model.LoginReturn.Member.FirstName",
                                     expiry: "@Model.LoginReturn.Expiry"}, "*");
                                 }catch(e){
                                     console.error("Error posting message to opener:", e);
                                 }
                             </script>
-                            @if (!string.IsNullOrEmpty(Model.LoginReturn.ReturnURL)){
-                            <script type="text/javascript">
-                                setTimeout(function() {
-                                    location.href = '@Model.LoginReturn.ReturnURL';
-                                }, 2000);
-                            </script>
+                            @if (!string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))
+                            {
+                                <script type="text/javascript">
+                                    setTimeout(function() {
+                                        location.href = '@Model.LoginReturn.ReturnURL';
+                                    }, 2000);
+                                </script>
                             }
                         </div>
                     }

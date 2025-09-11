@@ -72,7 +72,7 @@ namespace RST.Web.Controllers
                 }
 
                 member.Password = data.NewPassword;
-                member.ModifiedBy = db.Members.FirstOrDefault(d => d.Email == User.Identity.Name);
+                member.ModifiedBy = db.Members.First(d => d.Email == User.Identity.Name);
                 member.ModifyDate = DateTime.Now;
                 db.SaveChanges();
                 return Ok();
