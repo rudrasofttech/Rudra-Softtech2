@@ -53,7 +53,7 @@ export const postWithAuth = async (url, router, payload, options = {}) => {
                 return { result: false, errors: [err.message] };
                 //throw err;
             }
-            toast.info(`Retrying… (${attempt})`);
+            //toast.info(`Retrying… (${attempt})`);
             await new Promise(r => setTimeout(r, attempt * 500)); // backoff
         }
     }
@@ -102,7 +102,7 @@ export const getWithAuth = async (url, router, options = {}) => {
                 return { result: false, errors: [err.message] };
                 //throw err;
             }
-            toast.info(`Retrying… (${attempt})`);
+            //toast.info(`Retrying… (${attempt})`);
             await new Promise(r => setTimeout(r, attempt * 500));
         }
     }

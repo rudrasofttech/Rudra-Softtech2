@@ -29,6 +29,11 @@ export default function EditCard() {
     const [showEditPhoneModal, setShowEditPhoneModal] = useState(false);
     const [showEditSocialModal, setShowEditSocialModal] = useState(false);
     const [showEditThemeModal, setShowEditThemeModal] = useState(false);
+    const [showEditPhotosModal, setShowEditPhotosModal] = useState(false);
+    const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
+    const [addPhotoFile, setAddPhotoFile] = useState(null);
+    const [addPhotoTitle, setAddPhotoTitle] = useState("");
+    const [addPhotoLoading, setAddPhotoLoading] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [themes, setThemes] = useState(null);
     const [loadingTheme, setLoadingTheme] = useState(false);
@@ -38,7 +43,7 @@ export default function EditCard() {
     const handleLogoModalClose = () => setShowLogoModal(false);
     const handleLogoModalShow = () => setShowLogoModal(true);
 
-    const [logoChanged, setLogoChanged] = useState(false);  
+    const [logoChanged, setLogoChanged] = useState(false);
     const handleImageCropped = (base64Image) => {
         setWebsite(prev => ({
             ...prev,
@@ -109,6 +114,7 @@ export default function EditCard() {
 
     const handleSave = async () => {
         try {
+            console.log('Saving website data:', website);
             const data = {
                 company: website.vcard.company,
                 logo: website.vcard.logo,
@@ -129,7 +135,8 @@ export default function EditCard() {
                 twitter: website.vcard.twitter,
                 aboutInfo: website.vcard.aboutInfo,
                 facebook: website.vcard.facebook,
-                id: website.id
+                id: website.id,
+                photos: website.vcard.photos
             };
             const response = await postWithAuth(`${APIURLS.userWebsite}/updatevcard`, navigate, data);
             if (response.result) {
@@ -190,6 +197,7 @@ export default function EditCard() {
                         setShowEditPhoneModal(false);
                         setShowEditSocialModal(false);
                         setShowEditThemeModal(false);
+                        setShowEditPhotosModal(false);
                     }}>Contact</Nav.Link>
                     <Nav.Link className={showEditCompanyModal ? "active" : ""} onClick={() => {
                         setShowEditCompanyModal(true);
@@ -197,6 +205,7 @@ export default function EditCard() {
                         setShowEditPhoneModal(false);
                         setShowEditSocialModal(false);
                         setShowEditThemeModal(false);
+                        setShowEditPhotosModal(false);
                     }}>Business</Nav.Link>
                     <Nav.Link className={showEditPhoneModal ? "active" : ""} onClick={() => {
                         setShowEditCompanyModal(false);
@@ -204,6 +213,7 @@ export default function EditCard() {
                         setShowEditPhoneModal(true);
                         setShowEditSocialModal(false);
                         setShowEditThemeModal(false);
+                        setShowEditPhotosModal(false);
                     }}>Phone</Nav.Link>
                     <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
                         setShowEditCompanyModal(false);
@@ -211,6 +221,7 @@ export default function EditCard() {
                         setShowEditPhoneModal(false);
                         setShowEditSocialModal(true);
                         setShowEditThemeModal(false);
+                        setShowEditPhotosModal(false);
                     }}>Social</Nav.Link>
                     <Nav.Link className={showEditThemeModal ? "active" : ""} onClick={() => {
                         setShowEditCompanyModal(false);
@@ -218,7 +229,16 @@ export default function EditCard() {
                         setShowEditPhoneModal(false);
                         setShowEditSocialModal(false);
                         setShowEditThemeModal(true);
+                        setShowEditPhotosModal(false);
                     }}>Themes</Nav.Link>
+                    <Nav.Link className={showEditPhotosModal ? "active" : ""} onClick={() => {
+                        setShowEditCompanyModal(false);
+                        setShowEditContactModal(false);
+                        setShowEditPhoneModal(false);
+                        setShowEditSocialModal(false);
+                        setShowEditThemeModal(false);
+                        setShowEditPhotosModal(true);
+                    }}>Photos</Nav.Link>
                     {website.status === 1 ? <Nav.Link disabled={loading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
                         updateStatus(0);
                     }}>Activate</Nav.Link> : null}
@@ -284,7 +304,7 @@ export default function EditCard() {
                                 <label htmlFor="logoTxt" className="form-label">Logo URL</label>
 
                                 {website.vcard.logo !== "" ? <div>
-                                    <img alt="" src={website.vcard.logo} className="img-fluid" style={{maxWidth:"200px"} } />
+                                    <img alt="" src={website.vcard.logo} className="img-fluid" style={{ maxWidth: "200px" }} />
                                     <div className="my-2">
                                         <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
                                             setWebsite(prev => ({
@@ -456,7 +476,7 @@ export default function EditCard() {
                                         }
                                     }}
                                 />
-                                <div className="text-end"><small>It is recommended to include 1 phone number. <br/>Example: +91 9876543210</small></div>
+                                <div className="text-end"><small>It is recommended to include 1 phone number. <br />Example: +91 9876543210</small></div>
                             </div>
                             <div className="mb-2">
                                 <label htmlFor="phone2Txt" className="form-label">Phone 2</label>
@@ -681,6 +701,133 @@ export default function EditCard() {
                             {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
                                 <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
                             </div> : null}
+                        </> : null}
+                        {showEditPhotosModal ? <>
+                            <div className="fw-bold mb-2 fs-5">Photo Gallery</div>
+                            <div className="py-2 text-muted">Upload up to 12 photos (JPEG/PNG, max 50kb each).<br /> <strong>Existing: {website.vcard.photos ? website.vcard.photos.length : 0}/12</strong></div>
+                            <div className="mb-2">
+                                <div className='text-end'>
+                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPhotoModal(true)} disabled={website.vcard.photos && website.vcard.photos.length >= 12}>Add Photo</button>
+                                </div>
+                                <div className="mt-2">
+                                    {(website.vcard.photos || []).map((photoObj, idx) => (
+                                        <div key={idx} className="card mb-2 flex-row align-items-center" style={{ width: "100%", border: '1px solid #ccc', background: '#fff' }}>
+                                            <div className="p-2" style={{ flex: '0 0 40%' }}>
+                                                <img src={photoObj.photo || photoObj} alt={`Photo ${idx + 1}`} className="img-fluid rounded" />
+                                            </div>
+                                            <div className="p-2 flex-grow-1 d-flex flex-column justify-content-between" style={{ minWidth: 0 }}>
+                                                <label className='form-label'>Title</label>
+                                                <input type="text" className="form-control form-control-sm mb-2" placeholder="Photo Title" maxLength={100}
+                                                    value={photoObj.title || ''}
+                                                    onChange={e => {
+                                                        const newPhotos = [...website.vcard.photos];
+                                                        newPhotos[idx] = { ...photoObj, photo: photoObj.photo, title: e.target.value };
+                                                        setWebsite(prev => ({
+                                                            ...prev,
+                                                            vcard: {
+                                                                ...prev.vcard,
+                                                                photos: newPhotos
+                                                            }
+                                                        }));
+                                                        setIsDirty(true);
+                                                    }}
+                                                    onBlur={() => {
+                                                        if (isDirty) {
+                                                            handleSave();
+                                                            setIsDirty(false);
+                                                        }
+                                                    }}
+                                                />
+                                                <button type="button" className="btn btn-danger btn-sm align-self-end" style={{ minWidth: 80 }} onClick={() => {
+                                                    const newPhotos = [...website.vcard.photos];
+                                                    newPhotos.splice(idx, 1);
+                                                    setWebsite(prev => ({
+                                                        ...prev,
+                                                        vcard: {
+                                                            ...prev.vcard,
+                                                            photos: newPhotos
+                                                        }
+                                                    }));
+                                                    setIsDirty(true);
+                                                    handleSave();
+                                                    setIsDirty(false);
+                                                }}>Remove</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {website.vcard.photos && website.vcard.photos.length >= 12 ? <div className="text-danger mt-2">Maximum 12 photos allowed.</div> : null}
+                            </div>
+                            <Modal show={showAddPhotoModal} onHide={() => { setShowAddPhotoModal(false); setAddPhotoFile(null); setAddPhotoTitle(""); }}>
+                                <Modal.Header closeButton>
+                                    <Modal.Title>Add Photo</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <div className="mb-2">
+                                        <input type="file" accept="image/jpeg,image/png" onChange={e => setAddPhotoFile(e.target.files[0])} />
+                                    </div>
+                                    <div className="mb-2">
+                                        <input type="text" className="form-control" placeholder="Photo Title" maxLength={100} value={addPhotoTitle} onChange={e => setAddPhotoTitle(e.target.value)} />
+                                    </div>
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <button type="button" className="btn btn-secondary" onClick={() => { setShowAddPhotoModal(false); setAddPhotoFile(null); setAddPhotoTitle(""); }}>Cancel</button>
+                                    <button type="button" className="btn btn-primary" disabled={addPhotoLoading} onClick={async () => {
+                                        if (!addPhotoFile) { toast.error("Please select a photo."); return; }
+                                        if (!['image/jpeg', 'image/png'].includes(addPhotoFile.type)) { toast.error('Only JPEG and PNG files are allowed.'); return; }
+                                        setAddPhotoLoading(true);
+                                        const reader = new FileReader();
+                                        reader.onload = function (event) {
+                                            const img = new window.Image();
+                                            img.onload = function () {
+                                                let targetW = img.width, targetH = img.height;
+                                                if (targetW > 800 || targetH > 800) {
+                                                    const scale = Math.min(800 / targetW, 800 / targetH);
+                                                    targetW = Math.round(targetW * scale);
+                                                    targetH = Math.round(targetH * scale);
+                                                }
+                                                const canvas = document.createElement('canvas');
+                                                canvas.width = targetW;
+                                                canvas.height = targetH;
+                                                const ctx = canvas.getContext('2d');
+                                                ctx.drawImage(img, 0, 0, targetW, targetH);
+                                                let quality = 0.7;
+                                                let base64 = '';
+                                                do {
+                                                    base64 = canvas.toDataURL(addPhotoFile.type, quality);
+                                                    quality -= 0.1;
+                                                } while (base64.length > 70000 && quality > 0.3); // ~50kb base64
+                                                if (base64.length > 70000) {
+                                                    toast.error('Could not reduce image below 50kb.');
+                                                    setAddPhotoLoading(false);
+                                                    return;
+                                                }
+                                                setWebsite(prev => ({
+                                                    ...prev,
+                                                    vcard: {
+                                                        ...prev.vcard,
+                                                        photos: [...(prev.vcard.photos || []), { photo: base64, title: addPhotoTitle }]
+                                                    }
+                                                }));
+                                                //setIsDirty(true);
+                                                handleSave();
+                                                //setIsDirty(false);
+
+                                                setShowAddPhotoModal(false);
+                                                setAddPhotoFile(null);
+                                                setAddPhotoTitle("");
+                                                setAddPhotoLoading(false);
+                                            };
+                                            img.onerror = function () {
+                                                toast.error('Invalid image file.');
+                                                setAddPhotoLoading(false);
+                                            };
+                                            img.src = event.target.result;
+                                        };
+                                        reader.readAsDataURL(addPhotoFile);
+                                    }}>Save</button>
+                                </Modal.Footer>
+                            </Modal>
                         </> : null}
                     </div>
                 </div>

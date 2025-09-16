@@ -51,5 +51,7 @@ namespace RST.Model.DTO.UserWebsite
         public string? Address { get; set; }
         [MaxLength(500)]
         public string? AboutInfo { get; set; }
+
+        public List<VCardPhoto> Photos { get; set; } = [];
     }
 }

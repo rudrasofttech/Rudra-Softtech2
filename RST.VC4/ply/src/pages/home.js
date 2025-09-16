@@ -7,7 +7,7 @@ import "../styles/globals.css";
 import Loader from '../components/loader';
 import { getWithAuth } from '../utils/api';
 import { APIURLS } from '../utils/config';
-import { StatusDisplay } from '../components/statusdisplay';
+import { StatusDisplay, WebsiteTypeDisplay } from '../components/statusdisplay';
 import Swal from 'sweetalert2';
 import useAppStore from '../store/useAppStore';
 import Nav from 'react-bootstrap/Nav';
@@ -109,7 +109,7 @@ function Home() {
                     setRedirectUrl('/createlinklist');
                   }} className="btn btn-success">Create Link List</button>
                 </div>
-                </div>
+              </div>
 
               <table className="table">
                 <thead >
@@ -128,14 +128,19 @@ function Home() {
                         {new Date(site.created).toLocaleDateString()}
                         {site.modified ? <div className="text-muted"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}
                       </td>
-                      <td><StatusDisplay status={site.status} /></td>
+                      <td>
+                        <WebsiteTypeDisplay wt={site.wsType} />
+                      </td>
+                      <td>
+                        <StatusDisplay status={site.status} />
+                      </td>
                       <td>
                         <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
-                          if(site.wsType === 1) {
+                          if (site.wsType === 1) {
                             setRedirectUrl(`/editcard/${site.id}`);
-                          }else if(site.wsType === 2) {
+                          } else if (site.wsType === 2) {
                             setRedirectUrl(`/editlinklist/${site.id}`);
-                          } 
+                          }
                         }}><i className="bi bi-pencil-square"></i></button>
                       </td>
                       <td><button type="button" className="btn btn-link text-danger" disabled={loading || loadingDelete} onClick={() => { handleDelete(site.id); }}><i className="bi bi-trash3"></i></button></td>
@@ -154,7 +159,6 @@ function Home() {
               }} className="btn btn-primary btn-lg fs-3">Create Link List</button>
             </div>
           </>}</> : <>Loading websites...</>}
-
         </Container>
       </div>}
 

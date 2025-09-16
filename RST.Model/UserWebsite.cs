@@ -77,10 +77,9 @@ namespace RST.Model
 
     public class VCardPhoto
     {
-        public Guid PhotoId { get; set; } = Guid.NewGuid();
         [MaxLength(100)]
         public string Title { get; set; } = string.Empty;
-        [MaxLength(250)]
+        
         public string Photo { get; set; } = string.Empty;
     }
 }

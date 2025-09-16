@@ -325,6 +325,8 @@ namespace RST.Services
 
             var hostUrl = $"{request.Scheme}://{request.Host.Value}";
             var folderRelativePath = $"drive/uwpics/{uw.Id}";
+            var galleryFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath);
+
             var logoPngPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "logo.png");
             var logoJpgPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, "logo.jpg");
 
@@ -388,6 +390,60 @@ namespace RST.Services
             uw.VisitingCardDetail.Address = model.Address ?? string.Empty;
             uw.VisitingCardDetail.AboutInfo = model.AboutInfo ?? string.Empty;
             uw.VisitingCardDetail.Photos = [];
+
+            // Handle gallery photos (VCardPhoto)
+            var newPhotos = new List<VCardPhoto>();
+            var sentPhotoUrls = new HashSet<string>();
+
+            if (model.Photos != null && model.Photos.Count > 0)
+            {
+                for (int i = 0; i < model.Photos.Count; i++)
+                {
+                    var photoObj = model.Photos[i];
+                    var photoUrl = photoObj.Photo;
+                    var title = photoObj.Title ?? string.Empty;
+
+                    if (!string.IsNullOrWhiteSpace(photoUrl) && photoUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string? fileExt;
+                        var relativePath = SaveBase64ImageToFile(photoUrl, folderRelativePath, $"gallery-{i}", 800, out fileExt, logger);
+                        if (relativePath != null)
+                        {
+                            var url = $"{hostUrl}{relativePath}";
+                            newPhotos.Add(new VCardPhoto { Title = title, Photo = url });
+                            sentPhotoUrls.Add(url);
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(photoUrl))
+                    {
+                        newPhotos.Add(new VCardPhoto { Title = title, Photo = photoUrl });
+                        sentPhotoUrls.Add(photoUrl);
+                    }
+                }
+            }
+
+            // Remove any existing gallery images not present in sentPhotoUrls
+            try
+            {
+                if (Directory.Exists(galleryFolderPath))
+                {
+                    var files = Directory.GetFiles(galleryFolderPath, "gallery-*.*");
+                    foreach (var file in files)
+                    {
+                        var fileName = Path.GetFileName(file);
+                        var url = $"{hostUrl}/{folderRelativePath.Replace("\\", "/")}/{fileName}";
+                        if (!sentPhotoUrls.Contains(url))
+                        {
+                            System.IO.File.Delete(file);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to clean up gallery images for website {WebsiteId}", uw.Id);
+            }
+            uw.VisitingCardDetail.Photos.AddRange(newPhotos);
 
             uw.Modified = DateTime.UtcNow;
             uw.JsonData = JsonSerializer.Serialize(uw.VisitingCardDetail);

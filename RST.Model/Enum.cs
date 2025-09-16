@@ -9,7 +9,7 @@
         Portfolio = 4,
         ECommerce = 5,
         Educational = 6,
-        NonProfit = 7,
+        LandingPage = 7,
         Resume = 8,
     }
     public enum RecordStatus
