@@ -35,7 +35,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"].ToString()))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty))
     };
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -104,6 +104,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+
 // Set up custom content types - associating file extension to MIME type
 var provider = new FileExtensionContentTypeProvider();
 
@@ -114,6 +116,7 @@ provider.Mappings[".mpd"] = "application/dash+xml";
 provider.Mappings[".m4s"] = "video/iso.segment";
 provider.Mappings[".vtt"] = "text/vtt";
 provider.Mappings[".ttf"] = "font/ttf";
+
 
 app.UseStaticFiles(new StaticFileOptions
 {

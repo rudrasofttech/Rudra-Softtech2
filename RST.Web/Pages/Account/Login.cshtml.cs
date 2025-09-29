@@ -35,11 +35,16 @@ namespace RST.Web.Pages.Account
 
         public void OnGet()
         {
-            if (User.Identity.IsAuthenticated)
+            if (User?.Identity?.IsAuthenticated == true) // Added null checks for User and Identity
             {
                 var email = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
                 CurrentMember = authService.GetUser(email);
-
+                if(CurrentMember == null) 
+                {
+                    // If the user is not found in the database, sign them out and return.
+                    //HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
+                    return;
+                }
                 var claims = new List<Claim>() {
                 new(ClaimTypes.NameIdentifier,  CurrentMember.Email),
                 new(ClaimTypes.Email, CurrentMember.Email),
@@ -110,7 +115,7 @@ namespace RST.Web.Pages.Account
 
         private string GenerateJSONWebToken(Member m, DateTime expiry)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? string.Empty));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var dt = expiry;
             var claims = new List<Claim>() {

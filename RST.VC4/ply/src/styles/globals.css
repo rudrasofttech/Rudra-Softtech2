@@ -1,4 +1,58 @@
-﻿
+﻿/* Typography */
+.hero-text {
+  font-family: 'Merienda', cursive;
+  color: #4A148C; /* Deep plum for contrast */
+  font-size: 3rem;
+}
+
+.lead {
+  font-size: 1.25rem;
+  color: #555;
+}
+
+/* Cards */
+.card-pastel {
+  background-color: #FFF8F0; /* Soft peach */
+  border: 1px solid #FFCCBC;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Buttons */
+.btn-pastel-green {
+  background-color: #DFFFE0;
+  color: #00796B;
+  border: none;
+}
+
+.btn-pastel-green:hover {
+  background-color: #C8F7D2;
+  color: #004D40;
+}
+
+.btn-pastel-pink {
+  background-color: #FFE4E1;
+  color: #6A1B9A;
+  border: none;
+}
+
+.btn-pastel-pink:hover {
+  background-color: #FFD6D2;
+  color: #4A148C;
+}
+
+/* Section titles */
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: #00796B;
+  margin-bottom: 1rem;
+}
+
+/*****************************/
+
+
 .dancing-script {
     font-family: "Dancing Script", cursive;
     font-optical-sizing: auto;

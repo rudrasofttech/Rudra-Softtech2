@@ -30,10 +30,10 @@ export default function EditCard() {
     const [showEditSocialModal, setShowEditSocialModal] = useState(false);
     const [showEditThemeModal, setShowEditThemeModal] = useState(false);
     const [showEditPhotosModal, setShowEditPhotosModal] = useState(false);
-    const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
-    const [addPhotoFile, setAddPhotoFile] = useState(null);
-    const [addPhotoTitle, setAddPhotoTitle] = useState("");
-    const [addPhotoLoading, setAddPhotoLoading] = useState(false);
+    
+    //const [addPhotoFile, setAddPhotoFile] = useState(null);
+    
+    
     const [isDirty, setIsDirty] = useState(false);
     const [themes, setThemes] = useState(null);
     const [loadingTheme, setLoadingTheme] = useState(false);
@@ -92,11 +92,6 @@ export default function EditCard() {
         fetchThemes();
     }, [themePageIndex, navigate]);
 
-    // useEffect(() => {
-    //     if (redirectUrl) {
-    //         navigate(redirectUrl);
-    //     }
-    // }, [redirectUrl]);
 
     useEffect(() => {
         async function fetchSite() {
@@ -149,6 +144,13 @@ export default function EditCard() {
             console.error('Failed to create:', err.message);
         }
     }
+
+     useEffect(() => {
+        if(isDirty){
+            handleSave();
+            setIsDirty(false);
+        }
+     }, [website && website.vcard && website.vcard.photos]);
 
     const updateTheme = async (id) => {
         try {
@@ -685,9 +687,17 @@ export default function EditCard() {
                             {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
                             {themes !== null ? <>
                                 <div className="row">{themes.items.map((item, index) => {
-                                    return <div className="col-6 col-md-6" key={index}>
+                                    return <div className="col-6 col-md-6 p-2" key={index} style={{ height: "400px", overflow: "hidden" }}>
                                         <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
-                                            style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
+                                            style={{
+      height: "100%",
+      width: "100%",
+      objectFit: "cover", // ensures full image is visible
+      cursor: "pointer",
+      border: website.themeId === item.id ? "8px solid #007bff" : "none",
+      borderRadius:"10px"
+    }}
+ onClick={() => {
                                                 setWebsite(prev => ({
                                                     ...prev,
                                                     themeId: item.id
@@ -706,14 +716,68 @@ export default function EditCard() {
                             <div className="fw-bold mb-2 fs-5">Photo Gallery</div>
                             <div className="py-2 text-muted">Upload up to 12 photos (JPEG/PNG, max 50kb each).<br /> <strong>Existing: {website.vcard.photos ? website.vcard.photos.length : 0}/12</strong></div>
                             <div className="mb-2">
-                                <div className='text-end'>
-                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPhotoModal(true)} disabled={website.vcard.photos && website.vcard.photos.length >= 12}>Add Photo</button>
-                                </div>
+                                {website.vcard.photos && website.vcard.photos.length < 12 ? <div className='text-end'>
+                                    <div className="mb-2">
+                                        <input type="file" accept="image/jpeg,image/png" onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                                                toast.error('Only JPEG and PNG files are allowed.');
+                                                //setAddPhotoFile(null);
+                                                return;
+                                            }
+                                            const reader = new FileReader();
+                                            reader.onload = function (event) {
+                                                const img = new window.Image();
+                                                img.onload = function () {
+                                                    let targetW = img.width, targetH = img.height;
+                                                    if (targetW > 800 || targetH > 800) {
+                                                        const scale = Math.min(800 / targetW, 800 / targetH);
+                                                        targetW = Math.round(targetW * scale);
+                                                        targetH = Math.round(targetH * scale);
+                                                    }
+                                                    const canvas = document.createElement('canvas');
+                                                    canvas.width = targetW;
+                                                    canvas.height = targetH;
+                                                    const ctx = canvas.getContext('2d');
+                                                    ctx.drawImage(img, 0, 0, targetW, targetH);
+                                                    let quality = 0.7;
+                                                    let base64 = '';
+                                                    do {
+                                                        base64 = canvas.toDataURL(file.type, quality);
+                                                        quality -= 0.1;
+                                                    } while (base64.length > 70000 && quality > 0.3); // ~50kb base64
+                                                    if (base64.length > 70000) {
+                                                        toast.error('Could not reduce image below 50kb.');
+                                                        //setAddPhotoFile(null);
+                                                        return;
+                                                    }
+                                                    //setAddPhotoFile({ base64, type: file.type });
+                                                    setIsDirty(true);
+                                                    setWebsite(prev => ({
+                                                        ...prev,
+                                                        vcard: {
+                                                            ...prev.vcard,
+                                                            photos: [...(prev.vcard.photos || []), { photo: base64, title: '' }]
+                                                        }
+                                                    }));
+                                                };
+                                                img.onerror = function () {
+                                                    toast.error('Invalid image file.');
+                                                    //setAddPhotoFile(null);
+                                                };
+                                                img.src = event.target.result;
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }} />
+                                    </div>
+                                </div> : null }
+                                
                                 <div className="mt-2">
                                     {(website.vcard.photos || []).map((photoObj, idx) => (
                                         <div key={idx} className="card mb-2 flex-row align-items-center" style={{ width: "100%", border: '1px solid #ccc', background: '#fff' }}>
                                             <div className="p-2" style={{ flex: '0 0 40%' }}>
-                                                <img src={photoObj.photo || photoObj} alt={`Photo ${idx + 1}`} className="img-fluid rounded" />
+                                                <img src={photoObj.photo || photoObj} alt="" className="img-fluid rounded" />
                                             </div>
                                             <div className="p-2 flex-grow-1 d-flex flex-column justify-content-between" style={{ minWidth: 0 }}>
                                                 <label className='form-label'>Title</label>
@@ -729,18 +793,16 @@ export default function EditCard() {
                                                                 photos: newPhotos
                                                             }
                                                         }));
-                                                        setIsDirty(true);
+                                                    
                                                     }}
                                                     onBlur={() => {
-                                                        if (isDirty) {
-                                                            handleSave();
-                                                            setIsDirty(false);
-                                                        }
+                                                        setIsDirty(true);
                                                     }}
                                                 />
                                                 <button type="button" className="btn btn-danger btn-sm align-self-end" style={{ minWidth: 80 }} onClick={() => {
                                                     const newPhotos = [...website.vcard.photos];
                                                     newPhotos.splice(idx, 1);
+                                                    setIsDirty(true);
                                                     setWebsite(prev => ({
                                                         ...prev,
                                                         vcard: {
@@ -748,9 +810,12 @@ export default function EditCard() {
                                                             photos: newPhotos
                                                         }
                                                     }));
-                                                    setIsDirty(true);
-                                                    handleSave();
-                                                    setIsDirty(false);
+                                                    // setTimeout(() => {
+                                                    //     setIsDirty(true);
+                                                    //     handleSave();
+                                                    //     setIsDirty(false);
+                                                    // }, 200);
+
                                                 }}>Remove</button>
                                             </div>
                                         </div>
@@ -758,76 +823,6 @@ export default function EditCard() {
                                 </div>
                                 {website.vcard.photos && website.vcard.photos.length >= 12 ? <div className="text-danger mt-2">Maximum 12 photos allowed.</div> : null}
                             </div>
-                            <Modal show={showAddPhotoModal} onHide={() => { setShowAddPhotoModal(false); setAddPhotoFile(null); setAddPhotoTitle(""); }}>
-                                <Modal.Header closeButton>
-                                    <Modal.Title>Add Photo</Modal.Title>
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <div className="mb-2">
-                                        <input type="file" accept="image/jpeg,image/png" onChange={e => setAddPhotoFile(e.target.files[0])} />
-                                    </div>
-                                    <div className="mb-2">
-                                        <input type="text" className="form-control" placeholder="Photo Title" maxLength={100} value={addPhotoTitle} onChange={e => setAddPhotoTitle(e.target.value)} />
-                                    </div>
-                                </Modal.Body>
-                                <Modal.Footer>
-                                    <button type="button" className="btn btn-secondary" onClick={() => { setShowAddPhotoModal(false); setAddPhotoFile(null); setAddPhotoTitle(""); }}>Cancel</button>
-                                    <button type="button" className="btn btn-primary" disabled={addPhotoLoading} onClick={async () => {
-                                        if (!addPhotoFile) { toast.error("Please select a photo."); return; }
-                                        if (!['image/jpeg', 'image/png'].includes(addPhotoFile.type)) { toast.error('Only JPEG and PNG files are allowed.'); return; }
-                                        setAddPhotoLoading(true);
-                                        const reader = new FileReader();
-                                        reader.onload = function (event) {
-                                            const img = new window.Image();
-                                            img.onload = function () {
-                                                let targetW = img.width, targetH = img.height;
-                                                if (targetW > 800 || targetH > 800) {
-                                                    const scale = Math.min(800 / targetW, 800 / targetH);
-                                                    targetW = Math.round(targetW * scale);
-                                                    targetH = Math.round(targetH * scale);
-                                                }
-                                                const canvas = document.createElement('canvas');
-                                                canvas.width = targetW;
-                                                canvas.height = targetH;
-                                                const ctx = canvas.getContext('2d');
-                                                ctx.drawImage(img, 0, 0, targetW, targetH);
-                                                let quality = 0.7;
-                                                let base64 = '';
-                                                do {
-                                                    base64 = canvas.toDataURL(addPhotoFile.type, quality);
-                                                    quality -= 0.1;
-                                                } while (base64.length > 70000 && quality > 0.3); // ~50kb base64
-                                                if (base64.length > 70000) {
-                                                    toast.error('Could not reduce image below 50kb.');
-                                                    setAddPhotoLoading(false);
-                                                    return;
-                                                }
-                                                setWebsite(prev => ({
-                                                    ...prev,
-                                                    vcard: {
-                                                        ...prev.vcard,
-                                                        photos: [...(prev.vcard.photos || []), { photo: base64, title: addPhotoTitle }]
-                                                    }
-                                                }));
-                                                //setIsDirty(true);
-                                                handleSave();
-                                                //setIsDirty(false);
-
-                                                setShowAddPhotoModal(false);
-                                                setAddPhotoFile(null);
-                                                setAddPhotoTitle("");
-                                                setAddPhotoLoading(false);
-                                            };
-                                            img.onerror = function () {
-                                                toast.error('Invalid image file.');
-                                                setAddPhotoLoading(false);
-                                            };
-                                            img.src = event.target.result;
-                                        };
-                                        reader.readAsDataURL(addPhotoFile);
-                                    }}>Save</button>
-                                </Modal.Footer>
-                            </Modal>
                         </> : null}
                     </div>
                 </div>

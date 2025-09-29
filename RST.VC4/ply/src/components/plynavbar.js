@@ -6,7 +6,7 @@ import AccountButtons from './accountbuttons';
 
 export default function PlyNavbar(props) {
     const expand = 'md';
-    return <Navbar key={expand} expand={expand} className="bg-body-tertiary sticky-md-top p-md-1">
+    return <Navbar key={expand} expand={expand} className="bg-body-tertiary sticky-lg-top p-md-1">
         <Container fluid>
             <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda">Ply</Navbar.Brand>
             <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />

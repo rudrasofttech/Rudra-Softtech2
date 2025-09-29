@@ -52,7 +52,7 @@ namespace RST.Web.Service
             em.Message = emessage;
 
             // Set up the SmtpClient
-            var smtpClient = new SmtpClient(_config["SMTPSettings:host"], int.Parse(_config["SMTPSettings:port"]))
+            var smtpClient = new SmtpClient(_config["SMTPSettings:host"], int.Parse(_config["SMTPSettings:port"] ?? "0"))
             {
                 UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(_config["SMTPSettings:username"], _config["SMTPSettings:password"]),
@@ -88,6 +88,32 @@ namespace RST.Web.Service
             builder.Append("<div style='margin-bottom:20px; margin-bottom:20px'>In case above link is not working. Please copy the address mentioned bellow in your favourite web browser.</div>");
             builder.Append($"<div style='margin-bottom:30px'>https://www.rudrasofttech.com/account/resetpassword/{rpl.ID}</div>");
             return SendEmail(m.Email, m.FirstName, "Reset Password Link of Rudra Softtech Account", builder.ToString(), "ResetPassword");
+        }
+
+        public EmailMessage SendWebsiteActive(Member m, UserWebsite uw)
+        {
+            var builder = new StringBuilder();
+            builder.Append($"<div style='margin-bottom:10px'>Hello {m.FirstName},</div>");
+            
+            if(uw.WSType == WebsiteType.VCard)
+                builder.Append("<div style='margin-bottom:15px'>Your digital visiting card is active.</div>");
+            else if(uw.WSType == WebsiteType.LinkList)
+                builder.Append("<div style='margin-bottom:15px'>Your Link list is active.</div>");
+
+            builder.Append($"<a style='border-radius:10px;background:#005551;color:#fff;padding:10px 15px;margin-bottom:30px;text-decoration:none;display:inline-block;' href='https://{uw.Name}.vc4.in' target='_blank'>https://{uw.Name}.vc4.in</a>");
+
+            if (uw.WSType == WebsiteType.VCard)
+                builder.Append("<div style='margin-bottom:15px;margin-top:15px;'>You can check the digital visiting card on the link provided above.</div>");
+            else if (uw.WSType == WebsiteType.LinkList)
+                builder.Append("<div style='margin-bottom:15px;margin-top:15px;'>You can check the link list on the link provided above.</div>");
+            
+            var sb = new StringBuilder();
+            sb.Append(uw.Name);
+            if(uw.WSType == WebsiteType.VCard)
+                sb.Append(" visiting card is active");
+            else if (uw.WSType == WebsiteType.LinkList)
+                sb.Append(" link list is active");
+            return SendEmail(m.Email, m.FirstName, $"{uw.Name} is active", builder.ToString(), "UserWebsite");
         }
 
         public EmailMessage SendRegistrationLink(Member m)

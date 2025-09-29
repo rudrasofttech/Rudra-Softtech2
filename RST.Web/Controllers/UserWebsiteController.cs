@@ -4,6 +4,7 @@ using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
 using RST.Services;
+using RST.Web.Service;
 using System.Text.Json;
 
 namespace RST.Web.Controllers
@@ -22,24 +23,17 @@ namespace RST.Web.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UserWebsiteController : ControllerBase
+    public class UserWebsiteController(
+        IUserWebsiteService userWebsiteService,
+        ILogger<UserWebsiteController> logger,
+        IUserWebsiteRenderService userWebsiteRenderService,
+        RSTContext db, EmailService emailService) : ControllerBase
     {
-        private readonly IUserWebsiteService _userWebsiteService;
-        private readonly ILogger<UserWebsiteController> _logger;
-        private readonly IUserWebsiteRenderService _userWebsiteRenderService;
-        private readonly RSTContext _db;
-
-        public UserWebsiteController(
-            IUserWebsiteService userWebsiteService,
-            ILogger<UserWebsiteController> logger,
-            IUserWebsiteRenderService userWebsiteRenderService,
-            RSTContext db)
-        {
-            _userWebsiteService = userWebsiteService;
-            _logger = logger;
-            _userWebsiteRenderService = userWebsiteRenderService;
-            _db = db;
-        }
+        private readonly IUserWebsiteService _userWebsiteService = userWebsiteService;
+        private readonly ILogger<UserWebsiteController> _logger = logger;
+        private readonly IUserWebsiteRenderService _userWebsiteRenderService = userWebsiteRenderService;
+        private readonly RSTContext _db = db;
+        private readonly EmailService _emailService = emailService;
 
         private Member? GetCurrentMember()
         {
@@ -278,7 +272,17 @@ namespace RST.Web.Controllers
                 var website = await _userWebsiteService.UpdateStatusAsync(id, status, member);
                 if (website == null)
                     return NotFound(new { error = "Website not found or you do not have permission to update it." });
-
+                if (website.Status == RecordStatus.Active)
+                {
+                    try
+                    {
+                        _emailService.SendWebsiteActive(member, website);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogError(emailEx, "Error sending website active email for website {WebsiteId}", website.Id);
+                    }
+                }
                 return Ok(website);
             }
             catch (Exception ex)
