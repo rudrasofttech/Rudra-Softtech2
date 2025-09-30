@@ -1,81 +1,103 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { useAuth } from "../context/authprovider";
 import useAppStore from "../store/useAppStore";
+import { useEffect } from "react";
 import Nav from 'react-bootstrap/Nav';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 
 export default function AccountButtons(props) {
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn } = useAuth()
     const resetStore = useAppStore((state) => state.resetStore);
+    const popupRef = useRef(null);
     const setToken = useAppStore((state) => state.setToken);
     const setUserInfo = useAppStore((state) => state.setUserInfo);
     const name = useAppStore((state) => state.name);
-    const [showModal, setShowModal] = useState(false);
-    const [iframeUrl, setIframeUrl] = useState("");
-    const [isMobile, setIsMobile] = useState(false);
 
+    const isMobile = () => window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Extract token info from query string if present and remove from URL after setting
     useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+        const email = params.get("email");
+        const nameParam = params.get("name");
+        const expiry = params.get("expiry");
+        if (token && email && nameParam && expiry) {
+            setToken(token, expiry);
+            setUserInfo({ name: nameParam, email });
+            // Remove the query params from the URL after processing
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, [setToken, setUserInfo]);
 
-    const openModalWithUrl = (url) => {
-        setIframeUrl(url);
-        setShowModal(true);
+    const openLoginPopup = () => {
+        const url = 'https://localhost:7266/account/login?returnUrl=';
+        if (isMobile()) {
+            window.location.href = url + encodeURIComponent(window.location.href);
+        } else {
+            popupRef.current = window.open(
+                url,
+                'LoginWindow',
+                'width=500,height=700'
+            );
+        }
+    };
+
+    const openRegisterPopup = () => {
+        const url = 'https://localhost:7266/account/register?returnUrl=';
+        if (isMobile()) {
+            window.location.href = url + encodeURIComponent(window.location.href);
+        } else {
+            popupRef.current = window.open(
+                url,
+                'LoginWindow',
+                'width=500,height=700'
+            );
+        }
     };
 
     useEffect(() => {
         if (props.showLoginPopup !== null) {
-            openModalWithUrl('https://www.rudrasofttech.com/account/login?redirectUrl=');
+            openLoginPopup();
         }
     }, [props.showLoginPopup]);
 
     useEffect(() => {
         const handleMessage = (event) => {
+            // Replace with your Id origin
             if (event.origin !== 'https://www.rudrasofttech.com') return;
+            //console.log('Message received from IdP:', event.data);
             if (event.data !== null && event.data !== undefined) {
+                //console.log('Token received:', event.data.token);
+
                 const response = {
                     token: event.data.token,
                     name: event.data.name,
                     email: event.data.email
                 };
+
                 setToken(response.token, event.data.expiry);
                 setUserInfo({ name: response.name, email: response.email });
-                setShowModal(false);
+
+                if (popupRef.current) {
+                    popupRef.current.close();
+                }
             }
         };
+
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
     }, []);
 
-    return <>
-        <Form className="d-flex">
-            {isLoggedIn ? <Nav className=" flex-grow-1 pe-3">
-                <Nav.Link>{name}</Nav.Link>
-                <Nav.Link onClick={resetStore}><i className="bi bi-box-arrow-right"></i></Nav.Link>
-            </Nav> : null}
-            {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
-                <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={() => openModalWithUrl('https://localhost:7266/account/login?redirectUrl=')}>Login</Button>
-                <Button type="button" className=" btn-sm" variant="outline-primary" onClick={() => openModalWithUrl('https://localhost:7266/account/register?redirectUrl=')}>Sign Up</Button>
-            </div>}
-        </Form>
-        <Modal show={showModal} onHide={() => setShowModal(false)} size={isMobile ? undefined : "md"} fullscreen={isMobile} centered>
-            <Modal.Header closeButton>
-                <Modal.Title>{iframeUrl.includes('register') ? 'Sign Up' : 'Login'}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body style={{ padding: 0, minHeight: isMobile ? '100vh' : 500 }}>
-                {iframeUrl && <iframe
-                    src={iframeUrl}
-                    title="Account"
-                    style={{ border: 0, width: '100%', height: isMobile ? '100vh' : 500 }}
-                    allow="clipboard-write"
-                />}
-            </Modal.Body>
-        </Modal>
-    </>;
+    return <Form className="d-flex">
+        {isLoggedIn ? <Nav className=" flex-grow-1 pe-3">
+            <Nav.Link>{name}</Nav.Link>
+            <Nav.Link onClick={resetStore}><i className="bi bi-box-arrow-right"></i></Nav.Link>
+        </Nav> : null}
+        {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
+            <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={openLoginPopup}>Login</Button>
+            <Button type="button" className=" btn-sm" variant="outline-primary" onClick={openRegisterPopup}>Sign Up</Button>
+        </div>}
+    </Form>;
 }

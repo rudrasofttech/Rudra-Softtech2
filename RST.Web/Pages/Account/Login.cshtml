@@ -51,8 +51,8 @@
                         {
                             <script type="text/javascript">
                                 setTimeout(function() {
-                                    location.href = '@Model.LoginReturn.ReturnURL';
-                                }, 2000);
+                                    location.href = "@Model.LoginReturn.ReturnURL" + "&expiry=" + encodeURIComponent("@Model.LoginReturn.Expiry") + "&name=" + encodeURIComponent("@Model.LoginReturn.Member.FirstName") + "&email=" + encodeURIComponent("@Model.LoginReturn.Member.Email") + "&token=" + encodeURIComponent("@Model.LoginReturn.Token");
+                                }, 1000);
                             </script>
                         }
                     }
@@ -85,10 +85,10 @@
                                 <button type="submit" class="btn btn-primary w-100">Login</button>
                             </div>
                             <div class="text-end mb-3 fs-5">
-                                <p><a href="~/account/forgotpassword?returnurl=@Request.Query["returnurl"]">Forgot Your Password?</a></p>
+                                <p><a href="~/account/forgotpassword?returnUrl=@Request.Query["returnurl"]">Forgot Your Password?</a></p>
                             </div>
                             <div class="text-end mb-5 fs-5">
-                                <p><a href="~/account/register?returnurl=@Request.Query["returnurl"]">Register Now</a> for free acount.</p>
+                                <p><a href="~/account/register?returnUrl=@Request.Query["returnurl"]">Register Now</a> for free acount.</p>
                             </div>
                         </form>
                     }
@@ -116,8 +116,8 @@
                             {
                                 <script type="text/javascript">
                                     setTimeout(function() {
-                                        location.href = '@Model.LoginReturn.ReturnURL';
-                                    }, 2000);
+                                        location.href = '@Model.LoginReturn.ReturnURL'  + "&expiry=" + encodeURIComponent("@Model.LoginReturn.Expiry") + "&name=" + encodeURIComponent("@Model.LoginReturn.Member.FirstName") + "&email=" + encodeURIComponent("@Model.LoginReturn.Member.Email") + "&token=" + encodeURIComponent("@Model.LoginReturn.Token");
+                                    }, 1000);
                                 </script>
                             }
                         </div>

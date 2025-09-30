@@ -1,14 +1,15 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using RST.Web.Service;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using NuGet.Common;
 using RST.Model;
 using RST.Model.DTO;
-using Microsoft.IdentityModel.Tokens;
+using RST.Web.Service;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace RST.Web.Pages.Account
@@ -61,11 +62,20 @@ namespace RST.Web.Pages.Account
                     claims.Add(new Claim(ClaimTypes.Role, "demo"));
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                
+                DateTime expiry = DateTime.UtcNow.AddDays(90);
+                string token = GenerateJSONWebToken(CurrentMember, expiry);
+
                 string rurl = string.Empty;
                 if (Request.Query.ContainsKey("returnurl"))
+                {
                     rurl = Request.Query["returnurl"].ToString();
-                DateTime expiry = DateTime.UtcNow.AddDays(90);
-                LoginReturn = new LoginReturnDTO() { Member = CurrentMember, Expiry = expiry, Token = GenerateJSONWebToken(CurrentMember, expiry), ReturnURL = rurl };
+                    if (!rurl.Contains('?'))
+                        rurl += "?";
+
+                    //rurl += $"&name={CurrentMember.FirstName}&email={System.Net.WebUtility.UrlEncode(CurrentMember.Email)}&expiry={System.Net.WebUtility.UrlEncode(expiry.ToString())}&token={System.Net.WebUtility.UrlEncode(token)}";
+                }
+                LoginReturn = new LoginReturnDTO() { Member = CurrentMember, Expiry = expiry, Token = token, ReturnURL = rurl };
             }
         }
 
@@ -100,12 +110,21 @@ namespace RST.Web.Pages.Account
                     claims.Add(new Claim(ClaimTypes.Role, "demo"));
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-                string rurl = string.Empty;
-                if (Request.Query.ContainsKey("returnurl"))
-                    rurl = Request.Query["returnurl"].ToString();
+                
 
                 DateTime expiry = DateTime.UtcNow.AddDays(90);
-                LoginReturn = new LoginReturnDTO() { Member = m, Token = GenerateJSONWebToken(m, expiry), ReturnURL = rurl };
+                string token = GenerateJSONWebToken(m, expiry);
+
+                string rurl = string.Empty;
+                if (Request.Query.ContainsKey("returnurl"))
+                {
+                    rurl = Request.Query["returnurl"].ToString();
+                    if (!rurl.Contains('?'))
+                        rurl += "?";
+
+                    //rurl += $"&name={m.FirstName}&email={System.Net.WebUtility.UrlEncode(m.Email)}&expiry={System.Net.WebUtility.UrlEncode(expiry.ToString())}&token={System.Net.WebUtility.UrlEncode(token)}";
+                }
+                LoginReturn = new LoginReturnDTO() { Member = m, Token = token , ReturnURL = rurl, Expiry= expiry };
             }
             else
             {
