@@ -67,9 +67,9 @@ namespace RST.Web.Pages.Account
                 string token = GenerateJSONWebToken(CurrentMember, expiry);
 
                 string rurl = string.Empty;
-                if (Request.Query.ContainsKey("returnurl"))
+                if (Request.Query.ContainsKey("returnUrl"))
                 {
-                    rurl = Request.Query["returnurl"].ToString();
+                    rurl = Request.Query["returnUrl"].ToString();
                     if (!rurl.Contains('?'))
                         rurl += "?";
 
@@ -116,9 +116,9 @@ namespace RST.Web.Pages.Account
                 string token = GenerateJSONWebToken(m, expiry);
 
                 string rurl = string.Empty;
-                if (Request.Query.ContainsKey("returnurl"))
+                if (Request.Query.ContainsKey("returnUrl"))
                 {
-                    rurl = Request.Query["returnurl"].ToString();
+                    rurl = Request.Query["returnUrl"].ToString();
                     if (!rurl.Contains('?'))
                         rurl += "?";
 

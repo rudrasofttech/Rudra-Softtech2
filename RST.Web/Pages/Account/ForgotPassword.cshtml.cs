@@ -43,9 +43,7 @@ namespace RST.Web.Pages.Account
                     {
                         Error = "Unable to generte reset password link.";
                     }
-
                 }
-                
             }
             catch (Exception ex) {
                 logger.LogError(ex, "ForgotPasswordModel > OnPost");

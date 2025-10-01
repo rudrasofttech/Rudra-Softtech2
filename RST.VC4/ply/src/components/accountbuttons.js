@@ -32,7 +32,7 @@ export default function AccountButtons(props) {
     }, [setToken, setUserInfo]);
 
     const openLoginPopup = () => {
-        const url = 'https://localhost:7266/account/login?returnUrl=';
+        const url = 'https://www.rudrasofttech.com/account/login?returnUrl=';
         if (isMobile()) {
             window.location.href = url + encodeURIComponent(window.location.href);
         } else {
@@ -45,7 +45,7 @@ export default function AccountButtons(props) {
     };
 
     const openRegisterPopup = () => {
-        const url = 'https://localhost:7266/account/register?returnUrl=';
+        const url = 'https://www.rudrasofttech.com/account/register?returnUrl=';
         if (isMobile()) {
             window.location.href = url + encodeURIComponent(window.location.href);
         } else {

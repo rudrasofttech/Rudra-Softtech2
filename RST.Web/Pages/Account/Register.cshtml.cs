@@ -103,9 +103,9 @@ namespace RST.Web.Pages.Account
                         }
                     }
                     string rurl = string.Empty;
-                    if (Request.Query.ContainsKey("returnurl"))
-                        rurl = Request.Query["returnurl"].ToString();
-                    Success = $"Your account is created and an email has been sent to your registered email address.<br /> <br /> You will redirected to <a href='{Url.Content($"~/account/login?returnurl={rurl}")}'>log in</a> now.<script>setTimeout(function () {{  window.location.href = \"{Url.Content($"~/account/login?returnurl={rurl}")}\"; }}, 2000); </script>";
+                    if (Request.Query.ContainsKey("returnUrl"))
+                        rurl = Request.Query["returnUrl"].ToString();
+                    Success = $"Your account is created and an email has been sent to your registered email address.<br /> <br /> You will redirected to <a href='{Url.Content($"~/account/login?returnUrl={rurl}")}'>log in</a> now.<script>setTimeout(function () {{  window.location.href = \"{Url.Content($"~/account/login?returnUrl={rurl}")}\"; }}, 1000); </script>";
                 }
             }
             catch (Exception ex)

@@ -3,6 +3,7 @@
 
 @{
     Layout = null;
+    
 }
 
 <!DOCTYPE html>
@@ -33,7 +34,7 @@
                             else
                             {
                                 <p>You will be redirected now.</p>
-                                <p>If it not happens, <a href="@Model.LoginReturn.ReturnURL">click here</a> to move.</p>
+                                <p>If it not happens, <a href="@Html.Raw($"{Model.LoginReturn.ReturnURL}&expiry={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Expiry.ToString())}&name={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Member.FirstName)}&email={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Member.Email)}&token={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Token)}")">click here</a> to move.</p>
                             }
                         </div>
                         <script>
@@ -85,10 +86,10 @@
                                 <button type="submit" class="btn btn-primary w-100">Login</button>
                             </div>
                             <div class="text-end mb-3 fs-5">
-                                <p><a href="~/account/forgotpassword?returnUrl=@Request.Query["returnurl"]">Forgot Your Password?</a></p>
+                                <p><a href="~/account/forgotpassword?returnUrl=@Request.Query["returnUrl"]">Forgot Your Password?</a></p>
                             </div>
                             <div class="text-end mb-5 fs-5">
-                                <p><a href="~/account/register?returnUrl=@Request.Query["returnurl"]">Register Now</a> for free acount.</p>
+                                <p><a href="~/account/register?returnUrl=@Request.Query["returnUrl"]">Register Now</a> for free acount.</p>
                             </div>
                         </form>
                     }
