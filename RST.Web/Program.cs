@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RST.Context;
+using RST.Model.DTO;
 using RST.Services;
 using RST.Web.Service;
 using Serilog;
@@ -19,6 +20,11 @@ var multiSchemePolicy = new AuthorizationPolicyBuilder(
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthorization(o => o.DefaultPolicy = multiSchemePolicy);
+
+var jwtSection = builder.Configuration.GetSection("Jwt");
+builder.Services.Configure<JwtOptions>(jwtSection);
+var jwtOptions = jwtSection.Get<JwtOptions>();
+
 builder.Services.AddAuthentication(options =>
 {
 
@@ -33,9 +39,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty))
+        ValidIssuer = jwtOptions.Issuer,
+        ValidAudiences = jwtOptions.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key ?? string.Empty))
     };
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.IdentityModel.Tokens;
-using NuGet.Common;
 using RST.Model;
 using RST.Model.DTO;
 using RST.Web.Service;
@@ -38,8 +37,8 @@ namespace RST.Web.Pages.Account
         {
             if (User?.Identity?.IsAuthenticated == true) // Added null checks for User and Identity
             {
-                var email = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
-                CurrentMember = authService.GetUser(email);
+                var publicId = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
+                CurrentMember = authService.GetUser(new Guid(publicId));
                 if(CurrentMember == null) 
                 {
                     // If the user is not found in the database, sign them out and return.
@@ -47,7 +46,7 @@ namespace RST.Web.Pages.Account
                     return;
                 }
                 var claims = new List<Claim>() {
-                new(ClaimTypes.NameIdentifier,  CurrentMember.Email),
+                new(ClaimTypes.NameIdentifier,  CurrentMember.PublicID.ToString()),
                 new(ClaimTypes.Email, CurrentMember.Email),
                 new("FullName", CurrentMember.FirstName)};
                 if (CurrentMember.UserType == MemberTypeType.Admin)
@@ -95,7 +94,7 @@ namespace RST.Web.Pages.Account
             if (tuple.Item2)
             {
                 var claims = new List<Claim>() {
-                new(ClaimTypes.NameIdentifier,  m.Email),
+                new(ClaimTypes.NameIdentifier,  m.PublicID.ToString()),
                 new(ClaimTypes.Email, m.Email),
                 new("FullName", m.FirstName)};
                 if (m.UserType == MemberTypeType.Admin)
@@ -134,11 +133,14 @@ namespace RST.Web.Pages.Account
 
         private string GenerateJSONWebToken(Member m, DateTime expiry)
         {
+            var jwtSection = _config.GetSection("Jwt");
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? string.Empty));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var audiences = jwtSection.GetSection("Audience").Get<List<string>>() ?? new List<string>();
+
             var dt = expiry;
             var claims = new List<Claim>() {
-                new(ClaimTypes.NameIdentifier,  m.Email),
+                new(ClaimTypes.NameIdentifier,  m.PublicID.ToString()),
                 new(ClaimTypes.Email, m.Email),
                 new("FullName", m.FirstName),
                 new(JwtRegisteredClaimNames.Exp, dt.ToString("yyyy-MM-dd")),
@@ -155,10 +157,11 @@ namespace RST.Web.Pages.Account
                 claims.Add(new Claim(ClaimTypes.Role, "demo"));
 
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-                  _config["Jwt:Issuer"],
+                  null,
                   [.. claims],
                   expires: dt,
                   signingCredentials: credentials);
+            token.Payload["aud"] = audiences;
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

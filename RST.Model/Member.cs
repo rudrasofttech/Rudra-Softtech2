@@ -47,5 +47,7 @@ namespace RST.Model
                 return (UserType == MemberTypeType.Admin);
             }
         }
+
+        public Guid PublicID { get; set; } = Guid.NewGuid();    
     }
 }

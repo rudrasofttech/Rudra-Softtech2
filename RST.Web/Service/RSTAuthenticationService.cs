@@ -75,6 +75,10 @@ namespace RST.Web.Service
             }
         }
 
+        public Member? GetUser(Guid publicId)
+        {
+            return dc.Members.SingleOrDefault(t => (t.PublicID == publicId) && t.Status != RecordStatus.Deleted);
+        }
 
         public Member? GetUser(string username)
         {
@@ -218,6 +222,7 @@ namespace RST.Web.Service
                 EncryptedPassword = EncryptionHelper.CalculateSHA256($"{password}-{password}"),
                 Status = RecordStatus.Unverified,
                 UserType = mType,
+                PublicID = Guid.NewGuid()
             };
 
             dc.Members.Add(m);

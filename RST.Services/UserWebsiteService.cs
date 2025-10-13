@@ -4,38 +4,40 @@ using Microsoft.Extensions.Logging;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
+using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace RST.Services
 {
     public interface IUserWebsiteService
     {
+        public string Token { get; set; }
         Task<PagedData<UserWebsiteListItemDTO>> GetPagedAsync(int page, int psize, Member member);
         Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m);
         Task<UserWebsite?> GetByIdAsync(Guid id);
         Task<bool> IsUniqueNameAsync(string name);
         Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member);
         Task<UserWebsite?> CreateVCardAsync(CreateVCardWebsiteDTO model, Member member, HttpRequest request);
+
         Task<UserWebsite?> CreateLinkListAsync(CreateLinkListWebsiteDTO model, Member member, HttpRequest request);
         Task<bool> DeleteAsync(Guid id, Member member);
         Task<UserWebsite?> UpdateVCardAsync(UpdateVCardModel model, Member member, HttpRequest request, ILogger logger);
         Task<UserWebsite?> UpdateLinkListAsync(UpdateLinkListModel model, Member member, HttpRequest request, ILogger logger);
         Task<UserWebsite?> UpdateThemeAsync(UpdateThemeModel model, Member member);
         Task<UserWebsite?> UpdateStatusAsync(Guid id, RecordStatus status, Member member);
+
+        Task<UserWebsite?> UpdateWebstats(Guid id, string webstats, Member member);
         Task<string?> GetHtmlAsync(Guid id, Member member, IUserWebsiteRenderService userWebsiteRenderService);
         string? SaveBase64ImageToFile(string base64Image, string folderRelativePath, string fileNameNoExt, int maxSize, out string? fileExt, ILogger logger);
     }
 
-    public class UserWebsiteService : IUserWebsiteService
+    public class UserWebsiteService(RSTContext db, ILogger<UserWebsiteService> logger) : IUserWebsiteService
     {
-        private readonly RSTContext _db;
-        private readonly ILogger<UserWebsiteService> _logger;
+        private readonly RSTContext _db = db;
+        private readonly ILogger<UserWebsiteService> _logger = logger;
 
-        public UserWebsiteService(RSTContext db, ILogger<UserWebsiteService> logger)
-        {
-            _db = db;
-            _logger = logger;
-        }
+
+        public string Token { get; set; }
 
         public async Task<PagedData<UserWebsiteListItemDTO>> GetPagedAsync(int page, int psize, Member member)
         {
@@ -190,6 +192,7 @@ namespace RST.Services
                 Photos = model.Photos ?? []
             };
 
+            
             var userWebsite = new UserWebsite
             {
                 Id = websiteId,
@@ -203,9 +206,19 @@ namespace RST.Services
                 VisitingCardDetail = vcardDetail,
                 JsonData = JsonSerializer.Serialize(vcardDetail)
             };
-
+            
             _db.UserWebsites.Add(userWebsite);
             await _db.SaveChangesAsync();
+            try
+            {
+                var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" });
+                userWebsite.WebstatsScript = res?.Script ?? string.Empty;
+                await _db.SaveChangesAsync();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add website to webstats");
+            }
             return userWebsite;
         }
 
@@ -268,6 +281,16 @@ namespace RST.Services
 
             _db.UserWebsites.Add(userWebsite);
             await _db.SaveChangesAsync();
+            try
+            {
+                var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" });
+                userWebsite.WebstatsScript = res?.Script ?? string.Empty;
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add website to webstats");
+            }
             return userWebsite;
         }
 
@@ -447,6 +470,19 @@ namespace RST.Services
 
             uw.Modified = DateTime.UtcNow;
             uw.JsonData = JsonSerializer.Serialize(uw.VisitingCardDetail);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(uw.WebstatsScript))
+                {
+                    var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" });
+                    uw.WebstatsScript = res?.Script ?? string.Empty;
+                    await _db.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add website to webstats");
+            }
             _db.UserWebsites.Update(uw);
             await _db.SaveChangesAsync();
 
@@ -542,6 +578,19 @@ namespace RST.Services
 
             uw.Modified = DateTime.UtcNow;
             uw.JsonData = JsonSerializer.Serialize(uw.LinkListDetail);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(uw.WebstatsScript))
+                {
+                    var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" });
+                    uw.WebstatsScript = res?.Script ?? string.Empty;
+                    await _db.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add website to webstats");
+            }
             _db.UserWebsites.Update(uw);
             await _db.SaveChangesAsync();
 
@@ -679,6 +728,62 @@ namespace RST.Services
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to save or resize image for {Folder}", folderRelativePath);
+                return null;
+            }
+        }
+
+        public async Task<UserWebsite?> UpdateWebstats(Guid id, string webstats, Member member)
+        {
+            if (member == null)
+                return null;
+
+            var website = await _db.UserWebsites.Include(t => t.Owner)
+                .FirstOrDefaultAsync(t => t.Id == id && t.Owner.ID == member.ID);
+
+            if (website == null)
+                return null;
+
+            var res = AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{website.Name}.vc4.in" });
+
+            website.WebstatsScript = webstats;
+            website.Modified = DateTime.UtcNow;
+            
+            _db.UserWebsites.Update(website);
+            await _db.SaveChangesAsync();
+
+            return website;
+        }
+
+        private async Task<AddWebsiteResponse?> AddWebsiteToWebstatsAsync(AddWebsiteModel model)
+        {
+            using var httpClient = new HttpClient();
+
+            // Example: Retrieve token from configuration, environment, or a secure store
+            // Replace "your_token_here" with your actual token retrieval logic
+            if (!string.IsNullOrWhiteSpace(Token))
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+            }
+
+            try
+            {
+                var response = await httpClient.PostAsJsonAsync("https://www.webstats.co.in/data/AddWebsite", model);
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<AddWebsiteResponse>(json);
+                    return result;
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("Webstats AddWebsite failed: {Status} {Error}", response.StatusCode, error);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception calling Webstats AddWebsite");
                 return null;
             }
         }

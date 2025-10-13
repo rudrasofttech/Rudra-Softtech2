@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Framework;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
@@ -174,7 +176,7 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
-
+                SetBearerTokeninUserWebsiteServer();
                 var userWebsite = await _userWebsiteService.CreateVCardAsync(model, member, HttpContext.Request);
                 if (userWebsite == null)
                     return BadRequest(new { error = "Website name already exists or theme not found." });
@@ -218,7 +220,7 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
-
+                SetBearerTokeninUserWebsiteServer();
                 var uw = await _userWebsiteService.UpdateVCardAsync(model, member, HttpContext.Request, _logger);
                 if (uw == null)
                     return NotFound(new { error = "Website not found or you do not have permission to update it." });
@@ -322,7 +324,7 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
-
+                SetBearerTokeninUserWebsiteServer();
                 var userWebsite = await _userWebsiteService.CreateLinkListAsync(model, member, HttpContext.Request);
                 if (userWebsite == null)
                     return BadRequest(new { error = "Website name already exists or theme not found." });
@@ -344,7 +346,7 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
-
+                SetBearerTokeninUserWebsiteServer();
                 var uw = await _userWebsiteService.UpdateLinkListAsync(model, member, HttpContext.Request, _logger);
                 if (uw == null)
                     return NotFound(new { error = "Website not found or you do not have permission to update it." });
@@ -355,6 +357,18 @@ namespace RST.Web.Controllers
             {
                 _logger.LogError(ex, "Error updating LinkList website");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        private void SetBearerTokeninUserWebsiteServer()
+        {
+            if (HttpContext.Request.Headers.TryGetValue("Authorization", out var authHeader))
+            {
+                var headerValue = authHeader.ToString();
+                if (headerValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    _userWebsiteService.Token = headerValue["Bearer ".Length..].Trim();
+                }
             }
         }
     }

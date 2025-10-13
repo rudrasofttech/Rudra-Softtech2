@@ -67,7 +67,7 @@ namespace RST.Web.Controllers
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             
             var claims = new List<Claim>() {
-                new(ClaimTypes.NameIdentifier,  m.Email),
+                new(ClaimTypes.NameIdentifier,  m.PublicID.ToString()),
                 new(ClaimTypes.Email, m.Email),
                 new("FullName", m.FirstName),
                 new(JwtRegisteredClaimNames.Exp, dt.ToString("yyyy-MM-dd")), 

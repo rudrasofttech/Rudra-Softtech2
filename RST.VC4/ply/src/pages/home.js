@@ -169,6 +169,7 @@ function Home() {
                   <tr>
                     <th>Website Name</th>
                     <th>Created</th>
+                    <th>Type</th>
                     <th>Status</th>
                     <th colSpan={2}></th>
                   </tr>

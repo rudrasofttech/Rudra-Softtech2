@@ -75,6 +75,9 @@ namespace VC4.Pages
                         {
                             _logger.LogWarning("Unsupported WebsiteType: {WSType} for UserWebsite: {Subdomain}", UserWebsite.WSType, Subdomain);
                         }
+
+                        if(!string.IsNullOrWhiteSpace(UserWebsite.WebstatsScript))
+                            PageHtml = PageHtml.Replace("</body>", $"{UserWebsite.WebstatsScript}</body>");
                     }
                 }
                 else

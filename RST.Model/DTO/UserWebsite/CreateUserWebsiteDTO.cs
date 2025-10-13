@@ -14,4 +14,17 @@ namespace RST.Model.DTO.UserWebsite
         public WebsiteType WSType { get; set; }
         public Guid ThemeId { get; set; } = Guid.Empty;
     }
+
+    public class AddWebsiteModel
+    {
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    public class AddWebsiteResponse
+    {
+        public string? Message { get; set; }
+        public int? WebsiteId { get; set; }
+        public string? Script { get; set; }
+    }
 }
