@@ -198,7 +198,7 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
-
+                SetBearerTokeninUserWebsiteServer();
                 var deleted = await _userWebsiteService.DeleteAsync(id, member);
                 if (!deleted)
                     return NotFound(new { error = "Website not found or you do not have permission to delete it." });

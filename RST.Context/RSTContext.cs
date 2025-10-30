@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RST.Model;
+using RST.Model.VisitTracker;
 
 namespace RST.Context
 {
@@ -52,6 +53,25 @@ namespace RST.Context
             });
             modelBuilder.Entity<UserWebsite>().ToTable("UserWebsite");
             modelBuilder.Entity<UserWebsiteTheme>().ToTable("UserWebsiteTheme");
+        }
+    }
+
+    public class VisitDbContext : DbContext {
+        public VisitDbContext()
+        {
+        }
+
+        public VisitDbContext(DbContextOptions<VisitDbContext> options)
+            : base(options)
+        {
+        }
+
+        public virtual DbSet<Website> Websites { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("dbo");
+            modelBuilder.Entity<Website>().ToTable("Website");
         }
     }
 }

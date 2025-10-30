@@ -71,6 +71,9 @@ builder.Services.AddServerSideBlazor();
 
 builder.Services.AddDbContext<RSTContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("RSTContext")));
+builder.Services.AddDbContext<VisitDbContext>(options =>
+  options.UseSqlServer(builder.Configuration.GetConnectionString("VisitContext")));
+
 builder.Services.AddScoped<WebsiteSettingsService>();
 builder.Services.AddScoped<DataSourceService>();
 builder.Services.AddScoped<RSTAuthenticationService>();

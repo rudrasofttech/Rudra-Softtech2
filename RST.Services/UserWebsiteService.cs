@@ -31,9 +31,10 @@ namespace RST.Services
         string? SaveBase64ImageToFile(string base64Image, string folderRelativePath, string fileNameNoExt, int maxSize, out string? fileExt, ILogger logger);
     }
 
-    public class UserWebsiteService(RSTContext db, ILogger<UserWebsiteService> logger) : IUserWebsiteService
+    public class UserWebsiteService(RSTContext db, VisitDbContext visitDb, ILogger<UserWebsiteService> logger) : IUserWebsiteService
     {
         private readonly RSTContext _db = db;
+        private readonly VisitDbContext _visitDb = visitDb;
         private readonly ILogger<UserWebsiteService> _logger = logger;
 
 
@@ -192,7 +193,7 @@ namespace RST.Services
                 Photos = model.Photos ?? []
             };
 
-            
+
             var userWebsite = new UserWebsite
             {
                 Id = websiteId,
@@ -206,16 +207,16 @@ namespace RST.Services
                 VisitingCardDetail = vcardDetail,
                 JsonData = JsonSerializer.Serialize(vcardDetail)
             };
-            
+
             _db.UserWebsites.Add(userWebsite);
             await _db.SaveChangesAsync();
             try
             {
-                var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" });
-                userWebsite.WebstatsScript = res?.Script ?? string.Empty;
+                var res = AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" }, member.PublicID);
+                userWebsite.WebstatsScript = res?.WebsiteId.ToString() ?? string.Empty;
                 await _db.SaveChangesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to add website to webstats");
             }
@@ -283,8 +284,8 @@ namespace RST.Services
             await _db.SaveChangesAsync();
             try
             {
-                var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" });
-                userWebsite.WebstatsScript = res?.Script ?? string.Empty;
+                var res =  AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" }, member.PublicID);
+                userWebsite.WebstatsScript = res?.WebsiteId.ToString() ?? string.Empty;
                 await _db.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -317,6 +318,9 @@ namespace RST.Services
 
             _db.UserWebsites.Remove(uw);
             await _db.SaveChangesAsync();
+
+            var res = RemoveWebsiteFromWebstats(new RemoveWebsiteModel() { Name = $"{uw.Name}.vc4.in" }, member.PublicID);
+
             return true;
         }
 
@@ -474,9 +478,8 @@ namespace RST.Services
             {
                 if (string.IsNullOrWhiteSpace(uw.WebstatsScript))
                 {
-                    var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" });
-                    uw.WebstatsScript = res?.Script ?? string.Empty;
-                    await _db.SaveChangesAsync();
+                    var res = AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" }, member.PublicID);
+                    uw.WebstatsScript = res?.WebsiteId.ToString() ?? string.Empty;
                 }
             }
             catch (Exception ex)
@@ -582,9 +585,8 @@ namespace RST.Services
             {
                 if (string.IsNullOrWhiteSpace(uw.WebstatsScript))
                 {
-                    var res = await AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" });
-                    uw.WebstatsScript = res?.Script ?? string.Empty;
-                    await _db.SaveChangesAsync();
+                    var res = AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{uw.Name}.vc4.in" }, member.PublicID);
+                    uw.WebstatsScript = res?.WebsiteId.ToString() ?? string.Empty;
                 }
             }
             catch (Exception ex)
@@ -743,49 +745,71 @@ namespace RST.Services
             if (website == null)
                 return null;
 
-            var res = AddWebsiteToWebstatsAsync(new AddWebsiteModel() { Name = $"{website.Name}.vc4.in" });
+            var res = AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{website.Name}.vc4.in" }, member.PublicID);
 
-            website.WebstatsScript = webstats;
+            website.WebstatsScript = res?.WebsiteId.ToString();
             website.Modified = DateTime.UtcNow;
-            
+
             _db.UserWebsites.Update(website);
             await _db.SaveChangesAsync();
 
             return website;
         }
 
-        private async Task<AddWebsiteResponse?> AddWebsiteToWebstatsAsync(AddWebsiteModel model)
+        private bool RemoveWebsiteFromWebstats(RemoveWebsiteModel model, Guid userId)
         {
-            using var httpClient = new HttpClient();
-
-            // Example: Retrieve token from configuration, environment, or a secure store
-            // Replace "your_token_here" with your actual token retrieval logic
-            if (!string.IsNullOrWhiteSpace(Token))
-            {
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
-            }
-
             try
             {
-                var response = await httpClient.PostAsJsonAsync("https://www.webstats.co.in/data/AddWebsite", model);
-                if (response.IsSuccessStatusCode)
+                model.Name = model.Name.Replace(" ", "");
+                var website = _visitDb.Websites.FirstOrDefault(t => t.Name == model.Name && t.OwnerId == userId);
+                if (website != null)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<AddWebsiteResponse>(json);
-                    return result;
+                    website.Status = 0;
+                    website.DateModified = DateTime.UtcNow;
+                    _visitDb.SaveChanges();
+                    return true;
                 }
-                else
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception calling Webstats RemoveWebsite");
+            }
+            return false;
+        }
+
+
+        private AddWebsiteResponse? AddWebsiteToWebstats(AddWebsiteModel model, Guid userId)
+        {
+            model.Name = model.Name.Replace(" ", "");
+            try
+            {
+                if (!_visitDb.Websites.Any(t => t.Name == model.Name))
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    _logger.LogWarning("Webstats AddWebsite failed: {Status} {Error}", response.StatusCode, error);
-                    return null;
+                    var website = new Model.VisitTracker.Website
+                    {
+                        Name = model.Name,
+                        DateCreated = DateTime.UtcNow,
+                        OwnerId = userId,
+                        Status = 1
+                    };
+                    _visitDb.Websites.Add(website);
+                    _visitDb.SaveChanges();
+                    
+                    var result = new AddWebsiteResponse()
+                    {
+                        Script = string.Empty,
+                        WebsiteId = website.ID,
+                        Message = "Website added"
+                    };
+                    return result;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception calling Webstats AddWebsite");
-                return null;
             }
+
+            return null;
         }
     }
 }

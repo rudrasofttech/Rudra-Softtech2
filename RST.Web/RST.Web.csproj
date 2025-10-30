@@ -45,6 +45,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\drive\website-images\" />
     <Folder Include="wwwroot\js-tools\CoolUpload\sampleupload\" />
+    <Folder Include="wwwroot\logs\" />
   </ItemGroup>
 
 </Project>

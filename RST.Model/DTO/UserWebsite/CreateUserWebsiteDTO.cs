@@ -21,6 +21,12 @@ namespace RST.Model.DTO.UserWebsite
         public string Name { get; set; } = string.Empty;
     }
 
+    public class RemoveWebsiteModel
+    {
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = string.Empty;
+    }
+
     public class AddWebsiteResponse
     {
         public string? Message { get; set; }

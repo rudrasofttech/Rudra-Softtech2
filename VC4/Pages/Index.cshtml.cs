@@ -14,6 +14,7 @@ namespace VC4.Pages
         public string? Subdomain { get; private set; }
         public UserWebsite? UserWebsite { get; private set; }
         public string PageHtml { get; set; } = string.Empty;
+        public string? WebstatsId { get; set; } = string.Empty;
         public async void OnGet()
         {
             DateTime start = DateTime.UtcNow;
@@ -65,19 +66,18 @@ namespace VC4.Pages
                         {
                             UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
+                            WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else if (UserWebsite.WSType == WebsiteType.LinkList)
                         {
                             UserWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.LinkListDetail);
+                            WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else
                         {
                             _logger.LogWarning("Unsupported WebsiteType: {WSType} for UserWebsite: {Subdomain}", UserWebsite.WSType, Subdomain);
                         }
-
-                        if(!string.IsNullOrWhiteSpace(UserWebsite.WebstatsScript))
-                            PageHtml = PageHtml.Replace("</body>", $"{UserWebsite.WebstatsScript}</body>");
                     }
                 }
                 else
