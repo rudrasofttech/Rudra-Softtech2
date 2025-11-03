@@ -1,30 +1,30 @@
 'use client'
 export function StatusDisplay({ status }) {
     if (status === 0)
-        return "Active";
+        return <span className="text-success">Active</span>;
     else if (status === 1)
-        return "Inactive";
+        return <span className="text-secondary">Inactive</span>;
     else if (status === 2)
-        return "Deleted";
+        return <span className="text-danger">Deleted</span>;
     else if (status === 3)
-        return "Unverified";
+        return <span className="text-warning">Unverified</span>;
 }
 
 export function WebsiteTypeDisplay({ wt }) {
     if (wt === 1)
-        return "Visiting Card";
+        return <span>Visiting Card</span>;
     else if (wt === 2)
-        return "Link List";
+        return <span>Link List</span>;
     else if (wt === 3)
-        return "Blog";
+        return <span>Blog</span>;
     else if (wt === 4)
-        return "Portfolio";
+        return <span>Portfolio</span>;
     else if (wt === 5)
-        return "E-commerce";
+        return <span>E-commerce</span>;
     else if (wt === 6)
-        return "Educational";
+        return <span>Educational</span>;
     else if (wt === 7)
-        return "Portfolio";
-    else if (wt === 7)
-        return "Resume";
+        return <span>Portfolio</span>;
+    else if (wt === 8)
+        return <span>Resume</span>;
 }

@@ -189,209 +189,209 @@ export default function EditLinkList() {
                 </Nav> : <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>}
         </PlyNavbar>
         {loading ? <Loader /> : null}
-        {website !== null ? <div className="border-top g-0">
-            <div className="container-fluid">
-                <div className="row">
-                    {!isMobile ? <div className="col-md-6 col-lg-8 col-sm">
+        {website !== null ? <div className="container-fluid border-top">
+            <div className="row">
+                {!isMobile ? <div className="col-md-6 col-lg-8 col-sm">
+                    <div className='sticky-lg-top' style={{ top: "55px" }}>
                         <HtmlIframe id={website.id} navigate={navigate} dummy={dummy} />
-                    </div> : null}
-                    <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2 bg-light border-start">
-                        {showEditLinksModal ? <>
-                            <div className="fw-bold mb-2 fs-5">Link List Information</div>
-                            <div className="mb-2">
-                                <LinkListForm
-                                    links={website.linklist.links}
-                                    setLinks={links => setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links } }))}
-                                    handleSave={handleSave}
-                                    isDirty={isDirty}
-                                    setIsDirty={setIsDirty}
-                                />
-                                <button className="btn btn-secondary btn-sm mt-2" onClick={() => {
-                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: [...(prev.linklist.links || []), { title: '', url: '', description: '' }] } }));
-                                    setIsDirty(true);
-                                }}>Add Link</button>
-                            </div>
-                        </> : null}
-                        {showEditInfoModal ? <>
-                            <div className="fw-bold mb-2 fs-5">Personal Information</div>
-                            <div className="mb-2">
-                                <label className="form-label">Your Name</label>
-                                <input type="text" className="form-control" value={website.linklist.name} maxLength={100}
-                                    onChange={e => {
-                                        setWebsite(prev => ({
-                                            ...prev,
-                                            linklist: {
-                                                ...prev.linklist,
-                                                name: e.target.value
-                                            }
-                                        }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Displayed as the main heading on your LinkList page.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Tag Line</label>
-                                <input type="text" className="form-control" value={website.linklist.line} maxLength={250}
-                                    onChange={e => {
-                                        setWebsite(prev => ({
-                                            ...prev,
-                                            linklist: {
-                                                ...prev.linklist,
-                                                line: e.target.value
-                                            }
-                                        }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">A short tagline or description under your name (max 250 characters).</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Photo</label>
-                                {website.linklist.photo !== "" ? <div>
-                                    <img alt="" src={website.linklist.photo} className="img-fluid" style={{maxWidth:"200px"}} />
-                                    <div className="my-2">
-                                        <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
-                                            setWebsite(prev => ({
-                                                ...prev,
-                                                linklist: {
-                                                    ...prev.linklist,
-                                                    photo: ""
-                                                }
-                                            }));
-                                            setPhotoChanged(true);
-                                        }}>Remove</button>
-                                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Change</button>
-                                    </div>
-                                </div> : <div>
-                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Upload Photo</button>
-                                </div>}
-                                <small className="form-text text-muted">Recommended: Square image, max 300x300px. JPEG or PNG only.</small>
-                                <div className="text-end"><small>Upload a photo in jpeg or png format</small></div>
-                                <Modal show={showPhotoModal} onHide={() => setShowPhotoModal(false)}>
-                                    <Modal.Header closeButton>
-                                        <Modal.Title>Upload Photo</Modal.Title>
-                                    </Modal.Header>
-                                    <Modal.Body>
-                                        <ImageUploaderWithCrop maxWidth={300} maxHeight={300} onImageLoaded={base64 => {
-                                            setWebsite(prev => ({
-                                                ...prev,
-                                                linklist: {
-                                                    ...prev.linklist,
-                                                    photo: base64
-                                                }
-                                            }));
-                                            setPhotoChanged(true);
-                                            setShowPhotoModal(false);
-                                        }} />
-                                    </Modal.Body>
-                                </Modal>
-                            </div>
-                        </> : null}
-                        {showEditSocialModal ? <>
-                            <div className="fw-bold mb-2 fs-5">Social Links</div>
-                            <div className="mb-2">
-                                <label className="form-label">Youtube</label>
-                                <input type="text" className="form-control" value={website.linklist.youtube} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, youtube: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Paste your YouTube channel or video URL.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Instagram</label>
-                                <input type="text" className="form-control" value={website.linklist.instagram} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, instagram: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your Instagram profile URL (e.g., https://instagram.com/yourname).</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">LinkedIn</label>
-                                <input type="text" className="form-control" value={website.linklist.linkedIn} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, linkedIn: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your LinkedIn profile URL.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Twitter</label>
-                                <input type="text" className="form-control" value={website.linklist.twitter} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, twitter: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your Twitter/X profile URL.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Facebook</label>
-                                <input type="text" className="form-control" value={website.linklist.facebook} maxLength={300}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, facebook: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your Facebook profile or page URL.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">Telegram</label>
-                                <input type="text" className="form-control" value={website.linklist.telegram} maxLength={50}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, telegram: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your Telegram username or channel link.</small>
-                            </div>
-                            <div className="mb-2">
-                                <label className="form-label">WhatsApp</label>
-                                <input type="text" className="form-control" value={website.linklist.whatsApp} maxLength={15}
-                                    onChange={e => {
-                                        setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, whatsApp: e.target.value } }));
-                                        setIsDirty(true);
-                                    }}
-                                    onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
-                                />
-                                <small className="form-text text-muted">Your WhatsApp number (with country code) or click-to-chat link.</small>
-                            </div>
-                        </> : null}
-                        {showEditThemeModal ? <>
-                            {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
-                            {themes !== null ? <>
-                                <div className="row">{themes.items.map((item, index) => {
-                                    return <div className="col-6 col-md-6" key={index}>
-                                        <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
-                                            style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
-                                                setWebsite(prev => ({
-                                                    ...prev,
-                                                    themeId: item.id
-                                                }));
-                                                updateTheme(item.id);
-                                            }} />
-                                    </div>
-                                })}
-                                </div>
-                            </> : null}
-                            {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
-                                <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
-                            </div> : null}
-                        </> : null}
                     </div>
+                </div> : null}
+                <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2 bg-light border-start">
+                    {showEditLinksModal ? <>
+                        <div className="fw-bold mb-2 fs-5">Link List Information</div>
+                        <div className="mb-2">
+                            <LinkListForm
+                                links={website.linklist.links}
+                                setLinks={links => setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links } }))}
+                                handleSave={handleSave}
+                                isDirty={isDirty}
+                                setIsDirty={setIsDirty}
+                            />
+                            <button className="btn btn-secondary btn-sm mt-2" onClick={() => {
+                                setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, links: [...(prev.linklist.links || []), { title: '', url: '', description: '' }] } }));
+                                setIsDirty(true);
+                            }}>Add Link</button>
+                        </div>
+                    </> : null}
+                    {showEditInfoModal ? <>
+                        <div className="fw-bold mb-2 fs-5">Personal Information</div>
+                        <div className="mb-2">
+                            <label className="form-label">Your Name</label>
+                            <input type="text" className="form-control" value={website.linklist.name} maxLength={100}
+                                onChange={e => {
+                                    setWebsite(prev => ({
+                                        ...prev,
+                                        linklist: {
+                                            ...prev.linklist,
+                                            name: e.target.value
+                                        }
+                                    }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Displayed as the main heading on your LinkList page.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Tag Line</label>
+                            <input type="text" className="form-control" value={website.linklist.line} maxLength={250}
+                                onChange={e => {
+                                    setWebsite(prev => ({
+                                        ...prev,
+                                        linklist: {
+                                            ...prev.linklist,
+                                            line: e.target.value
+                                        }
+                                    }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">A short tagline or description under your name (max 250 characters).</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Photo</label>
+                            {website.linklist.photo !== "" ? <div>
+                                <img alt="" src={website.linklist.photo} className="img-fluid" style={{ maxWidth: "200px" }} />
+                                <div className="my-2">
+                                    <button type="button" className="btn btn-secondary btn-sm me-2" onClick={() => {
+                                        setWebsite(prev => ({
+                                            ...prev,
+                                            linklist: {
+                                                ...prev.linklist,
+                                                photo: ""
+                                            }
+                                        }));
+                                        setPhotoChanged(true);
+                                    }}>Remove</button>
+                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Change</button>
+                                </div>
+                            </div> : <div>
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPhotoModal(true)}>Upload Photo</button>
+                            </div>}
+                            <small className="form-text text-muted">Recommended: Square image, max 300x300px. JPEG or PNG only.</small>
+                            <div className="text-end"><small>Upload a photo in jpeg or png format</small></div>
+                            <Modal show={showPhotoModal} onHide={() => setShowPhotoModal(false)}>
+                                <Modal.Header closeButton>
+                                    <Modal.Title>Upload Photo</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <ImageUploaderWithCrop maxWidth={300} maxHeight={300} onImageLoaded={base64 => {
+                                        setWebsite(prev => ({
+                                            ...prev,
+                                            linklist: {
+                                                ...prev.linklist,
+                                                photo: base64
+                                            }
+                                        }));
+                                        setPhotoChanged(true);
+                                        setShowPhotoModal(false);
+                                    }} />
+                                </Modal.Body>
+                            </Modal>
+                        </div>
+                    </> : null}
+                    {showEditSocialModal ? <>
+                        <div className="fw-bold mb-2 fs-5">Social Links</div>
+                        <div className="mb-2">
+                            <label className="form-label">Youtube</label>
+                            <input type="text" className="form-control" value={website.linklist.youtube} maxLength={300}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, youtube: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Paste your YouTube channel or video URL.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Instagram</label>
+                            <input type="text" className="form-control" value={website.linklist.instagram} maxLength={300}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, instagram: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your Instagram profile URL (e.g., https://instagram.com/yourname).</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">LinkedIn</label>
+                            <input type="text" className="form-control" value={website.linklist.linkedIn} maxLength={300}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, linkedIn: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your LinkedIn profile URL.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Twitter</label>
+                            <input type="text" className="form-control" value={website.linklist.twitter} maxLength={300}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, twitter: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your Twitter/X profile URL.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Facebook</label>
+                            <input type="text" className="form-control" value={website.linklist.facebook} maxLength={300}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, facebook: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your Facebook profile or page URL.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">Telegram</label>
+                            <input type="text" className="form-control" value={website.linklist.telegram} maxLength={50}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, telegram: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your Telegram username or channel link.</small>
+                        </div>
+                        <div className="mb-2">
+                            <label className="form-label">WhatsApp</label>
+                            <input type="text" className="form-control" value={website.linklist.whatsApp} maxLength={15}
+                                onChange={e => {
+                                    setWebsite(prev => ({ ...prev, linklist: { ...prev.linklist, whatsApp: e.target.value } }));
+                                    setIsDirty(true);
+                                }}
+                                onBlur={() => { if (isDirty) { handleSave(); setIsDirty(false); } }}
+                            />
+                            <small className="form-text text-muted">Your WhatsApp number (with country code) or click-to-chat link.</small>
+                        </div>
+                    </> : null}
+                    {showEditThemeModal ? <>
+                        {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
+                        {themes !== null ? <>
+                            <div className="row">{themes.items.map((item, index) => {
+                                return <div className="col-6 col-md-6" key={index}>
+                                    <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
+                                        style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
+                                            setWebsite(prev => ({
+                                                ...prev,
+                                                themeId: item.id
+                                            }));
+                                            updateTheme(item.id);
+                                        }} />
+                                </div>
+                            })}
+                            </div>
+                        </> : null}
+                        {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
+                            <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
+                        </div> : null}
+                    </> : null}
                 </div>
             </div>
         </div> : null}

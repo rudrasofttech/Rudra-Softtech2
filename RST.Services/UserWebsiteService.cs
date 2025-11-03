@@ -73,6 +73,7 @@ namespace RST.Services
                     Modified = m.Modified,
                     Status = m.Status,
                     WSType = m.WSType,
+                    WebstatsId = m.WebstatsScript ?? string.Empty,
                     OwnerName = m.Owner.FirstName
                 });
             }
@@ -81,7 +82,7 @@ namespace RST.Services
 
         public async Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m)
         {
-            if (m == null) return new List<UserWebsiteListItemDTO>();
+            if (m == null) return [];
 
             return await _db.UserWebsites
                 .Include(t => t.Owner)
@@ -95,6 +96,7 @@ namespace RST.Services
                     Modified = t.Modified,
                     Status = t.Status,
                     WSType = t.WSType,
+                    WebstatsId = t.WebstatsScript ?? string.Empty,
                     OwnerName = t.Owner.FirstName
                 })
                 .ToListAsync();

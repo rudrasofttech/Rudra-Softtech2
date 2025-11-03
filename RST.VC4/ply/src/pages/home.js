@@ -153,25 +153,32 @@ function Home() {
           {error !== "" ? <div className="text-danger text-center my-2">{error}</div> : null}
           {!loading ? <>{designs.length > 0 ? (
             <>
-              <div className="mb-4 d-flex "><h1 className="me-auto">My Sites</h1>
+              <div className="mb-4 d-flex ">
+                <h1 className="me-auto">My Sites</h1>
                 <div className="p-2 flex-shrink-1">
                   <button type="button" onClick={() => {
                     setRedirectUrl('/createvcard');
-                  }} className="btn btn-success me-2">Create Visiting Card</button>
+                  }} className="fancy-btn me-2">
+                    <span className="icon">💼</span>
+                    Create Visiting Card
+                  </button>
                   <button type="button" onClick={() => {
                     setRedirectUrl('/createlinklist');
-                  }} className="btn btn-success">Create Link List</button>
+                  }} className="fancy-btn linklist">
+                    <span className="icon">🔗</span>
+                    Create Link List
+                  </button>
                 </div>
               </div>
 
-              <table className="table">
+              <table className="table table-hover table-bordered">
                 <thead >
                   <tr>
-                    <th>Website Name</th>
+                    <th>Website</th>
                     <th>Created</th>
                     <th>Type</th>
                     <th>Status</th>
-                    <th colSpan={2}></th>
+                    <th colSpan={3}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,6 +195,10 @@ function Home() {
                       <td>
                         <StatusDisplay status={site.status} />
                       </td>
+                      <td>
+                        <a rel="noreferrer" href={`https://www.webstats.co.in/report?id=${site.webstatsId}`} target="_blank">Report</a>
+                      </td>
+
                       <td>
                         <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
                           if (site.wsType === 1) {
