@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Container } from "react-bootstrap";
 import PlyNavbar from "../components/plynavbar";
@@ -7,6 +7,8 @@ import Nav from 'react-bootstrap/Nav';
 import { APIURLS } from '../utils/config';
 import { postWithAuth } from '../utils/api';
 import { toast } from 'react-toastify';
+import ChooseTheme from "../components/choosetheme"; // Add this import at the top
+
 
 // Step 1: Website Info
 const WizardStepWebsiteInfo = ({ next, formData, setFormData }) => {
@@ -295,8 +297,35 @@ const WizardStepSocialLinks = ({ next, prev, formData, setFormData }) => {
         </div>
     );
 };
+// Step 5: Theme Selection
+const WizardStepThemes = ({ next, prev, formData, setFormData }) => {
+    const [selectedTheme, setSelectedTheme] = useState(formData.themeId || "593e47a0-efe5-4432-afb4-013e802bfe30");
 
-// Step 5: Review & Submit
+    useEffect(() => {
+        setFormData({ ...formData, themeId: selectedTheme });
+        // eslint-disable-next-line
+    }, [selectedTheme]);
+
+    return (
+        <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
+            <h2 className="title mb-3">🎨 Choose a Theme</h2>
+            <ChooseTheme
+                themeType={1}
+                initialThemeId={selectedTheme}
+                onThemeSelect={theme => setSelectedTheme(theme.id)}
+            />
+            <div className="wizard-controls pt-4">
+                <button onClick={prev} type="button" className="btn btn-secondary">
+                    <i className="bi bi-arrow-left-circle me-2"></i>Back
+                </button>
+                <button onClick={next} type="button" className="btn btn-primary">
+                    Next <i className="bi bi-arrow-right-circle ms-2"></i>
+                </button>
+            </div>
+        </div>
+    );
+};
+// Step 6: Review & Submit
 const WizardStepReview = ({ prev, formData, submit, loading, errors }) => (
     <div className="wizard-step mx-auto bg-light p-3 rounded" style={{ width: "800px", maxWidth: "100%" }}>
         <h2 className="title mb-3">Review & Submit</h2>
@@ -333,7 +362,7 @@ export default function CreateVCard() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState([]);
     const navigate = useNavigate();
-    const maxSteps = 4;
+    const maxSteps = 5;
 
     const next = () => setStep(s => Math.min(s + 1, maxSteps));
     const prev = () => setStep(s => Math.max(s - 1, 0));
@@ -347,7 +376,7 @@ export default function CreateVCard() {
                 navigate,
                 {
                     WebsiteName: formData.websiteName,
-                    ThemeId: "593e47a0-efe5-4432-afb4-013e802bfe30",
+                    ThemeId: formData.themeId || "593e47a0-efe5-4432-afb4-013e802bfe30",
                     Company: formData.company,
                     TagLine: formData.tagLine,
                     Logo: formData.logo,
@@ -390,7 +419,8 @@ export default function CreateVCard() {
                 {step === 1 && <WizardStepPersonalInfo next={next} prev={prev} formData={formData} setFormData={setFormData} />}
                 {step === 2 && <WizardStepPhoneNumbers next={next} prev={prev} formData={formData} setFormData={setFormData} />}
                 {step === 3 && <WizardStepSocialLinks next={next} prev={prev} formData={formData} setFormData={setFormData} />}
-                {step === 4 && <WizardStepReview prev={prev} formData={formData} submit={submit} loading={loading} errors={errors} />}
+                {step === 4 && <WizardStepThemes next={next} prev={prev} formData={formData} setFormData={setFormData} />}
+                {step === 5 && <WizardStepReview prev={prev} formData={formData} submit={submit} loading={loading} errors={errors} />}
             </Container>
         </>
     );

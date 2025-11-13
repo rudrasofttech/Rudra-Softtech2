@@ -7,21 +7,6 @@ import { AuthProvider } from "@/context/authprovider";
 import ToastProvider from "@/components/toastprovider";
 
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// export const metadata = {
-//   title: "Ply",
-//   description: "Create and manage your websites effortlessly with Ply, the ultimate website builder by Rudra Softtech.",
-// };
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en">

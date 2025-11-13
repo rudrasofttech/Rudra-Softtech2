@@ -11,6 +11,7 @@ import { StatusDisplay, WebsiteTypeDisplay } from '../components/statusdisplay';
 import Swal from 'sweetalert2';
 import useAppStore from '../store/useAppStore';
 import Nav from 'react-bootstrap/Nav';
+import HomeAnonymous from '../components/homeanonymous';
 
 function Home() {
   const [redirectUrl, setRedirectUrl] = useState("");
@@ -88,65 +89,64 @@ function Home() {
         <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>
       </PlyNavbar>
       {!isLoggedIn ? (
-        <div className="unauth-home p-lg-4 p-2 text-center">
-          <div className="my-md-5 my-4 hero-text merienda fs-1">Build Beautiful Websites in Minutes</div>
-          <p className="lead mb-4">No code. No stress. Just pure creativity.</p>
-          <div className="text-center mb-4">
-            <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-success btn-lg fs-2 px-5 py-3">
-              Start Creating
-            </button>
-          </div>
-          <Container className="features-section py-5">
-            <h2 className="mb-4">What You Can Do with Ply</h2>
-            <div className="row text-start">
-              {[
-                //{ icon: "bi bi-mouse", title: "Drag & Drop Builder", desc: "Design visually—no code required." },
-                //{ icon: "bi bi-code-slash", title: "Modular Razor Integration", desc: "Powerful templating for developers." },
-                { icon: "bi bi-eye", title: "Live Preview & Diagnostics", desc: "Instant feedback with branded overlays." },
-                { icon: "bi bi-images", title: "Photo Galleries & Cropping", desc: "Responsive, branded visuals." },
-                { icon: "bi bi-rocket", title: "One-Click Deploy", desc: "Launch instantly with zero friction." },
-              ].map((f, i) => (
-                <div key={i} className="col-md-4 mb-4">
-                  <div className="p-3 border rounded h-100 shadow-sm">
-                    <i className={`${f.icon} fs-2 text-success mb-2`}></i>
-                    <h5>{f.title}</h5>
-                    <p>{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Container>
+        <HomeAnonymous onStart={() => setDummy(Date.now())} />
+        // <div className="unauth-home p-lg-4 p-2 text-center">
+        //   <div className="my-md-5 my-4 hero-text merienda fs-1">Build Beautiful Websites in Minutes</div>
+        //   <p className="lead mb-4">No code. No stress. Just pure creativity.</p>
+        //   <div className="text-center mb-4">
+        //     <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-success btn-lg fs-2 px-5 py-3">
+        //       Start Creating
+        //     </button>
+        //   </div>
+        //   <Container className="features-section py-5">
+        //     <h2 className="mb-4">What You Can Do with Ply</h2>
+        //     <div className="row text-start">
+        //       {[
+        //         { icon: "bi bi-eye", title: "Live Preview & Diagnostics", desc: "Instant feedback with branded overlays." },
+        //         { icon: "bi bi-images", title: "Photo Galleries & Cropping", desc: "Responsive, branded visuals." },
+        //         { icon: "bi bi-rocket", title: "One-Click Deploy", desc: "Launch instantly with zero friction." },
+        //       ].map((f, i) => (
+        //         <div key={i} className="col-md-4 mb-4">
+        //           <div className="p-3 border rounded h-100 shadow-sm">
+        //             <i className={`${f.icon} fs-2 text-success mb-2`}></i>
+        //             <h5>{f.title}</h5>
+        //             <p>{f.desc}</p>
+        //           </div>
+        //         </div>
+        //       ))}
+        //     </div>
+        //   </Container>
 
-          <Container className="why-ply-section py-5">
-            <h2 className="mb-4">Why Creators Love Ply</h2>
-            <blockquote className="blockquote">
-              “Ply helped me launch a stunning portfolio in under an hour. The live preview and pastel themes made it feel like magic.”
-            </blockquote>
-            <figcaption className="blockquote-footer">Aditi, Designer & Freelancer</figcaption>
-            <div className="row mt-4">
-              {[
-                { title: "Emotionally Engaging Design", desc: "Curated palettes and elegant fonts that resonate." },
-                { title: "Modular & Extensible", desc: "Reusable components and branded overlays." },
-                { title: "Built for Speed", desc: "From idea to live site in minutes." },
-              ].map((v, i) => (
-                <div key={i} className="col-md-4 mb-3">
-                  <div className="p-3 border rounded h-100 bg-light">
-                    <h5>{v.title}</h5>
-                    <p>{v.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Container>
+        //   <Container className="why-ply-section py-5">
+        //     <h2 className="mb-4">Why Creators Love Ply</h2>
+        //     <blockquote className="blockquote">
+        //       “Ply helped me launch a stunning portfolio in under an hour. The live preview and pastel themes made it feel like magic.”
+        //     </blockquote>
+        //     <figcaption className="blockquote-footer">Aditi, Designer & Freelancer</figcaption>
+        //     <div className="row mt-4">
+        //       {[
+        //         { title: "Emotionally Engaging Design", desc: "Curated palettes and elegant fonts that resonate." },
+        //         { title: "Modular & Extensible", desc: "Reusable components and branded overlays." },
+        //         { title: "Built for Speed", desc: "From idea to live site in minutes." },
+        //       ].map((v, i) => (
+        //         <div key={i} className="col-md-4 mb-3">
+        //           <div className="p-3 border rounded h-100 bg-light">
+        //             <h5>{v.title}</h5>
+        //             <p>{v.desc}</p>
+        //           </div>
+        //         </div>
+        //       ))}
+        //     </div>
+        //   </Container>
 
-          <div className="cta-section py-5 bg-dark text-white">
-            <h2 className="mb-3">Ready to Create Something Beautiful?</h2>
-            <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-light btn-lg fs-3 px-5 py-3">
-              Try Ply Now
-            </button>
-            <p className="mt-3">No login required to explore. Try the builder instantly.</p>
-          </div>
-        </div>
+        //   <div className="cta-section py-5 bg-dark text-white">
+        //     <h2 className="mb-3">Ready to Create Something Beautiful?</h2>
+        //     <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-light btn-lg fs-3 px-5 py-3">
+        //       Try Ply Now
+        //     </button>
+        //     <p className="mt-3">No login required to explore. Try the builder instantly.</p>
+        //   </div>
+        // </div>
       ) : <div>
         <Container className="my-5">
           {loading ? <Loader /> : null}

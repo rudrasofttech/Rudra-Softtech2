@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import Nav from 'react-bootstrap/Nav';
 import { Button } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function AccountButtons(props) {
     const { isLoggedIn } = useAuth()
@@ -13,7 +15,7 @@ export default function AccountButtons(props) {
     const setToken = useAppStore((state) => state.setToken);
     const setUserInfo = useAppStore((state) => state.setUserInfo);
     const name = useAppStore((state) => state.name);
-
+const navigate = useNavigate();
     const isMobile = () => window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     // Extract token info from query string if present and remove from URL after setting
@@ -93,7 +95,10 @@ export default function AccountButtons(props) {
     return <Form className="d-flex">
         {isLoggedIn ? <Nav className=" flex-grow-1 pe-3">
             <Nav.Link>{name}</Nav.Link>
-            <Nav.Link onClick={resetStore}><i className="bi bi-box-arrow-right"></i></Nav.Link>
+            <Nav.Link onClick={() => { 
+                resetStore(); 
+                navigate('/');
+                }}><i className="bi bi-box-arrow-right"></i></Nav.Link>
         </Nav> : null}
         {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
             <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={openLoginPopup}>Login</Button>

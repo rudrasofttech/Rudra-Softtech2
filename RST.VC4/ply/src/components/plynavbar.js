@@ -3,12 +3,13 @@ import Container from 'react-bootstrap/Container';
 import Navbar from 'react-bootstrap/Navbar';
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import AccountButtons from './accountbuttons';
+import logo from '../assets/logo.jpg';
 
 export default function PlyNavbar(props) {
     const expand = 'md';
-    return <Navbar key={expand} expand={expand} className="bg-body-tertiary sticky-lg-top p-md-1">
+    return <Navbar key={expand} expand={expand} className="bg-white sticky-lg-top p-md-1">
         <Container fluid>
-            <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda">Ply</Navbar.Brand>
+            <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda"><img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' /></Navbar.Brand>
             <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />
             <Navbar.Offcanvas
                 id={`offcanvasNavbar-expand-${expand}`}
@@ -16,7 +17,7 @@ export default function PlyNavbar(props) {
                 placement="end">
                 <Offcanvas.Header closeButton>
                     <Offcanvas.Title id={`offcanvasNavbarLabel-expand-${expand}`} className="fw-bold merienda">
-                        Ply
+                        <img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' />
                     </Offcanvas.Title>
                 </Offcanvas.Header>
                 <Offcanvas.Body>

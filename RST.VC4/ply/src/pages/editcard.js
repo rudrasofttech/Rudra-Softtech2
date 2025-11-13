@@ -13,6 +13,7 @@ import useScreenSize from '../hooks/useScreenSize';
 import ResponsivePreview from '../components/responsivepreview';
 import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
 import Modal from 'react-bootstrap/Modal';
+import ChooseTheme from '../components/choosetheme';
 
 
 export default function EditCard() {
@@ -35,9 +36,9 @@ export default function EditCard() {
 
 
     const [isDirty, setIsDirty] = useState(false);
-    const [themes, setThemes] = useState(null);
-    const [loadingTheme, setLoadingTheme] = useState(false);
-    const [themePageIndex, setThemePageIndex] = useState(1);
+    // const [themes, setThemes] = useState(null);
+    // const [loadingTheme, setLoadingTheme] = useState(false);
+    // const [themePageIndex, setThemePageIndex] = useState(1);
     const [showLogoModal, setShowLogoModal] = useState(false);
 
     const handleLogoModalClose = () => setShowLogoModal(false);
@@ -69,28 +70,28 @@ export default function EditCard() {
         setLogoChanged(false);
     }, [website && website.vcard && website.vcard.logo]);
 
-    useEffect(() => {
-        async function fetchThemes() {
-            setLoadingTheme(true);
-            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=1`, navigate);
-            if (r.result) {
-                if (themes === null) {
-                    setThemes(r.data);
-                } else {
-                    setThemes((prev) => ({
-                        items: [...prev.items, ...r.data.items],
-                        pageIndex: r.data.pageIndex,
-                        pageCount: r.data.pageCount,
-                        totalRecords: r.data.totalRecords
-                    }));
-                }
-            } else {
-                toast.error("Failed to load themes: " + r.errors.join(', '));
-            }
-            setLoadingTheme(false);
-        }
-        fetchThemes();
-    }, [themePageIndex, navigate]);
+    // useEffect(() => {
+    //     async function fetchThemes() {
+    //         setLoadingTheme(true);
+    //         var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=1`, navigate);
+    //         if (r.result) {
+    //             if (themes === null) {
+    //                 setThemes(r.data);
+    //             } else {
+    //                 setThemes((prev) => ({
+    //                     items: [...prev.items, ...r.data.items],
+    //                     pageIndex: r.data.pageIndex,
+    //                     pageCount: r.data.pageCount,
+    //                     totalRecords: r.data.totalRecords
+    //                 }));
+    //             }
+    //         } else {
+    //             toast.error("Failed to load themes: " + r.errors.join(', '));
+    //         }
+    //         setLoadingTheme(false);
+    //     }
+    //     fetchThemes();
+    // }, [themePageIndex, navigate]);
 
 
     useEffect(() => {
@@ -684,35 +685,12 @@ export default function EditCard() {
                             <div className="text-end"><small>Example- https://www.facebook.com/singhrajkiran</small></div>
                         </div>
                     </> : null}
-                    {showEditThemeModal ? <>
-                        {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
-                        {themes !== null ? <>
-                            <div className="row">{themes.items.map((item, index) => {
-                                return <div className="col-6 col-md-6 p-2" key={index} style={{ height: "400px", overflow: "hidden" }}>
-                                    <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
-                                        style={{
-                                            height: "100%",
-                                            width: "100%",
-                                            objectFit: "cover", // ensures full image is visible
-                                            cursor: "pointer",
-                                            border: website.themeId === item.id ? "8px solid #007bff" : "none",
-                                            borderRadius: "10px"
-                                        }}
-                                        onClick={() => {
-                                            setWebsite(prev => ({
+                    {showEditThemeModal ? <ChooseTheme themeType={1} onThemeSelect={(id) => {
+                        setWebsite(prev => ({
                                                 ...prev,
-                                                themeId: item.id
+                                                themeId: id
                                             }));
-                                            updateTheme(item.id);
-                                        }} />
-                                </div>
-                            })}
-                            </div>
-                        </> : null}
-                        {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
-                            <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
-                        </div> : null}
-                    </> : null}
+                                            updateTheme(id); }} initialThemeId={website.themeId} /> : null}
                     {showEditPhotosModal ? <>
                         <div className="fw-bold mb-2 fs-5">Photo Gallery</div>
                         <div className="py-2 text-muted">Upload up to 12 photos (JPEG/PNG, max 50kb each).<br /> <strong>Existing: {website.vcard.photos ? website.vcard.photos.length : 0}/12</strong></div>

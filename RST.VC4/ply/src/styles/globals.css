@@ -1,4 +1,9 @@
 ﻿
+:root {
+    --bs-primary: #7CBDFF;
+  }
+
+  
 .fancy-btn {
   display: inline-flex;
   align-items: center;
@@ -167,13 +172,9 @@
     }
 }
 
-/* body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: Arial, Helvetica, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-} */
+.logo{
+    width: 50px;
+}
 
 * {
     box-sizing: border-box;

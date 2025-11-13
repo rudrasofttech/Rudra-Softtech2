@@ -66,12 +66,14 @@ namespace VC4.Pages
                         {
                             UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
+                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
                             WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else if (UserWebsite.WSType == WebsiteType.LinkList)
                         {
                             UserWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.LinkListDetail);
+                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
                             WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else

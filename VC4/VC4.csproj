@@ -27,4 +27,8 @@
     <ProjectReference Include="..\RST.Services\RST.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\logs\" />
+  </ItemGroup>
+
 </Project>

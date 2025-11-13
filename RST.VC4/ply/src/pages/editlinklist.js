@@ -12,6 +12,7 @@ import useScreenSize from '../hooks/useScreenSize';
 import ResponsivePreview from '../components/responsivepreview';
 import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
 import Modal from 'react-bootstrap/Modal';
+import ChooseTheme from '../components/choosetheme';
 
 export default function EditLinkList() {
     const isMobile = useScreenSize();
@@ -106,32 +107,32 @@ export default function EditLinkList() {
         }
     }
 
-    const [themes, setThemes] = useState(null);
-    const [loadingTheme, setLoadingTheme] = useState(false);
-    const [themePageIndex, setThemePageIndex] = useState(1);
+    // const [themes, setThemes] = useState(null);
+    // const [loadingTheme, setLoadingTheme] = useState(false);
+    // const [themePageIndex, setThemePageIndex] = useState(1);
 
-    useEffect(() => {
-        async function fetchThemes() {
-            setLoadingTheme(true);
-            var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=2`, navigate);
-            if (r.result) {
-                if (themes === null) {
-                    setThemes(r.data);
-                } else {
-                    setThemes((prev) => ({
-                        items: [...prev.items, ...r.data.items],
-                        pageIndex: r.data.pageIndex,
-                        pageCount: r.data.pageCount,
-                        totalRecords: r.data.totalRecords
-                    }));
-                }
-            } else {
-                toast.error("Failed to load themes: " + r.errors.join(', '));
-            }
-            setLoadingTheme(false);
-        }
-        fetchThemes();
-    }, [themePageIndex, navigate]);
+    // useEffect(() => {
+    //     async function fetchThemes() {
+    //         setLoadingTheme(true);
+    //         var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=2`, navigate);
+    //         if (r.result) {
+    //             if (themes === null) {
+    //                 setThemes(r.data);
+    //             } else {
+    //                 setThemes((prev) => ({
+    //                     items: [...prev.items, ...r.data.items],
+    //                     pageIndex: r.data.pageIndex,
+    //                     pageCount: r.data.pageCount,
+    //                     totalRecords: r.data.totalRecords
+    //                 }));
+    //             }
+    //         } else {
+    //             toast.error("Failed to load themes: " + r.errors.join(', '));
+    //         }
+    //         setLoadingTheme(false);
+    //     }
+    //     fetchThemes();
+    // }, [themePageIndex, navigate]);
 
     const updateTheme = async (id) => {
         try {
@@ -371,27 +372,12 @@ export default function EditLinkList() {
                             <small className="form-text text-muted">Your WhatsApp number (with country code) or click-to-chat link.</small>
                         </div>
                     </> : null}
-                    {showEditThemeModal ? <>
-                        {loadingTheme ? <div className="position-relative"><Loader position='absolute' /></div> : null}
-                        {themes !== null ? <>
-                            <div className="row">{themes.items.map((item, index) => {
-                                return <div className="col-6 col-md-6" key={index}>
-                                    <img src={item.thumbnail} className="img-fluid mb-2" alt={item.name}
-                                        style={{ cursor: "pointer", border: website.themeId === item.id ? "2px solid blue" : "none" }} onClick={() => {
-                                            setWebsite(prev => ({
+                    {showEditThemeModal ? <ChooseTheme themeType={2} onThemeSelect={(id) => {
+                        setWebsite(prev => ({
                                                 ...prev,
-                                                themeId: item.id
+                                                themeId: id
                                             }));
-                                            updateTheme(item.id);
-                                        }} />
-                                </div>
-                            })}
-                            </div>
-                        </> : null}
-                        {themes !== null && themes.pageIndex < themes.pageCount ? <div className="text-center p-1">
-                            <button type="button" className="btn btn-sm btm-outline-primary" onClick={() => { setThemePageIndex(themes.pageIndex + 1) }}>Load More</button>
-                        </div> : null}
-                    </> : null}
+                                            updateTheme(id); }} initialThemeId={website.themeId} /> : null}
                 </div>
             </div>
         </div> : null}
