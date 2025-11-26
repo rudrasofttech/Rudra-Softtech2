@@ -12,6 +12,10 @@ import Swal from 'sweetalert2';
 import useAppStore from '../store/useAppStore';
 import Nav from 'react-bootstrap/Nav';
 import HomeAnonymous from '../components/homeanonymous';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+
+
 
 function Home() {
   const [redirectUrl, setRedirectUrl] = useState("");
@@ -23,6 +27,10 @@ function Home() {
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [error, setError] = useState('');
   const { setDesigns, designs, deleteDesign } = useAppStore();
+
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareSite, setShareSite] = useState(null);
+
 
   useEffect(() => {
     const loadDesigns = async () => {
@@ -49,6 +57,10 @@ function Home() {
     }
   }, [redirectUrl]);
 
+  const getShareText = (site) => {
+    return `Hey, just wanted to share my digital card "${site.name}" with you. It’s got all my latest contact info and links, in case you ever need them. Here’s the link: https://${site.name}.vc4.in`;
+  }
+
   const deleteItem = async (id) => {
     setLoadingDelete(true);
     setError('');
@@ -59,6 +71,45 @@ function Home() {
       setError(r.errors.join(', '));
     }
     setLoadingDelete(false);
+  }
+
+  const handleShare = (site) => {
+    setShareSite(site);
+    setShowShareModal(true);
+  }
+
+  const shareVia = (platform) => {
+    if (!shareSite) return;
+    const url = `https://${shareSite.name}.vc4.in`;
+    const text = getShareText(shareSite);
+
+    let shareUrl = '';
+    switch (platform) {
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      case 'email':
+        shareUrl = `mailto:?subject=Check%20out%20my%20digital%20card&body=${encodeURIComponent(text)}`;
+        break;
+      case 'sms':
+        shareUrl = `sms:?body=${encodeURIComponent(text)}`;
+        break;
+      default:
+        shareUrl = '';
+    }
+    if (shareUrl) {
+      window.open(shareUrl, '_blank');
+    }
+    setShowShareModal(false);
   }
 
   const handleDelete = (id) => {
@@ -90,95 +141,129 @@ function Home() {
       </PlyNavbar>
       {!isLoggedIn ? (
         <HomeAnonymous onStart={() => setDummy(Date.now())} />
-        // <div className="unauth-home p-lg-4 p-2 text-center">
-        //   <div className="my-md-5 my-4 hero-text merienda fs-1">Build Beautiful Websites in Minutes</div>
-        //   <p className="lead mb-4">No code. No stress. Just pure creativity.</p>
-        //   <div className="text-center mb-4">
-        //     <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-success btn-lg fs-2 px-5 py-3">
-        //       Start Creating
-        //     </button>
-        //   </div>
-        //   <Container className="features-section py-5">
-        //     <h2 className="mb-4">What You Can Do with Ply</h2>
-        //     <div className="row text-start">
-        //       {[
-        //         { icon: "bi bi-eye", title: "Live Preview & Diagnostics", desc: "Instant feedback with branded overlays." },
-        //         { icon: "bi bi-images", title: "Photo Galleries & Cropping", desc: "Responsive, branded visuals." },
-        //         { icon: "bi bi-rocket", title: "One-Click Deploy", desc: "Launch instantly with zero friction." },
-        //       ].map((f, i) => (
-        //         <div key={i} className="col-md-4 mb-4">
-        //           <div className="p-3 border rounded h-100 shadow-sm">
-        //             <i className={`${f.icon} fs-2 text-success mb-2`}></i>
-        //             <h5>{f.title}</h5>
-        //             <p>{f.desc}</p>
-        //           </div>
-        //         </div>
-        //       ))}
-        //     </div>
-        //   </Container>
-
-        //   <Container className="why-ply-section py-5">
-        //     <h2 className="mb-4">Why Creators Love Ply</h2>
-        //     <blockquote className="blockquote">
-        //       “Ply helped me launch a stunning portfolio in under an hour. The live preview and pastel themes made it feel like magic.”
-        //     </blockquote>
-        //     <figcaption className="blockquote-footer">Aditi, Designer & Freelancer</figcaption>
-        //     <div className="row mt-4">
-        //       {[
-        //         { title: "Emotionally Engaging Design", desc: "Curated palettes and elegant fonts that resonate." },
-        //         { title: "Modular & Extensible", desc: "Reusable components and branded overlays." },
-        //         { title: "Built for Speed", desc: "From idea to live site in minutes." },
-        //       ].map((v, i) => (
-        //         <div key={i} className="col-md-4 mb-3">
-        //           <div className="p-3 border rounded h-100 bg-light">
-        //             <h5>{v.title}</h5>
-        //             <p>{v.desc}</p>
-        //           </div>
-        //         </div>
-        //       ))}
-        //     </div>
-        //   </Container>
-
-        //   <div className="cta-section py-5 bg-dark text-white">
-        //     <h2 className="mb-3">Ready to Create Something Beautiful?</h2>
-        //     <button type="button" onClick={() => setDummy(Date.now())} className="btn btn-light btn-lg fs-3 px-5 py-3">
-        //       Try Ply Now
-        //     </button>
-        //     <p className="mt-3">No login required to explore. Try the builder instantly.</p>
-        //   </div>
-        // </div>
       ) : <div>
-        <Container className="my-5">
+        <Container fluid className="my-5">
           {loading ? <Loader /> : null}
           {error !== "" ? <div className="text-danger text-center my-2">{error}</div> : null}
           {!loading ? <>{designs.length > 0 ? (
             <>
-              <div className="mb-4 d-flex ">
-                <h1 className="me-auto">My Sites</h1>
-                <div className="p-2 flex-shrink-1">
-                  <button type="button" onClick={() => {
-                    setRedirectUrl('/createvcard');
-                  }} className="fancy-btn me-2">
-                    <span className="icon">💼</span>
-                    Create Visiting Card
-                  </button>
-                  <button type="button" onClick={() => {
-                    setRedirectUrl('/createlinklist');
-                  }} className="fancy-btn linklist">
-                    <span className="icon">🔗</span>
-                    Create Link List
-                  </button>
+              <div className="mb-4">
+                <div className='row align-items-center'>
+                  <div className='col-xl-6 col-md-3'>
+                    <h1 className="me-auto text-center text-md-start mb-2 mb-md-0">My Sites</h1>
+                  </div>
+                  <div className='col-xl-3 col-md-5'>
+
+                    <button type="button" onClick={() => {
+                      setRedirectUrl('/createvcard');
+                    }} className="fancy-btn w-100 mb-2 mb-md-0">
+                      <span className="icon">💼</span>
+                      Create Visiting Card
+                    </button>
+                  </div>
+                  <div className='col-xl-3 col-md-4'>
+                    <button type="button" onClick={() => {
+                      setRedirectUrl('/createlinklist');
+                    }} className="fancy-btn w-100 mb-2 mb-md-0 linklist">
+                      <span className="icon">🔗</span>
+                      Create Link List
+                    </button>
+                  </div>
                 </div>
               </div>
+              
 
-              <table className="table table-hover table-bordered">
+<div className="row g-4">
+  {designs.map((site, index) => {
+    // Set title color based on status
+    let titleColor = "text-primary";
+    if (site.status === 0) titleColor = "text-success";
+    else if (site.status === 1) titleColor = "text-secondary";
+    else if (site.status === 2) titleColor = "text-danger";
+    else if (site.status === 3) titleColor = "text-warning";
+
+    return (
+      <div className="col-12 col-md-6 col-lg-4" key={index}>
+        <div className="card h-100 shadow-lg border-0 rounded-4">
+          <div className="card-body d-flex flex-column justify-content-between">
+            <div>
+              <h5 className={`card-title mb-2 d-flex align-items-center gap-2 ${titleColor}`}>
+                <WebsiteTypeDisplay wt={site.wsType} />
+                <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
+                  target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
+                  style={{ fontSize: "1.25rem" }}>
+                  {site.name}
+                </a>
+                <StatusDisplay status={site.status} />
+              </h5>
+              <div className="mb-2">
+                <span className="badge bg-light text-dark me-2">
+                  Created: {new Date(site.created).toLocaleDateString()}
+                </span>
+                {site.modified ? (
+                  <span className="badge bg-light text-dark">
+                    Last modified: {new Date(site.modified).toLocaleDateString()}
+                  </span>
+                ) : null}
+              </div>
+             
+            </div>
+            <div className="d-flex flex-wrap gap-2 mt-3">
+              <a
+                rel="noreferrer"
+                href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
+                target="_blank"
+                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+              >
+                <i className="bi bi-bar-chart-line"></i> Report
+              </a>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm rounded-pill px-3"
+                onClick={() => handleShare(site)}
+              >
+                <i className="bi bi-share"></i> Share
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-dark btn-sm rounded-pill px-3"
+                disabled={loading || loadingDelete}
+                onClick={() => {
+                  if (site.wsType === 1) {
+                    setRedirectUrl(`/editcard/${site.id}`);
+                  } else if (site.wsType === 2) {
+                    setRedirectUrl(`/editlinklist/${site.id}`);
+                  }
+                }}
+              >
+                <i className="bi bi-pencil-square"></i> Edit
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-danger btn-sm rounded-pill px-3"
+                disabled={loading || loadingDelete}
+                onClick={() => { handleDelete(site.id); }}
+              >
+                <i className="bi bi-trash3"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+
+              {/* <div className='table-responsive'>
+                <table className="table table-hover table-bordered">
                 <thead >
                   <tr>
                     <th>Website</th>
                     <th>Created</th>
                     <th>Type</th>
                     <th>Status</th>
-                    <th colSpan={3}></th>
+                    <th colSpan={4}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,7 +272,7 @@ function Home() {
                       <td><a rel="noreferrer" href={`https://${site.name}.vc4.in`} target="_blank">{site.name}</a></td>
                       <td>
                         {new Date(site.created).toLocaleDateString()}
-                        {site.modified ? <div className="text-muted"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}
+                        {site.modified ? <div className="text-muted d-none d-md-block"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}
                       </td>
                       <td>
                         <WebsiteTypeDisplay wt={site.wsType} />
@@ -198,7 +283,11 @@ function Home() {
                       <td>
                         <a rel="noreferrer" href={`https://www.webstats.co.in/report?id=${site.webstatsId}`} target="_blank">Report</a>
                       </td>
-
+                      <td>
+                        <button type="button" className="btn btn-link text-primary" onClick={() => handleShare(site)}>
+                          <i className="bi bi-share"></i>
+                        </button>
+                      </td>
                       <td>
                         <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
                           if (site.wsType === 1) {
@@ -212,7 +301,9 @@ function Home() {
                     </tr>
                   ))}
                 </tbody>
-              </table></>
+              </table>
+              </div> */}
+              </>
           ) : <>
             <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
             <div className="text-center mt-3">
@@ -226,7 +317,26 @@ function Home() {
           </>}</> : <>Loading websites...</>}
         </Container>
       </div>}
-
+      <Modal show={showShareModal} onHide={() => setShowShareModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Share Your Site</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-flex flex-column gap-2">
+            <Button className='mb-2' variant="success" onClick={() => shareVia('whatsapp')}>WhatsApp</Button>
+            <Button className='mb-2' variant="primary" onClick={() => shareVia('facebook')}>Facebook</Button>
+            <Button className='mb-2' variant="info" onClick={() => shareVia('linkedin')}>LinkedIn</Button>
+            <Button className='mb-2' variant="secondary" onClick={() => shareVia('twitter')}>Twitter</Button>
+            <Button className='mb-2' variant="warning" onClick={() => shareVia('sms')}>SMS</Button>
+            <Button className='mb-2' variant="dark" onClick={() => shareVia('email')}>Email</Button>
+          </div>
+          <div className="mt-3">
+            <small>Link to share: <b>{shareSite ? `https://${shareSite.name}.vc4.in` : ''}</b></small>
+            <br />
+            <small>Message: <b>{shareSite ? getShareText(shareSite) : ''}</b></small>
+          </div>
+        </Modal.Body>
+      </Modal>
     </>
   );
 }
