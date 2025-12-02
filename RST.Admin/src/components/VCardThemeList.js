@@ -18,7 +18,7 @@ class VCardThemeList extends Component {
             loggedin: localStorage.getItem("token") !== null,
             error: null,
             page: 1,
-            pageSize: 20,
+            pageSize: 10,
             totalRecords: 0,
             pageCount: 0
         };
@@ -30,7 +30,7 @@ class VCardThemeList extends Component {
 
     fetchThemes = (page = this.state.page) => {
         this.setState({ loading: true, error: null });
-        fetch(`${API.GetURL()}/UserWebsiteTheme?page=${page}&psize=${this.state.pageSize}&wstype=1`, {
+        fetch(`${API.GetURL()}/UserWebsiteTheme?page=${page}&wstype=1`, {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',

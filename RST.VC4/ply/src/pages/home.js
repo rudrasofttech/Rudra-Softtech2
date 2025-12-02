@@ -58,7 +58,7 @@ function Home() {
   }, [redirectUrl]);
 
   const getShareText = (site) => {
-    return `Hey, just wanted to share my digital card "${site.name}" with you. It’s got all my latest contact info and links, in case you ever need them. Here’s the link: https://${site.name}.vc4.in`;
+    return `Hey, just wanted to share my digital card "${site.name}" with you. It’s got all my latest contact info and links, in case you ever need them. Here’s the link: https://${site.name.toLowerCase()}.vc4.in`;
   }
 
   const deleteItem = async (id) => {
@@ -171,139 +171,83 @@ function Home() {
                   </div>
                 </div>
               </div>
-              
 
-<div className="row g-4">
-  {designs.map((site, index) => {
-    // Set title color based on status
-    let titleColor = "text-primary";
-    if (site.status === 0) titleColor = "text-success";
-    else if (site.status === 1) titleColor = "text-secondary";
-    else if (site.status === 2) titleColor = "text-danger";
-    else if (site.status === 3) titleColor = "text-warning";
 
-    return (
-      <div className="col-12 col-md-6 col-lg-4" key={index}>
-        <div className="card h-100 shadow-lg border-0 rounded-4">
-          <div className="card-body d-flex flex-column justify-content-between">
-            <div>
-              <h5 className={`card-title mb-2 d-flex align-items-center gap-2 ${titleColor}`}>
-                <WebsiteTypeDisplay wt={site.wsType} />
-                <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
-                  target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
-                  style={{ fontSize: "1.25rem" }}>
-                  {site.name}
-                </a>
-                <StatusDisplay status={site.status} />
-              </h5>
-              <div className="mb-2">
-                <span className="badge bg-light text-dark me-2">
-                  Created: {new Date(site.created).toLocaleDateString()}
-                </span>
-                {site.modified ? (
-                  <span className="badge bg-light text-dark">
-                    Last modified: {new Date(site.modified).toLocaleDateString()}
-                  </span>
-                ) : null}
+              <div className="row g-4">
+                {designs.map((site, index) => {
+                  // Set title color based on status
+                  let titleColor = "text-primary";
+                  if (site.status === 0) titleColor = "text-success";
+                  else if (site.status === 1) titleColor = "text-secondary";
+                  else if (site.status === 2) titleColor = "text-danger";
+                  else if (site.status === 3) titleColor = "text-warning";
+
+                  return (
+                    <div className="col-12 col-md-6 col-lg-4" key={index}>
+                      <div className="card h-100 shadow-lg border-0 rounded-4">
+                        <div className="card-body d-flex flex-column justify-content-between">
+                          <div>
+                            <h5 className={`card-title mb-2 d-flex align-items-center gap-2 ${titleColor}`}>
+                              <WebsiteTypeDisplay wt={site.wsType} />
+                              <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
+                                target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
+                                style={{ fontSize: "1.25rem" }}>
+                                {site.name}
+                              </a>
+                              <StatusDisplay status={site.status} />
+                            </h5>
+                            <div className="mb-2">
+                              <span className="badge bg-light text-dark me-2">
+                                Created: {new Date(site.created).toLocaleDateString()}
+                              </span>
+                              {site.modified ? (
+                                <span className="badge bg-light text-dark">
+                                  Last modified: {new Date(site.modified).toLocaleDateString()}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="d-flex flex-wrap gap-2 mt-3">
+                            <a rel="noreferrer"
+                              href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
+                              target="_blank"
+                              className="btn btn-outline-secondary rounded-pill  me-2">
+                              <i className="bi bi-bar-chart-line"></i>
+                            </a>
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary rounded-pill  me-2"
+                              onClick={() => handleShare(site)}>
+                              <i className="bi bi-share"></i>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-dark rounded-pill  me-2"
+                              disabled={loading || loadingDelete}
+                              onClick={() => {
+                                if (site.wsType === 1) {
+                                  setRedirectUrl(`/editcard/${site.id}`);
+                                } else if (site.wsType === 2) {
+                                  setRedirectUrl(`/editlinklist/${site.id}`);
+                                }
+                              }}>
+                              <i className="bi bi-pencil-square"></i>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger rounded-pill  me-2"
+                              disabled={loading || loadingDelete}
+                              onClick={() => { handleDelete(site.id); }}>
+                              <i className="bi bi-trash3"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-             
-            </div>
-            <div className="d-flex flex-wrap gap-2 mt-3">
-              <a
-                rel="noreferrer"
-                href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
-                target="_blank"
-                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-              >
-                <i className="bi bi-bar-chart-line"></i> Report
-              </a>
-              <button
-                type="button"
-                className="btn btn-outline-primary btn-sm rounded-pill px-3"
-                onClick={() => handleShare(site)}
-              >
-                <i className="bi bi-share"></i> Share
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm rounded-pill px-3"
-                disabled={loading || loadingDelete}
-                onClick={() => {
-                  if (site.wsType === 1) {
-                    setRedirectUrl(`/editcard/${site.id}`);
-                  } else if (site.wsType === 2) {
-                    setRedirectUrl(`/editlinklist/${site.id}`);
-                  }
-                }}
-              >
-                <i className="bi bi-pencil-square"></i> Edit
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-danger btn-sm rounded-pill px-3"
-                disabled={loading || loadingDelete}
-                onClick={() => { handleDelete(site.id); }}
-              >
-                <i className="bi bi-trash3"></i> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
-
-
-              {/* <div className='table-responsive'>
-                <table className="table table-hover table-bordered">
-                <thead >
-                  <tr>
-                    <th>Website</th>
-                    <th>Created</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th colSpan={4}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {designs.map((site, index) => (
-                    <tr key={index}>
-                      <td><a rel="noreferrer" href={`https://${site.name}.vc4.in`} target="_blank">{site.name}</a></td>
-                      <td>
-                        {new Date(site.created).toLocaleDateString()}
-                        {site.modified ? <div className="text-muted d-none d-md-block"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}
-                      </td>
-                      <td>
-                        <WebsiteTypeDisplay wt={site.wsType} />
-                      </td>
-                      <td>
-                        <StatusDisplay status={site.status} />
-                      </td>
-                      <td>
-                        <a rel="noreferrer" href={`https://www.webstats.co.in/report?id=${site.webstatsId}`} target="_blank">Report</a>
-                      </td>
-                      <td>
-                        <button type="button" className="btn btn-link text-primary" onClick={() => handleShare(site)}>
-                          <i className="bi bi-share"></i>
-                        </button>
-                      </td>
-                      <td>
-                        <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
-                          if (site.wsType === 1) {
-                            setRedirectUrl(`/editcard/${site.id}`);
-                          } else if (site.wsType === 2) {
-                            setRedirectUrl(`/editlinklist/${site.id}`);
-                          }
-                        }}><i className="bi bi-pencil-square"></i></button>
-                      </td>
-                      <td><button type="button" className="btn btn-link text-danger" disabled={loading || loadingDelete} onClick={() => { handleDelete(site.id); }}><i className="bi bi-trash3"></i></button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div> */}
-              </>
+            </>
           ) : <>
             <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
             <div className="text-center mt-3">
@@ -322,19 +266,36 @@ function Home() {
           <Modal.Title>Share Your Site</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="d-flex flex-column gap-2">
-            <Button className='mb-2' variant="success" onClick={() => shareVia('whatsapp')}>WhatsApp</Button>
-            <Button className='mb-2' variant="primary" onClick={() => shareVia('facebook')}>Facebook</Button>
-            <Button className='mb-2' variant="info" onClick={() => shareVia('linkedin')}>LinkedIn</Button>
-            <Button className='mb-2' variant="secondary" onClick={() => shareVia('twitter')}>Twitter</Button>
-            <Button className='mb-2' variant="warning" onClick={() => shareVia('sms')}>SMS</Button>
-            <Button className='mb-2' variant="dark" onClick={() => shareVia('email')}>Email</Button>
+          <div className="">
+            {shareSite ? <>
+              <div className='text-center mb-3 fs-4'>Download QR Code</div>
+              <div className='px-5'>
+                <img src={`${APIURLS.userWebsite}/qrcode/${shareSite.id}`} alt="Share" className="img-fluid" />
+              </div>
+            </> : null}
+            <div className='text-center my-3 fs-4'>Or share this text</div>
+            <textarea className='form-control' rows={4} readOnly value={shareSite ? getShareText(shareSite) : ''}></textarea>
+            {/* <div className='text-center'>
+              <button className='mb-2 me-2 btn btn-success btn-lg rounded-circle' onClick={() => shareVia('whatsapp')}>
+                <i className="bi bi-whatsapp"></i></button>
+              <button className='mb-2 me-2 btn btn-primary btn-lg rounded-circle' onClick={() => shareVia('facebook')}>
+                <i className="bi bi-facebook"></i>
+              </button>
+              <button className='mb-2 me-2 btn btn-info btn-lg rounded-circle text-white' onClick={() => shareVia('linkedin')}>
+                <i className="bi bi-linkedin"></i>
+              </button>
+              <button className='mb-2 me-2 btn btn-secondary btn-lg rounded-circle' onClick={() => shareVia('twitter')}>
+                <i className="bi bi-twitter"></i>
+              </button>
+              <button className='mb-2 me-2 btn btn-warning btn-lg rounded-circle text-white' onClick={() => shareVia('sms')}>
+                <i className="bi bi-chat-dots"></i>
+              </button>
+              <button className='mb-2 btn btn-dark btn-lg rounded-circle' onClick={() => shareVia('email')}>
+                <i className="bi bi-envelope"></i>
+              </button>
+            </div> */}
           </div>
-          <div className="mt-3">
-            <small>Link to share: <b>{shareSite ? `https://${shareSite.name}.vc4.in` : ''}</b></small>
-            <br />
-            <small>Message: <b>{shareSite ? getShareText(shareSite) : ''}</b></small>
-          </div>
+
         </Modal.Body>
       </Modal>
     </>

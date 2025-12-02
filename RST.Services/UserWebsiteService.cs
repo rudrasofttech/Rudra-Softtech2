@@ -1,9 +1,13 @@
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using QRCoder;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -22,6 +26,7 @@ namespace RST.Services
         Task<UserWebsite?> CreateLinkListAsync(CreateLinkListWebsiteDTO model, Member member, HttpRequest request);
         Task<bool> DeleteAsync(Guid id, Member member);
         Task<UserWebsite?> UpdateVCardAsync(UpdateVCardModel model, Member member, HttpRequest request, ILogger logger);
+        Task<Stream?> GetQRCodeStreamAsync(Guid id);
         Task<UserWebsite?> UpdateLinkListAsync(UpdateLinkListModel model, Member member, HttpRequest request, ILogger logger);
         Task<UserWebsite?> UpdateThemeAsync(UpdateThemeModel model, Member member);
         Task<UserWebsite?> UpdateStatusAsync(Guid id, RecordStatus status, Member member);
@@ -325,6 +330,107 @@ namespace RST.Services
 
             return true;
         }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+        public async Task<Stream?> GetQRCodeStreamAsync(Guid id)
+        {
+            var uw = await _db.UserWebsites.Include(t => t.Owner).FirstOrDefaultAsync(t => t.Id == id);
+            if (uw == null)
+                return null;
+
+            try
+            {
+                string url = $"https://{uw.Name.ToLower()}.vc4.in";
+
+                // Generate QR code
+                var qrGenerator = new QRCodeGenerator();
+                QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new QRCode(qrCodeData);
+                
+                var ms = new MemoryStream();
+                // pixelPerModule: 20, darkColor: Black, lightColor: White, drawQuietZones: false
+                using (Bitmap qrCodeImage = qrCode.GetGraphic(20, Color.Black, Color.White, drawQuietZones: false))
+                {
+                    int padding = 10;
+                    int fontSize = 20;
+                    int textHeight;
+
+                    // Measure text height
+                    using (var g = Graphics.FromImage(qrCodeImage))
+                    using (var font = new Font("Arial", fontSize, FontStyle.Bold, GraphicsUnit.Pixel))
+                    {
+                        var textSize = g.MeasureString(url, font);
+                        textHeight = (int)Math.Ceiling(textSize.Height);
+                    }
+
+                    int width = qrCodeImage.Width;
+                    int height = qrCodeImage.Height + padding + textHeight;
+
+                    using (Bitmap combinedImage = new Bitmap(width, height))
+                    using (Graphics g = Graphics.FromImage(combinedImage))
+                    {
+                        g.Clear(Color.White);
+                        // Draw QR code at the top
+                        g.DrawImage(qrCodeImage, 0, 0);
+
+                        // Draw text below QR code with padding
+                        using (var font = new Font("Arial", fontSize, FontStyle.Bold, GraphicsUnit.Pixel))
+                        using (var brush = new SolidBrush(Color.Black))
+                        {
+                            var textRect = new RectangleF(0, qrCodeImage.Height + padding, width, textHeight);
+                            var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                            g.DrawString(url, font, brush, textRect, format);
+                        }
+
+                        combinedImage.Save(ms, ImageFormat.Png);
+                    }
+                }
+                ms.Position = 0; // Reset stream position for reading
+                return ms;
+            }
+            catch (Exception dirEx)
+            {
+                _logger.LogError(dirEx, "Failed to generate QR for website {WebsiteId}", uw.Id);
+            }
+            return null;
+        }
+        //public async Task<string?> GetQRCodeAsync(Guid id, Member member)
+        //{
+        //    if (member == null)
+        //        return null;
+
+        //    var uw = await _db.UserWebsites.Include(t => t.Owner).FirstOrDefaultAsync(t => t.Id == id && t.Owner.ID == member.ID);
+        //    if (uw == null)
+        //        return null;
+
+        //    try
+        //    {
+        //        var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        //        var folderPath = Path.Combine(webRootPath, "drive", "uwpics", uw.Id.ToString());
+        //        string url = $"https://{uw.Name.ToLower()}.vc4.in";
+
+        //        // Generate QR code
+        //        var qrGenerator = new QRCodeGenerator();
+        //        QRCodeData qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+        //        var qrCode = new QRCode(qrCodeData);
+
+        //        using (Bitmap qrCodeImage = qrCode.GetGraphic(20))
+        //        using (var ms = new MemoryStream())
+        //        {
+        //            qrCodeImage.Save(ms, ImageFormat.Png);
+        //            string filePath = Path.Combine(folderPath, "qr.png");
+        //            qrCodeImage.Save(filePath, ImageFormat.Png);
+        //            return $"drive/uwpics/{uw.Id.ToString()}/qr.png";
+        //        }
+        //    }
+        //    catch (Exception dirEx)
+        //    {
+        //        _logger.LogError(dirEx, "Failed to generate QR for website {WebsiteId}", uw.Id);
+        //    }
+
+
+        //    return null;
+        //}
 
         public async Task<UserWebsite?> UpdateVCardAsync(UpdateVCardModel model, Member member, HttpRequest request, ILogger logger)
         {

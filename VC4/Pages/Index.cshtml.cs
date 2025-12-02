@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using RST.Context;
 using RST.Model;
 using RST.Services;
+using System.Text;
 
 namespace VC4.Pages
 {
@@ -66,14 +67,47 @@ namespace VC4.Pages
                         {
                             UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
-                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
+                            
+                            var sb = new StringBuilder();
+                            sb.AppendLine($"<meta name=\"keywords\" content=\"{UserWebsite.VisitingCardDetail?.MetaKeywords}\">");
+                            sb.AppendLine($"<meta name=\"description\" content=\"{UserWebsite.VisitingCardDetail?.MetaDescription}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.Company))
+                            {
+                                sb.AppendLine($"<meta property=\"og:title\" content=\"{UserWebsite.VisitingCardDetail.Company}\">");
+                            }
+                            else if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.PersonName))
+                                sb.AppendLine($"<meta property=\"og:title\" content=\"{UserWebsite.VisitingCardDetail.PersonName}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.AboutInfo))
+                                sb.AppendLine($"<meta property=\"og:description\" content=\"{UserWebsite.VisitingCardDetail.MetaDescription}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.Logo))
+                                sb.AppendLine($"<meta property=\"og:image\" content=\"{UserWebsite.VisitingCardDetail.Logo}\">");
+                            sb.AppendLine($"<meta property=\"og:url\" content=\"https://{UserWebsite.Name.ToLower()}.vc4.in\">");
+                            sb.AppendLine($"<meta property=\"og:type\" content=\"visiting card website\">");
+                            sb.AppendLine($"<meta name=\"format-detection\" content=\"telephone=no\" />");
+                            PageHtml = PageHtml.Replace("</head>", $"{sb}</head>");
                             WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else if (UserWebsite.WSType == WebsiteType.LinkList)
                         {
                             UserWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(UserWebsite.JsonData);
                             PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.LinkListDetail);
-                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
+                            var sb = new StringBuilder();
+                            sb.AppendLine($"<meta name=\"keywords\" content=\"{UserWebsite.VisitingCardDetail?.MetaKeywords}\">");
+                            sb.AppendLine($"<meta name=\"description\" content=\"{UserWebsite.VisitingCardDetail?.MetaDescription}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.Company))
+                            {
+                                sb.AppendLine($"<meta property=\"og:title\" content=\"{UserWebsite.VisitingCardDetail.Company}\">");
+                            }
+                            else if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.PersonName))
+                                sb.AppendLine($"<meta property=\"og:title\" content=\"{UserWebsite.VisitingCardDetail.PersonName}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.AboutInfo))
+                                sb.AppendLine($"<meta property=\"og:description\" content=\"{UserWebsite.VisitingCardDetail.MetaDescription}\">");
+                            if (!string.IsNullOrWhiteSpace(UserWebsite.VisitingCardDetail?.Logo))
+                                sb.AppendLine($"<meta property=\"og:image\" content=\"{UserWebsite.VisitingCardDetail.Logo}\">");
+                            sb.AppendLine($"<meta property=\"og:url\" content=\"https://{UserWebsite.Name.ToLower()}.vc4.in\">");
+                            sb.AppendLine($"<meta property=\"og:type\" content=\"link list website\">");
+                            sb.AppendLine($"<meta name=\"format-detection\" content=\"telephone=no\" />");
+                            PageHtml = PageHtml.Replace("</head>", $"{sb}</head>");
                             WebstatsId = UserWebsite.WebstatsScript;
                         }
                         else

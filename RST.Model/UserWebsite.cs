@@ -28,6 +28,7 @@ namespace RST.Model
         public string Html { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
         public string? WebstatsScript { get; set; } = string.Empty;
+        
     }
 
     public class VisitingCardDetail
@@ -74,6 +75,38 @@ namespace RST.Model
         public List<VCardPhoto> Photos { get; set; } = [];
 
         public bool HasSocialLinks => !string.IsNullOrEmpty(Youtube) || !string.IsNullOrEmpty(Instagram) || !string.IsNullOrEmpty(LinkedIn) || !string.IsNullOrEmpty(Twitter) || !string.IsNullOrEmpty(Facebook) || !string.IsNullOrEmpty(WhatsApp) || !string.IsNullOrEmpty(Telegram);
+
+        [NotMapped]
+        [JsonIgnore]
+        public string MetaKeywords => $"{Company}, {PersonName}, {Designation}";
+
+        [NotMapped]
+        [JsonIgnore]
+        public string MetaDescription
+        {
+            get
+            {
+                var parts = new List<string>();
+
+                if (!string.IsNullOrWhiteSpace(PersonName))
+                    parts.Add(PersonName);
+
+                if (!string.IsNullOrWhiteSpace(Designation))
+                    parts.Add(Designation);
+
+                if (!string.IsNullOrWhiteSpace(Company))
+                    parts.Add($"at {Company}");
+
+                if (!string.IsNullOrWhiteSpace(TagLine))
+                    parts.Add(TagLine);
+
+                if (!string.IsNullOrWhiteSpace(AboutInfo))
+                    parts.Add(AboutInfo);
+
+                // Join with ". " for readability, but you can adjust as needed
+                return string.Join(". ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+            }
+        }
     }
 
     public class VCardPhoto

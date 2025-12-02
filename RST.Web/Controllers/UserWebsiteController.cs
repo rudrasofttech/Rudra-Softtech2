@@ -1,7 +1,5 @@
-﻿using Azure.Core;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Build.Framework;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
@@ -81,7 +79,7 @@ namespace RST.Web.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         public async Task<IActionResult> Get(Guid id)
         {
             try
@@ -190,7 +188,7 @@ namespace RST.Web.Controllers
             }
         }
 
-        [HttpGet("delete/{id}")]
+        [HttpGet("delete/{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -259,7 +257,7 @@ namespace RST.Web.Controllers
             }
         }
 
-        [HttpGet("updatestatus/{id}")]
+        [HttpGet("updatestatus/{id:guid}")]
         public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] RecordStatus status)
         {
             try
@@ -294,7 +292,7 @@ namespace RST.Web.Controllers
             }
         }
 
-        [HttpGet("html/{id}")]
+        [HttpGet("html/{id:guid}")]
         public async Task<IActionResult> GetHtml(Guid id)
         {
             try
@@ -359,6 +357,26 @@ namespace RST.Web.Controllers
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
+
+        [HttpGet("qrcode/{id:guid}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetQrCodeAsync(Guid id)
+        {
+            try
+            {
+                var stream = await _userWebsiteService.GetQRCodeStreamAsync(id);
+                if (stream == null)
+                    return NotFound(new { error = "Website not found, unable to get QR code." });
+
+                return File(stream, "image/png");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating QR code for website,");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
 
         private void SetBearerTokeninUserWebsiteServer()
         {
