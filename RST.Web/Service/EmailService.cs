@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using RST.Context;
+﻿using RST.Context;
 using RST.Model;
-using System.Net.Mail;
+using RST.Model.DTO;
 using System.Net;
-using RST.Web.Pages.Blog;
+using System.Net.Mail;
+using System.Security.Cryptography.Xml;
 using System.Text;
 
 namespace RST.Web.Service
@@ -68,7 +68,7 @@ namespace RST.Web.Service
                 IsBodyHtml = true
             };
             mailMessage.To.Add(new MailAddress(em.ToAddress, em.ToName));
-            
+
             // Send the email
             smtpClient.Send(mailMessage);
             em.IsSent = true;
@@ -94,10 +94,10 @@ namespace RST.Web.Service
         {
             var builder = new StringBuilder();
             builder.Append($"<div style='margin-bottom:10px'>Hello {m.FirstName},</div>");
-            
-            if(uw.WSType == WebsiteType.VCard)
+
+            if (uw.WSType == WebsiteType.VCard)
                 builder.Append("<div style='margin-bottom:15px'>Your digital visiting card is active.</div>");
-            else if(uw.WSType == WebsiteType.LinkList)
+            else if (uw.WSType == WebsiteType.LinkList)
                 builder.Append("<div style='margin-bottom:15px'>Your Link list is active.</div>");
 
             builder.Append($"<a style='border-radius:10px;background:#005551;color:#fff;padding:10px 15px;margin-bottom:30px;text-decoration:none;display:inline-block;' href='https://{uw.Name}.vc4.in' target='_blank'>https://{uw.Name}.vc4.in</a>");
@@ -106,10 +106,10 @@ namespace RST.Web.Service
                 builder.Append("<div style='margin-bottom:15px;margin-top:15px;'>You can check the digital visiting card on the link provided above.</div>");
             else if (uw.WSType == WebsiteType.LinkList)
                 builder.Append("<div style='margin-bottom:15px;margin-top:15px;'>You can check the link list on the link provided above.</div>");
-            
+
             var sb = new StringBuilder();
             sb.Append(uw.Name);
-            if(uw.WSType == WebsiteType.VCard)
+            if (uw.WSType == WebsiteType.VCard)
                 sb.Append(" visiting card is active");
             else if (uw.WSType == WebsiteType.LinkList)
                 sb.Append(" link list is active");
@@ -122,6 +122,133 @@ namespace RST.Web.Service
             builder.Append($"<div style='margin-bottom:10px'>Welcome {m.FirstName},</div>");
             builder.Append("<div style='margin-bottom:15px'>You are now a registered member. Thanks for choosing Rudra Softtech LLP! We are happy to see you on board. You can use your account to access Ply.</div>");
             return SendEmail(m.Email, m.FirstName, "Registration Successful", builder.ToString(), "Registration");
+        }
+
+        public EmailMessage SendPasscode(Member m, string otp)
+        {
+            var builder = new StringBuilder();
+            builder.Append($"<div style='margin-bottom:10px'>Dear {m.FirstName},</div>");
+            builder.Append($"<div style='margin-bottom:15px'>Your account one time passcode is <strong>{otp}</strong>.<div>This is valid for 10 minutes.</div><div></div></div>");
+            return SendEmail(m.Email, m.FirstName, "Rudra Softtech OTP", builder.ToString(), "OTP");
+        }
+
+    }
+
+    public class SMSService(IConfiguration config)
+    {
+        private readonly IConfiguration _config = config;
+
+        private (string CountryCode, string MobileNumber) ParsePhoneNumber(string phoneNumber)
+        {
+            // Assumes phoneNumber format: "countrycode-mobilenumber", e.g. "91-987500276"
+            var parts = phoneNumber.Split('-', 2);
+            if (parts.Length == 2)
+            {
+                return (parts[0], parts[1]);
+            }
+            // Fallback: treat entire string as mobile number, country code empty
+            return ("", phoneNumber);
+        }
+
+        //public async Task<bool> SendSMSAsync(string phoneNumber, string message)
+        //{
+        //    var parsedNumber = ParsePhoneNumber(phoneNumber);
+        //    string customerId = _config["MessageCentral:CustomerId"]; // supply actual customerId
+        //    string key = _config["MessageCentral:Key"]; // supply actual key
+
+        //    // Convert key to Base64
+        //    string base64Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(key));
+
+        //    using (var client = new HttpClient())
+        //    {
+        //        client.DefaultRequestHeaders.Add("accept", "*/*");
+
+        //        // Build the query string
+        //        var url = $"https://cpaas.messagecentral.com/auth/v1/authentication/token" +
+        //                  $"?scope=NEW&customerId={Uri.EscapeDataString(customerId)}" +
+        //                  $"&key={Uri.EscapeDataString(base64Key)}";
+
+        //        HttpResponseMessage authResponse = await client.GetAsync(url);
+
+        //        if (authResponse.IsSuccessStatusCode)
+        //        {
+        //            string result = await authResponse.Content.ReadAsStringAsync();
+
+        //            var resp = System.Text.Json.JsonSerializer.Deserialize<AuthResponseData>(result, new System.Text.Json.JsonSerializerOptions() { });
+        //            if (resp != null && resp.Status == 200)
+        //            {
+        //                // Build the request URL with query parameters
+        //                var url2 = $"https://cpaas.messagecentral.com/verification/v3/send" +
+        //                          $"?countryCode={parsedNumber.CountryCode ?? "91"}&flowType=SMS&mobileNumber={Uri.EscapeDataString(parsedNumber.MobileNumber)}&senderId=RST&type=SMS&message={Uri.EscapeDataString(message)}&messageType=OTP";
+
+        //                // Create the request
+        //                var request = new HttpRequestMessage(HttpMethod.Post, url2);
+        //                request.Headers.Add("authToken", resp.Token ?? string.Empty);
+
+        //                // Send the request
+        //                var response = await client.SendAsync(request);
+
+        //                // Read the response
+        //                string result2 = await response.Content.ReadAsStringAsync();
+
+        //                if (!response.IsSuccessStatusCode)
+        //                {
+        //                    throw new Exception($"Error: {response.StatusCode}, Details: {result2}");
+        //                }
+        //                else
+        //                {
+        //                    var resp2 = System.Text.Json.JsonSerializer.Deserialize<MCApiResponse<SMSResponseData>>(result2);
+        //                    if (resp2 != null && resp2.ResponseCode == 200)
+        //                    {
+        //                        return true;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            string error = await authResponse.Content.ReadAsStringAsync();
+        //            throw new Exception($"Error: {authResponse.StatusCode}, Details: {error}");
+        //        }
+        //        return false;
+        //    }
+        //}
+
+        public async Task<bool> SendSMSAsync(string phoneNumber, string message)
+        {
+            var parsedNumber = ParsePhoneNumber(phoneNumber);
+            string key = _config["2Factor:Key"]; // supply actual key
+
+            // Convert key to Base64
+            //string base64Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(key));
+
+            using (var client = new HttpClient())
+            {
+                //client.DefaultRequestHeaders.Add("accept", "*/*");
+
+                // Build the query string
+                var url = $"https://2factor.in/API/V1/{key}/SMS/{phoneNumber.Replace("-", "")}/{message}/{_config["2Factor:Template"]}";
+
+
+                HttpResponseMessage authResponse = await client.GetAsync(url);
+
+                if (authResponse.IsSuccessStatusCode)
+                {
+                    string result = await authResponse.Content.ReadAsStringAsync();
+
+                    var resp = System.Text.Json.JsonSerializer.Deserialize<TwoFactorSMSResponse>(result, new System.Text.Json.JsonSerializerOptions() { });
+                    if (resp != null && resp.Status == "Success")
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    string error = await authResponse.Content.ReadAsStringAsync();
+                    throw new Exception($"Error: {authResponse.StatusCode}, Details: {error}");
+                }
+                return false;
+            }
         }
     }
 }

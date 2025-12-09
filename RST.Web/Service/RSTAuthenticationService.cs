@@ -38,20 +38,42 @@ namespace RST.Web.Service
             return new Tuple<Member?, bool>(null, false);
         }
 
+        public Tuple<Member?, bool> ValidateOTP(string username, string phone, string password)
+        {
+            var m = dc.Members.FirstOrDefault(t => (t.Email == username || (t.Phone == phone && !string.IsNullOrEmpty(t.Phone))) &&
+            t.Status != RecordStatus.Deleted);
+
+            if (m != null)
+            {
+                var passcodes = dc.Passcodes.Where(t => t.MemberID == m.ID && t.Expiry > DateTime.UtcNow && t.Purpose == PasscodePurpose.TwoFactorAuthentication).ToList();
+                foreach(var pc in passcodes)
+                {
+                    if (pc.OTP.SequenceEqual(EncryptionHelper.CalculateSHA256($"{password}"))) {
+                        m.LastLogon = DateTime.UtcNow;
+                        m.LastLoginAttempt = null;
+                        m.InvalidAttemptCount = 0;
+                        dc.SaveChanges();
+                        return new Tuple<Member?, bool>(m, true);
+                    }
+                }
+            }
+            return new Tuple<Member?, bool>(null, false);
+        }
+
 
         public Member? Update(int id,
-            string name, bool newsletter,
-            Member? modifiedby,
-            string gender, MemberTypeType mtype )
+            string name, string email,string phone,
+            Member? modifiedby
+            )
         {
             var m = dc.Members.First(t => t.ID == id);
             if (m != null)
             {
                 m.FirstName = name;
-                m.Newsletter = newsletter;
+                m.Email = email;
                 m.ModifiedBy = modifiedby;
                 m.ModifyDate = DateTime.UtcNow;
-                m.UserType = mtype;
+                m.Phone = phone;
                 dc.SaveChanges();
             }
             return m;
@@ -83,6 +105,36 @@ namespace RST.Web.Service
         public Member? GetUser(string username)
         {
             return dc.Members.SingleOrDefault(t => (t.Email == username ) && t.Status != RecordStatus.Deleted);
+        }
+
+        public Member? GetUser(string username, string phone)
+        {
+            return dc.Members.SingleOrDefault(t => (t.Email == username || t.Phone == phone) && t.Status != RecordStatus.Deleted);
+        }
+
+        public string CreatePasscode(int memberId, PasscodePurpose purpose = PasscodePurpose.AccountVerification)
+        {
+
+            // Generate a 6-digit random number as a string
+            var random = new Random();
+            string otp = random.Next(100000, 1000000).ToString();
+
+            var p = new Passcode()
+            {
+                MemberID = memberId,
+                OTP = EncryptionHelper.CalculateSHA256(otp),
+                Purpose = purpose,
+                Expiry = DateTime.UtcNow.AddMinutes(10)
+            };
+            dc.Passcodes.Add(p);
+            var expiredPasscodes = dc.Passcodes.Where(p => p.Expiry <= DateTime.UtcNow).ToList();
+            if (expiredPasscodes.Any())
+            {
+                dc.Passcodes.RemoveRange(expiredPasscodes);
+            }
+            dc.SaveChanges();
+
+            return otp;
         }
 
         public bool AnyLoginAttempteRemain(string email)
@@ -194,7 +246,7 @@ namespace RST.Web.Service
             dc.SaveChanges();
         }
 
-        public bool CreateUser(string username, string password, bool newsletter, string memberName, MemberTypeType mType)
+        public bool CreateUser(string username, string password, bool newsletter, string memberName, MemberTypeType mType, string phone)
         {
 
             if (username.Trim() == string.Empty)
@@ -211,6 +263,11 @@ namespace RST.Web.Service
                 return false;
             }
 
+            if (!string.IsNullOrEmpty(phone) && PhoneExist(phone))
+            {
+                return false;
+            }
+
 
             var m = new Member
             {
@@ -222,7 +279,8 @@ namespace RST.Web.Service
                 EncryptedPassword = EncryptionHelper.CalculateSHA256($"{password}-{password}"),
                 Status = RecordStatus.Unverified,
                 UserType = mType,
-                PublicID = Guid.NewGuid()
+                PublicID = Guid.NewGuid(),
+                Phone = phone,
             };
 
             dc.Members.Add(m);
@@ -233,6 +291,21 @@ namespace RST.Web.Service
         public bool EmailExist(string email)
         {
             return (from t in dc.Members where t.Email == email select t).Any();
+        }
+
+        public bool EmailExist(string email, int excludeMemberId)
+        {
+            return (from t in dc.Members where t.Email == email && t.ID != excludeMemberId select t).Any();
+        }
+
+        public bool PhoneExist(string phone)
+        {
+            return (from t in dc.Members where t.Phone == phone select t).Any();
+        }
+
+        public bool PhoneExist(string phone, int excludeMemberId)
+        {
+            return (from t in dc.Members where t.Phone == phone && t.ID != excludeMemberId select t).Any();
         }
 
         public void UpdateEncryptedPassword()

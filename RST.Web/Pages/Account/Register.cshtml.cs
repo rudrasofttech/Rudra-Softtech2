@@ -2,30 +2,43 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RST.Web.Service;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RST.Web.Pages.Account
 {
-    public class RegisterModel(RSTAuthenticationService _authService, EmailService _emailService, ILogger<RegisterModel> _logger, CaptchaService _captchaService) : PageModel
+    public class RegisterModel(RSTAuthenticationService authService, 
+        //EmailService _emailService, 
+        ILogger<RegisterModel> _logger, 
+        CaptchaService _captchaService //, SMSService _smsService
+        ) : PageModel
     {
 
-        private readonly RSTAuthenticationService authService = _authService;
-        private readonly EmailService emailService = _emailService;
+        private readonly RSTAuthenticationService _authService = authService;
+        //private readonly EmailService emailService = _emailService;
         private readonly ILogger<RegisterModel> logger = _logger;
         private readonly CaptchaService _captchaManager = _captchaService;
+        //private readonly SMSService smsService = _smsService;
 
         [Required]
         [MaxLength(150)]
         [EmailAddress(ErrorMessage = "Invalid email address.")]
         [BindProperty]
         public string Email { get; set; } = string.Empty;
+        //[Required]
+        //[BindProperty]
+        //[MaxLength(150)]
+        //[MinLength(8, ErrorMessage = "Password should be minimum 8 characters.")]
+        //[DataType(DataType.Password)]
+        //public string Password { get; set; } = string.Empty;
         [Required]
         [BindProperty]
-        [MaxLength(150)]
-        [MinLength(8, ErrorMessage = "Password should be minimum 8 characters.")]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
+        [MaxLength(15)]
+        public string Phone { get; set; } = string.Empty;
+
+        [Required]
+        [BindProperty]
+        [MaxLength(5)]
+        public string CountryCode { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Your name is required.")]
         [MaxLength(150)]
         [BindProperty]
@@ -55,7 +68,7 @@ namespace RST.Web.Pages.Account
             CaptchaImage = _captchaManager.CaptchaImage;
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
             try
             {
@@ -76,11 +89,18 @@ namespace RST.Web.Pages.Account
                 if (_authService.EmailExist(Email))
                 {
                     ModelState.AddModelError(nameof(Email), "Email already exists.");
+                    LoadCaptcha();
                     return Page();
                 }
-
+                if (_authService.PhoneExist($"{CountryCode}-{Phone}"))
+                {
+                    ModelState.AddModelError(nameof(Phone), "Phone already exists.");
+                    LoadCaptcha();
+                    return Page();
+                }
+                string Password = Guid.NewGuid().ToString().Replace("-", "")[..8]; // Generate a random password
                 // Call the authentication service to register the user
-                var result = _authService.CreateUser(Email, Password, true, MemberName, Model.MemberTypeType.Member);
+                var result = _authService.CreateUser(Email, Password, true, MemberName, Model.MemberTypeType.Member, $"{CountryCode}-{Phone}" );
 
                 if (!result)
                 {
@@ -89,23 +109,25 @@ namespace RST.Web.Pages.Account
                 }
                 else
                 {
-                    var m = _authService.GetUser(Email); // Ensure the user is created in the database
-                    if (m != null)
-                    {
-                        try
-                        {
-                            var em = emailService.SendRegistrationLink(m);
-                        }
-                        catch (Exception ex2)
-                        {
-                            logger.LogError(ex2, "RegisterModel > OnPost > SendRegistrationLink");
+                    //var m = _authService.GetUser(Email); // Ensure the user is created in the database
+                    //if (m != null)
+                    //{
+                    //    try
+                    //    {
+                    //        var p = _authService.CreatePasscode(m.ID, Model.PasscodePurpose.TwoFactorAuthentication);
+                    //        var em = emailService.SendPasscode(m, p);
+                    //        var smsresult = await smsService.SendSMSAsync(m.Phone, p);
+                    //    }
+                    //    catch (Exception ex2)
+                    //    {
+                    //        logger.LogError(ex2, "RegisterModel > OnPost > SendActivationPasscode");
 
-                        }
-                    }
+                    //    }
+                    //}
                     string rurl = string.Empty;
                     if (Request.Query.ContainsKey("returnUrl"))
                         rurl = Request.Query["returnUrl"].ToString();
-                    Success = $"Your account is created and an email has been sent to your registered email address.<br /> <br /> You will redirected to <a href='{Url.Content($"~/account/login?returnUrl={rurl}")}'>log in</a> now.<script>setTimeout(function () {{  window.location.href = \"{Url.Content($"~/account/login?returnUrl={rurl}")}\"; }}, 1000); </script>";
+                    Success = $"You’re all set! Registration successful.<br /> <br /> You will redirected to <a href='{Url.Content($"~/account/login?returnUrl={rurl}?s=1")}'>log in</a> now.<script>setTimeout(function () {{  window.location.href = \"{Url.Content($"~/account/login?returnUrl={rurl}")}\"; }}, 2000); </script>";
                 }
             }
             catch (Exception ex)

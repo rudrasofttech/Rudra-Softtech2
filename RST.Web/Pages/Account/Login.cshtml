@@ -17,7 +17,7 @@
     <div class="container py-5">
         <div class="row">
             <div class="offset-lg-4 col-lg-4 col-md-6">
-                <div class="mb-lg-5 mb-md-3 text-end">
+                <div class="mb-md-3 text-end">
                     <img src="//www.rudrasofttech.com/l/img/rst-logo-small.png" alt="Rudra Softtech LLP" style="max-height:80px;" class="img-fluid" />
                 </div>
                 @if (!User.Identity.IsAuthenticated)
@@ -29,7 +29,19 @@
                             @if (string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))
                             {
                                 <p>You are logged in.</p>
-                                <a class="mt-4" href="~/account/logout">Logout Now</a>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <a class="btn btn-success w-100" href="~/account/profile">
+                Go to Profile
+            </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a class="btn btn-danger w-100" href="~/account/logout">
+                Logout
+            </a>
+            </div>
+                                </div>
+          
                             }
                             else
                             {
@@ -64,12 +76,97 @@
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between">
                                     <label for="emailTxt" class="form-label fw-bold">Email</label>
-                                    <small>Required</small>
                                 </div>
                                 <input asp-for="Email" class="form-control" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
+                            <div class="text-center my-2">
+    <span class="fw-bold">— OR —</span>
+</div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <label for="phoneTxt" class="form-label fw-bold">Phone</label>
+                                </div>
+                                <div class="input-group">
+                                    <select class="form-select" style="max-width: 80px;" id="countryCode" asp-for="CountryCode">
+                                        <option value="91" selected>+91</option>
+                                        @* <!-- You can add more codes if needed -->
+                                    <option value="+1">USA (+1)</option>
+                                    <option value="+44">UK (+44)</option> *@
+                                    </select>
+                                    <input autocomplete="off" maxlength="10" asp-for="Phone" id="phoneTxt" class="form-control" />
+                                </div>
+                            </div>
+                            <input type="hidden" asp-for="OtpSentTime" />
                             <div class="mb-4">
+                                @if (!Model.OtpSent)
+                                {
+                                    <button type="submit" asp-page-handler="GenerateOtp" class="btn btn-secondary w-100" id="generateOtpBtn">Generate OTP</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" asp-page-handler="ResendOtp" 
+        class="btn btn-warning w-100" 
+        id="resendOtpBtn" disabled>
+    Resend OTP (2:00)
+</button>
+
+<script>
+    var btn = document.getElementById('resendOtpBtn');
+    var timeLeft = 120; // seconds
+
+    var timer = setInterval(function () {
+        // Calculate minutes and seconds
+        var minutes = Math.floor(timeLeft / 60);
+        var seconds = timeLeft % 60;
+
+        // Format with leading zero if needed
+        var formatted = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+
+        // Update button text
+        btn.textContent = "Resend OTP (" + formatted + ")";
+
+        timeLeft--;
+
+        if (timeLeft < 0) {
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.textContent = "Resend OTP";
+        }
+    }, 1000);
+</script>
+                                }
+                            </div>
+                            @if (Model.OtpSent)
+                            {
+                                <div class="mb-4">
+    <label class="form-label fw-bold">Enter OTP</label>
+    <input asp-for="OTP" id="otpInput" maxlength="6" class="form-control" />
+    <span asp-validation-for="OTP" class="text-danger"></span>
+</div>
+
+<div class="text-center mb-5">
+    <button type="submit" asp-page-handler="LoginOtp" id="loginBtn" class="btn btn-primary w-100" disabled>
+        Login
+    </button>
+</div>
+
+<script>
+    const otpInput = document.getElementById("otpInput");
+    const loginBtn = document.getElementById("loginBtn");
+
+    otpInput.addEventListener("input", function () {
+        // Enable only if OTP has exactly 6 digits
+        if (otpInput.value.length === 6) {
+            loginBtn.disabled = false;
+        } else {
+            loginBtn.disabled = true;
+        }
+    });
+</script>
+
+                            }
+                            @* <div class="mb-4">
                                 <div class="d-flex justify-content-between">
                                     <label for="passwordTxt" class="form-label fw-bold">Password</label>
                                     <small>Required</small>
@@ -77,17 +174,15 @@
 
                                 <input asp-for="Password" class="form-control" />
                                 <span asp-validation-for="Password" class="text-danger"></span>
-                            </div>
+                            </div> *@
                             @if (!string.IsNullOrEmpty(Model.Error))
                             {
                                 <div class="text-danger my-2">@Model.Error</div>
                             }
-                            <div class="text-center mb-5">
-                                <button type="submit" class="btn btn-primary w-100">Login</button>
-                            </div>
-                            <div class="text-end mb-3 fs-5">
+                            
+                           @*  <div class="text-end mb-3 fs-5">
                                 <p><a href="~/account/forgotpassword?returnUrl=@Request.Query["returnUrl"]">Forgot Your Password?</a></p>
-                            </div>
+                            </div> *@
                             <div class="text-end mb-5 fs-5">
                                 <p><a href="~/account/register?returnUrl=@Request.Query["returnUrl"]">Register Now</a> for free acount.</p>
                             </div>
@@ -101,7 +196,20 @@
                         <div>
                             <h1>Hello, @Model.CurrentMember.FirstName</h1>
                             <p>You are already logged in.</p>
-                            <a class="btn btn-primary mt-4" href="~/account/logout">Logout Now</a>
+                            <div class="mb-3">
+            <!-- Option 1: Go to Profile -->
+            <a class="btn btn-success btn-lg w-50" href="~/account/profile">
+                Go to Profile
+            </a>
+    </div>
+
+    <div class="mb-3">
+            <!-- Option 2: Logout -->
+            <a class="btn btn-danger btn-lg w-50" href="~/account/logout">
+                Logout
+            </a>
+    </div>
+
                             <script>
                                 try{
                                     window.opener.postMessage({

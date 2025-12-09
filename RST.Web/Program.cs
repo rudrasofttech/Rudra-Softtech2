@@ -78,6 +78,7 @@ builder.Services.AddScoped<WebsiteSettingsService>();
 builder.Services.AddScoped<DataSourceService>();
 builder.Services.AddScoped<RSTAuthenticationService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<SMSService>();
 builder.Services.AddScoped<CaptchaService>();
 builder.Services.AddScoped<IUserWebsiteRenderService, UserWebsiteRenderService>();
 builder.Services.AddScoped<IUserWebsiteThemeService, UserWebsiteThemeService>();

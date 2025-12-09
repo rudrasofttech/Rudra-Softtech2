@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace RST.Model
 {
@@ -48,6 +44,30 @@ namespace RST.Model
             }
         }
 
-        public Guid PublicID { get; set; } = Guid.NewGuid();    
+        public Guid PublicID { get; set; } = Guid.NewGuid();
+        [MaxLength(50)]
+        public string Phone { get; set; } = string.Empty;
+    }
+
+    public class Passcode
+    {
+        public Guid ID { get; set; } = Guid.NewGuid();            
+        public byte[] OTP { get; set; } = []; 
+        public int MemberID { get; set; }
+
+        [ForeignKey(nameof(MemberID))]
+        public Member Member { get; set; } = null!;
+        public DateTime Expiry { get; set; } = DateTime.UtcNow.AddMinutes(10);
+        public DateTime CreateDate { get; set; }  = DateTime.UtcNow;
+        public PasscodePurpose Purpose { get; set; } = PasscodePurpose.TwoFactorAuthentication;
+        [NotMapped]
+        public string OTPDisplay { get; set; }
+    }
+
+    public enum PasscodePurpose
+    {
+        AccountVerification = 3,
+        PasswordReset = 2,
+        TwoFactorAuthentication = 1
     }
 }
