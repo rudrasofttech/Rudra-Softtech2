@@ -13,22 +13,42 @@ using System.Text;
 
 namespace RST.Web.Pages.Account
 {
-    public class LoginModel(RSTAuthenticationService _authService, IConfiguration config) : PageModel
+    public class LoginModel(RSTAuthenticationService _authService,
+        ILogger<LoginModel> _logger,
+        SMSService _smsService, EmailService _emailService, IConfiguration config) : PageModel
     {
+        private readonly EmailService emailService = _emailService;
         private readonly IConfiguration _config = config;
         private readonly RSTAuthenticationService authService = _authService;
+        private readonly SMSService smsService = _smsService;
+        private readonly ILogger<LoginModel> logger = _logger;
         public List<string> Errors { get; set; } = [];
-        [Required(ErrorMessage = "Email is required.")]
+        //[Required(ErrorMessage = "Email is required.")]
+        [EmailAddress]
         [MaxLength(150)]
         [BindProperty]
         public string Email { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Password is required.")]
+        //[Required(ErrorMessage = "Password is required.")]
+        //[BindProperty]
+        //[DataType(DataType.Password)]
+        //[MaxLength(150)]
+        //public string Password { get; set; } = string.Empty;
+        [MaxLength(15)]
         [BindProperty]
-        [DataType(DataType.Password)]
-        [MaxLength(150)]
-        public string Password { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+
+        [BindProperty]
+        [MaxLength(5)]
+        public string CountryCode { get; set; } = string.Empty;
+        [BindProperty]
+        public string OTP { get; set; } = string.Empty;
+        public bool OtpSent { get; set; } = false;
+        [BindProperty]
+        public DateTime? OtpSentTime { get; set; }
+        public bool CanResendOtp => OtpSentTime.HasValue && (DateTime.UtcNow - OtpSentTime.Value).TotalSeconds >= 120;
 
         public string Error { get; set; } = string.Empty;
+
 
         public LoginReturnDTO LoginReturn { get; set; } = null!;
         public Member? CurrentMember { get; set; }
@@ -39,7 +59,7 @@ namespace RST.Web.Pages.Account
             {
                 var publicId = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
                 CurrentMember = authService.GetUser(new Guid(publicId));
-                if(CurrentMember == null) 
+                if (CurrentMember == null)
                 {
                     // If the user is not found in the database, sign them out and return.
                     //HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
@@ -61,7 +81,7 @@ namespace RST.Web.Pages.Account
                     claims.Add(new Claim(ClaimTypes.Role, "demo"));
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                
+
                 DateTime expiry = DateTime.UtcNow.AddDays(90);
                 string token = GenerateJSONWebToken(CurrentMember, expiry);
 
@@ -78,10 +98,98 @@ namespace RST.Web.Pages.Account
             }
         }
 
-        public async void OnPost()
+        public async Task<IActionResult> OnPostGenerateOtpAsync()
         {
-            if (!ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(Email) && string.IsNullOrWhiteSpace(Phone))
+            {
+                Error = "Please enter your email or phone number.";
+                return Page();
+            }
+
+            // Call your OTP generation logic here
+            var m = authService.GetUser(Email, $"{CountryCode}-{Phone}");
+            if (m != null)
+            {
+                if (m != null)
+                {
+                    var p = authService.CreatePasscode(m.ID, PasscodePurpose.TwoFactorAuthentication);
+                    var err = await SendOTPMessageAsync(m, p);
+                    if (err.Length > 0)
+                    {
+                        Error = err;
+                    }
+                }
+
+            }
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostResendOtpAsync()
+        {
+            if (string.IsNullOrWhiteSpace(Email) && string.IsNullOrWhiteSpace(Phone))
+            {
+                Error = "Please enter your email or phone number.";
+                return Page();
+            }
+            //if (!CanResendOtp)
+            //{
+            //    Error = "Please wait before resending OTP.";
+            //    return Page();
+            //}
+            var m = authService.GetUser(Email, $"{CountryCode}-{Phone}");
+            if (m != null)
+            {
+                if (m != null)
+                {
+                    var p = authService.CreatePasscode(m.ID, PasscodePurpose.TwoFactorAuthentication);
+                    var err = await SendOTPMessageAsync(m, p);
+                    if (err.Length > 0)
+                    {
+                        Error = err;
+                    }
+                }
+
+            }
+            return Page();
+        }
+
+        private async Task<string> SendOTPMessageAsync(Member m, string otp)
+        {
+            var err = new StringBuilder();
+            try
+            {
+                var em = emailService.SendPasscode(m, otp);
+            }
+            catch (Exception emailError)
+            {
+                logger.LogError(emailError, "LoginModel > SendOTPMessage");
+                err.Append("<div>Unable to send email.</div>");
+            }
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(m.Phone) && m.Phone.Length > 4)
+                {
+                    var smsresult = await smsService.SendSMSAsync(m.Phone, otp);
+                }
+            }
+            catch (Exception smsError)
+            {
+                logger.LogError(smsError, "LoginModel > SendOTPMessage");
+                err.Append("<div>Unable to send sms.</div>");
+            }
+            OtpSentTime = DateTime.UtcNow;
+            OtpSent = true;
+
+            return err.ToString();
+        }
+
+        public async void OnPostLoginOtpAsync()
+        {
+            if (string.IsNullOrEmpty(Email) && string.IsNullOrWhiteSpace(Phone))
+            {
+                Error = "Please provide either Email or Phone";
                 return;
+            }
             Error = string.Empty;
             if (!authService.AnyLoginAttempteRemain(Email))
             {
@@ -89,7 +197,8 @@ namespace RST.Web.Pages.Account
                 return;
             }
 
-            var tuple = authService.ValidateUser(Email, Password);
+            //var tuple = authService.ValidateUser(Email, Password);
+            var tuple = authService.ValidateOTP(Email, $"{CountryCode}-{Phone}", OTP);
             var m = tuple.Item1;
             if (tuple.Item2)
             {
@@ -109,7 +218,7 @@ namespace RST.Web.Pages.Account
                     claims.Add(new Claim(ClaimTypes.Role, "demo"));
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-                
+
 
                 DateTime expiry = DateTime.UtcNow.AddDays(90);
                 string token = GenerateJSONWebToken(m, expiry);
@@ -123,7 +232,7 @@ namespace RST.Web.Pages.Account
 
                     //rurl += $"&name={m.FirstName}&email={System.Net.WebUtility.UrlEncode(m.Email)}&expiry={System.Net.WebUtility.UrlEncode(expiry.ToString())}&token={System.Net.WebUtility.UrlEncode(token)}";
                 }
-                LoginReturn = new LoginReturnDTO() { Member = m, Token = token , ReturnURL = rurl, Expiry= expiry };
+                LoginReturn = new LoginReturnDTO() { Member = m, Token = token, ReturnURL = rurl, Expiry = expiry };
             }
             else
             {

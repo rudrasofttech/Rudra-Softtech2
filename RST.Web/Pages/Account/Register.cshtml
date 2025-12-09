@@ -16,13 +16,13 @@
 <body>
     <div class="container">
         <div class="row align-items-center justify-content-center" style="min-height:100vh;">
-            <div class="col-sm-6">
+            <div class="col-md-6">
                 <div class="text-center">
                     <img src="https://www.rudrasofttech.com/l/img/rst-logo-small.png" alt="Rudra Softtech LLP" style="max-height:100px;" class="img-fluid mb-4" />
                     <div class="mb-4">Creating an account will give you access to <strong>Ply</strong> and other services offered by Rudra Softtech.</div>
                 </div>
             </div>
-            <div class="col-sm-6">
+            <div class="col-md-6">
                 @if (!string.IsNullOrEmpty(Model.Success))
                 {
                     <div class="text-success my-3 fs-5 p-3 border-success ">@Html.Raw(Model.Success)</div>
@@ -41,22 +41,38 @@
                         </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
+                                <label for="phoneTxt" class="form-label fw-bold">Phone</label>
+                                <small class="text-danger">Required</small>
+                            </div>
+                            <div class="input-group">
+                                <select class="form-select" style="max-width: 80px;" id="countryCode" asp-for="CountryCode">
+                                    <option value="91" selected>+91</option>
+                                    @* <!-- You can add more codes if needed -->
+                                    <option value="+1">USA (+1)</option>
+                                    <option value="+44">UK (+44)</option> *@
+                                </select>
+                                <input autocomplete="off" maxlength="10" asp-for="Phone" id="phoneTxt" class="form-control" />
+                            </div>
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
                                 <label for="emailTxt" class="form-label fw-bold">Email</label>
                                 <small class="text-danger">Required</small>
                             </div>
                             <input autocomplete="off" asp-for="Email" id="emailTxt" class="form-control" />
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
-                        <div class="mb-3">
+                        @* <div class="mb-3">
                             <div class="d-flex justify-content-between">
                                 <label for="passwordTxt" class="form-label fw-bold">Password</label>
                                 <small class="text-danger">Required</small>
                             </div>
                             <input asp-for="Password" id="passwordTxt" class="form-control" />
                             <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
+                        </div>  *@
                         <div class="mb-3 fs-6">
-                            By continuing you agree to our <a href="https://www.rudrasofttech.com/privacy" target="_blank">privacy policy</a> and <a href="#" target="_blank">terms of use</a>. You also agree that Rudra Softtech LLP will send account and products related emails.
+                            By continuing, you agree to our <a href="https://www.rudrasofttech.com/privacy" target="_blank">Privacy Policy</a> and <a href="#" target="_blank">Terms of Use</a>. You also agree that Rudra Softtech LLP will send account and product-related emails and SMS.
                         </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between">
