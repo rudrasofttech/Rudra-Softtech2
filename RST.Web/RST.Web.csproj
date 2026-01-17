@@ -48,4 +48,23 @@
     <Folder Include="wwwroot\logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Resources\RSTResource.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>RSTResource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\RSTResource.hi.resx">
+      <CustomToolNamespace>RST.Web.Resources</CustomToolNamespace>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\RSTResource.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>RSTResource.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>RST.Web.Resources</CustomToolNamespace>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

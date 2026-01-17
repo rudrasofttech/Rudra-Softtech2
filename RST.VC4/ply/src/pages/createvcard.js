@@ -13,6 +13,7 @@ import ChooseTheme from "../components/choosetheme"; // Add this import at the t
 // Step 1: Website Info
 const WizardStepWebsiteInfo = ({ next, formData, setFormData }) => {
     const [websiteName, setWebsiteName] = useState(formData.websiteName || '');
+    const [websiteNameError, setWebsiteNameError] = useState('');
     const [company, setCompany] = useState(formData.company || '');
     const [tagLine, setTagLine] = useState(formData.tagLine || '');
     const [logo, setLogo] = useState(formData.logo || '');
@@ -21,11 +22,30 @@ const WizardStepWebsiteInfo = ({ next, formData, setFormData }) => {
     const [errors, setErrors] = useState([]);
     const navigate = useNavigate();
 
+    // Only allow valid domain characters: a-z, 0-9, -
+    const domainRegex = /^[a-zA-Z0-9-]+$/;
+
+    const handleWebsiteNameChange = (e) => {
+        let value = e.target.value;
+        // Remove invalid characters
+        value = value.replace(/[^a-zA-Z0-9-]/g, '');
+        setWebsiteName(value);
+        if (value.length > 0 && !domainRegex.test(value)) {
+            setWebsiteNameError('Only letters, numbers, and hyphens are allowed.');
+        } else {
+            setWebsiteNameError('');
+        }
+    };
+
     const handleBlur = () => {
         setFormData({ ...formData, websiteName, company, tagLine, logo });
     };
 
     const handleNext = async () => {
+        if (!websiteName || !domainRegex.test(websiteName)) {
+            setErrors(["Website name can only contain letters, numbers, and hyphens."]);
+            return;
+        }
         try {
             setLoading(true);
             setErrors([]);
@@ -89,14 +109,17 @@ const WizardStepWebsiteInfo = ({ next, formData, setFormData }) => {
                 <input
                     type="text"
                     value={websiteName}
-                    onChange={e => setWebsiteName(e.target.value)}
+                    onChange={handleWebsiteNameChange}
                     maxLength={50}
                     minLength={3}
                     required
                     className="form-control form-control-lg"
                     onBlur={handleBlur}
+                    pattern="[a-zA-Z0-9-]+"
+                    autoComplete="off"
                 />
-                <div className="text-end"><small>Min 3, Max 50 characters. Must be unique.<br/>Example: <b>my-vcard</b>, <b>rajkiran-card</b></small></div>
+                {websiteNameError && <div className="text-danger"><small>{websiteNameError}</small></div>}
+                <div className="text-end"><small>Min 3, Max 50 characters. Only letters, numbers, and hyphens allowed. Must be unique.<br/>Example: <b>my-vcard</b>, <b>rajkiran-card</b></small></div>
             </div>
             <div className="mb-3">
                 <label className="form-label">Company/Business Name</label>
