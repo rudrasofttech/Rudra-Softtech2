@@ -87,7 +87,11 @@ namespace RST.Web.Pages.Account
                 {
                     var publicId = User.Claims.First(t => t.Type == ClaimTypes.NameIdentifier).Value;
                     var CurrentMember = authService.GetUser(new Guid(publicId));
-                    
+                    if(CurrentMember == null)
+                    {
+                        HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
+                        return Page();
+                    }
                     if (_authService.EmailExist(Email, CurrentMember.ID))
                     {
                         ModelState.AddModelError(nameof(Email), "Email already exists.");

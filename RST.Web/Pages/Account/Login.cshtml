@@ -3,8 +3,9 @@
 
 @{
     Layout = null;
-    
 }
+
+@inject Microsoft.Extensions.Localization.IStringLocalizer<RST.Web.Resources.RSTResource> Localizer
 
 <!DOCTYPE html>
 <html>
@@ -28,36 +29,38 @@
                             <h1>Hello, @Model.LoginReturn.Member.FirstName</h1>
                             @if (string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))
                             {
-                                <p>You are logged in.</p>
+                                <p>@Localizer["LoggedInTxt"]</p>
                                 <div class="row mb-3">
                                     <div class="col-6">
-                                        <a class="btn btn-success w-100" href="~/account/profile">
-                Go to Profile
-            </a>
+                                        <a class="btn btn-success w-100" href="~/account/profile">@Localizer["GoToProfileTxt"]</a>
                                     </div>
                                     <div class="col-6">
-                                        <a class="btn btn-danger w-100" href="~/account/logout">
-                Logout
-            </a>
-            </div>
+                                        <a class="btn btn-danger w-100" href="~/account/logout">@Localizer["LogoutTxt"]</a>
+                                        </div>
                                 </div>
-          
                             }
                             else
                             {
-                                <p>You will be redirected now.</p>
+                                <p>@Localizer["YouWillBeRedirectedTxt"]</p>
                                 <p>If it not happens, <a href="@Html.Raw($"{Model.LoginReturn.ReturnURL}&expiry={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Expiry.ToString())}&name={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Member.FirstName)}&email={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Member.Email)}&token={System.Net.WebUtility.UrlEncode(Model.LoginReturn.Token)}")">click here</a> to move.</p>
                             }
                         </div>
-                        <script>
+                        <script type="text/javascript">
                             sessionStorage.setItem("token", "@Model.LoginReturn.Token");
-                            try{
-                                window.opener.postMessage({token : "@Model.LoginReturn.Token",
+                            let d = {token : "@Model.LoginReturn.Token",
                                 email : "@Model.LoginReturn.Member.Email",
                                 name: "@Model.LoginReturn.Member.FirstName",
-                                expiry: "@Model.LoginReturn.Expiry"}, "*");
+                                expiry: "@Model.LoginReturn.Expiry.ToString("o")"};
+                            try{
+                                window.opener.postMessage(d, "*");
                             }catch(e){
                                 console.error("Error posting message to opener:", e);
+                            }
+                            try{
+                                setTimeout(function () {window.dispatchEvent(new MessageEvent('message', {data: d}));}, 100);
+            
+                            }catch(e){
+                                console.error("Error posting message to window:", e);
                             }
                         </script>
                         @if (!string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))
@@ -71,21 +74,19 @@
                     }
                     else
                     {
-                        <h2 class="mb-3">Sign in</h2>
+                        <h2 class="mb-3">@Localizer["SignInTxt"]</h2>
                         <form method="post">
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between">
-                                    <label for="emailTxt" class="form-label fw-bold">Email</label>
+                                    <label for="emailTxt" class="form-label fw-bold">@Localizer["EmailTxt"]</label>
                                 </div>
                                 <input asp-for="Email" class="form-control" />
                             </div>
-                            <div class="text-center my-2">
-    <span class="fw-bold">— OR —</span>
-</div>
+                            <div class="text-center my-2">    <span class="fw-bold">— @Localizer["OrTxt"] —</span></div>
 
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between">
-                                    <label for="phoneTxt" class="form-label fw-bold">Phone</label>
+                                    <label for="phoneTxt" class="form-label fw-bold">@Localizer["PhoneTxt"]</label>
                                 </div>
                                 <div class="input-group">
                                     <select class="form-select" style="max-width: 80px;" id="countryCode" asp-for="CountryCode">
@@ -101,55 +102,41 @@
                             <div class="mb-4">
                                 @if (!Model.OtpSent)
                                 {
-                                    <button type="submit" asp-page-handler="GenerateOtp" class="btn btn-secondary w-100" id="generateOtpBtn">Generate OTP</button>
+                                    <button type="submit" asp-page-handler="GenerateOtp" class="btn btn-secondary w-100" id="generateOtpBtn">@Localizer["GenerateOTPTxt"]</button>
                                 }
                                 else
                                 {
-                                    <button type="submit" asp-page-handler="ResendOtp" 
-        class="btn btn-warning w-100" 
-        id="resendOtpBtn" disabled>
-    Resend OTP (2:00)
-</button>
-
-<script>
-    var btn = document.getElementById('resendOtpBtn');
-    var timeLeft = 120; // seconds
-
-    var timer = setInterval(function () {
-        // Calculate minutes and seconds
-        var minutes = Math.floor(timeLeft / 60);
-        var seconds = timeLeft % 60;
-
-        // Format with leading zero if needed
-        var formatted = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
-
-        // Update button text
-        btn.textContent = "Resend OTP (" + formatted + ")";
-
-        timeLeft--;
-
-        if (timeLeft < 0) {
-            clearInterval(timer);
-            btn.disabled = false;
-            btn.textContent = "Resend OTP";
-        }
-    }, 1000);
-</script>
+                                    <button type="submit" asp-page-handler="ResendOtp" class="btn btn-warning w-100" id="resendOtpBtn" disabled>@Localizer["ResendOTPTxt"] (2:00)</button>
+                                    <script>
+                                        var btn = document.getElementById('resendOtpBtn');
+                                        var timeLeft = 120; // seconds
+                                        var timer = setInterval(function () {
+                                            // Calculate minutes and seconds
+                                            var minutes = Math.floor(timeLeft / 60);
+                                            var seconds = timeLeft % 60;
+                                            // Format with leading zero if needed
+                                            var formatted = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+                                            // Update button text
+                                            btn.textContent = "Resend OTP (" + formatted + ")";
+                                            timeLeft--;
+                                            if (timeLeft < 0) {
+                                                clearInterval(timer);
+                                                btn.disabled = false;
+                                                btn.textContent = "Resend OTP";
+                                            }}, 1000);
+                                    </script>
                                 }
                             </div>
                             @if (Model.OtpSent)
                             {
                                 <div class="mb-4">
-    <label class="form-label fw-bold">Enter OTP</label>
-    <input asp-for="OTP" id="otpInput" maxlength="6" class="form-control" />
-    <span asp-validation-for="OTP" class="text-danger"></span>
-</div>
-
-<div class="text-center mb-5">
-    <button type="submit" asp-page-handler="LoginOtp" id="loginBtn" class="btn btn-primary w-100" disabled>
-        Login
-    </button>
-</div>
+                                    <label class="form-label fw-bold">@Localizer["EnterOTPTxt"]</label>
+                                    <input asp-for="OTP" id="otpInput" maxlength="6" class="form-control" />
+                                    <span asp-validation-for="OTP" class="text-danger"></span>
+                                </div>
+                                <div class="text-center mb-5">
+                                    <button type="submit" asp-page-handler="LoginOtp" id="loginBtn" class="btn btn-primary w-100" disabled>@Localizer["LoginTxt"]</button>
+                                    </div>
 
 <script>
     const otpInput = document.getElementById("otpInput");
@@ -166,15 +153,7 @@
 </script>
 
                             }
-                            @* <div class="mb-4">
-                                <div class="d-flex justify-content-between">
-                                    <label for="passwordTxt" class="form-label fw-bold">Password</label>
-                                    <small>Required</small>
-                                </div>
-
-                                <input asp-for="Password" class="form-control" />
-                                <span asp-validation-for="Password" class="text-danger"></span>
-                            </div> *@
+                            
                             @if (!string.IsNullOrEmpty(Model.Error))
                             {
                                 <div class="text-danger my-2">@Model.Error</div>
@@ -184,7 +163,7 @@
                                 <p><a href="~/account/forgotpassword?returnUrl=@Request.Query["returnUrl"]">Forgot Your Password?</a></p>
                             </div> *@
                             <div class="text-end mb-5 fs-5">
-                                <p><a href="~/account/register?returnUrl=@Request.Query["returnUrl"]">Register Now</a> for free acount.</p>
+                                <p><a href="~/account/register?returnUrl=@Request.Query["returnUrl"]">@Localizer["RegisterNowTxt"]</a> @Localizer["RegisterFreeTxt"]</p>
                             </div>
                         </form>
                     }
@@ -195,30 +174,27 @@
                     {
                         <div>
                             <h1>Hello, @Model.CurrentMember.FirstName</h1>
-                            <p>You are already logged in.</p>
-                            <div class="mb-3">
-            <!-- Option 1: Go to Profile -->
-            <a class="btn btn-success btn-lg w-50" href="~/account/profile">
-                Go to Profile
-            </a>
-    </div>
-
-    <div class="mb-3">
-            <!-- Option 2: Logout -->
-            <a class="btn btn-danger btn-lg w-50" href="~/account/logout">
-                Logout
-            </a>
-    </div>
+                            <p>@Localizer["LoggedInNowTxt"]</p>
+                            <div class="mb-3"><a class="btn btn-success btn-lg w-50" href="~/account/profile">@Localizer["GoToProfileTxt"]</a></div>
+                                <div class="mb-3"><a class="btn btn-danger btn-lg w-50" href="~/account/logout">@Localizer["LogoutTxt"]</a></div>
 
                             <script>
+                                let d2 = { 
+                                    token : "@Model.LoginReturn.Token",
+                                    email : "@Model.LoginReturn.Member.Email",
+                                    name: "@Model.LoginReturn.Member.FirstName",
+                                    expiry: "@Model.LoginReturn.Expiry.ToString("o")"
+                                };
                                 try{
-                                    window.opener.postMessage({
-                                        token : "@Model.LoginReturn.Token",
-                                        email : "@Model.LoginReturn.Member.Email",
-                                        name: "@Model.LoginReturn.Member.FirstName",
-                                    expiry: "@Model.LoginReturn.Expiry"}, "*");
+                                    window.opener.postMessage(d2, "*");
                                 }catch(e){
                                     console.error("Error posting message to opener:", e);
+                                }
+                                try{
+                                    setTimeout(function () {window.dispatchEvent(new MessageEvent('message', {data: d2}));}, 100);
+                                    
+                                }catch(e){
+                                    console.error("Error posting message to window:", e);
                                 }
                             </script>
                             @if (!string.IsNullOrEmpty(Model.LoginReturn.ReturnURL))

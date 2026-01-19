@@ -9,6 +9,7 @@
 <html>
 <head>
     <title>@Model.CustomPage.Title</title>
+    <link rel="canonical" href="@Model.CanonicalUrl" />
     @Html.Raw(Model.CustomPage.PageMeta)
     @if (!Model.CustomPage.NoTemplate)
     {

@@ -10,18 +10,19 @@ using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Localization;
 
 namespace RST.Web.Pages.Account
 {
-    public class LoginModel(RSTAuthenticationService _authService,
-        ILogger<LoginModel> _logger,
-        SMSService _smsService, EmailService _emailService, IConfiguration config) : PageModel
+    public class LoginModel : PageModel
     {
-        private readonly EmailService emailService = _emailService;
-        private readonly IConfiguration _config = config;
-        private readonly RSTAuthenticationService authService = _authService;
-        private readonly SMSService smsService = _smsService;
-        private readonly ILogger<LoginModel> logger = _logger;
+        private readonly EmailService emailService;
+        private readonly IConfiguration _config;
+        private readonly RSTAuthenticationService authService;
+        private readonly SMSService smsService;
+        private readonly ILogger<LoginModel> logger;
+        private readonly IStringLocalizer<RST.Web.Resources.RSTResource> _localizer;
+
         public List<string> Errors { get; set; } = [];
         //[Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
@@ -52,6 +53,19 @@ namespace RST.Web.Pages.Account
 
         public LoginReturnDTO LoginReturn { get; set; } = null!;
         public Member? CurrentMember { get; set; }
+
+        public LoginModel(RSTAuthenticationService _authService,
+            ILogger<LoginModel> _logger,
+            SMSService _smsService, EmailService _emailService, IConfiguration config,
+            IStringLocalizer<RST.Web.Resources.RSTResource> localizer) : base()
+        {
+            emailService = _emailService;
+            _config = config;
+            authService = _authService;
+            smsService = _smsService;
+            logger = _logger;
+            _localizer = localizer;
+        }
 
         public void OnGet()
         {
@@ -102,24 +116,24 @@ namespace RST.Web.Pages.Account
         {
             if (string.IsNullOrWhiteSpace(Email) && string.IsNullOrWhiteSpace(Phone))
             {
-                Error = "Please enter your email or phone number.";
+                Error = _localizer["EmailPhoneRequired"];
+                
                 return Page();
             }
 
-            // Call your OTP generation logic here
             var m = authService.GetUser(Email, $"{CountryCode}-{Phone}");
             if (m != null)
             {
-                if (m != null)
+                var p = authService.CreatePasscode(m.ID, PasscodePurpose.TwoFactorAuthentication);
+                var err = await SendOTPMessageAsync(m, p);
+                if (err.Length > 0)
                 {
-                    var p = authService.CreatePasscode(m.ID, PasscodePurpose.TwoFactorAuthentication);
-                    var err = await SendOTPMessageAsync(m, p);
-                    if (err.Length > 0)
-                    {
-                        Error = err;
-                    }
+                    Error = err;
                 }
-
+            }
+            else
+            {
+                Error = _localizer["UserNotFound"];
             }
             return Page();
         }
@@ -128,7 +142,7 @@ namespace RST.Web.Pages.Account
         {
             if (string.IsNullOrWhiteSpace(Email) && string.IsNullOrWhiteSpace(Phone))
             {
-                Error = "Please enter your email or phone number.";
+                Error = _localizer["EmailPhoneRequired"].Value;
                 return Page();
             }
             //if (!CanResendOtp)
@@ -163,7 +177,7 @@ namespace RST.Web.Pages.Account
             catch (Exception emailError)
             {
                 logger.LogError(emailError, "LoginModel > SendOTPMessage");
-                err.Append("<div>Unable to send email.</div>");
+                err.Append($"<div>{_localizer["UnableToSendEmail"].Value}</div>");
             }
             try
             {
@@ -175,7 +189,7 @@ namespace RST.Web.Pages.Account
             catch (Exception smsError)
             {
                 logger.LogError(smsError, "LoginModel > SendOTPMessage");
-                err.Append("<div>Unable to send sms.</div>");
+                err.Append($"<div>{_localizer["UnableToSendSMS"].Value}</div>");
             }
             OtpSentTime = DateTime.UtcNow;
             OtpSent = true;
@@ -187,13 +201,13 @@ namespace RST.Web.Pages.Account
         {
             if (string.IsNullOrEmpty(Email) && string.IsNullOrWhiteSpace(Phone))
             {
-                Error = "Please provide either Email or Phone";
+                Error = _localizer["EmailPhoneRequired"].Value;
                 return;
             }
             Error = string.Empty;
             if (!authService.AnyLoginAttempteRemain(Email))
             {
-                Error = $"You have exhausted all login attempts. Please wait for {authService.CoolOffTimeImMinutes} minutes.";
+                Error = $"{_localizer["ExhaustedLoginAttempt"].Value} Please wait for {authService.CoolOffTimeImMinutes} minutes.";
                 return;
             }
 
@@ -236,7 +250,7 @@ namespace RST.Web.Pages.Account
             }
             else
             {
-                Error = $"Unable to validate credentials.";
+                Error = _localizer["Unabletovalidatecreds"].Value;
             }
         }
 

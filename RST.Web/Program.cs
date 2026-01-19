@@ -101,6 +101,11 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
+builder.Services.AddLocalization(options => options.ResourcesPath = "");
+builder.Services.AddRazorPages()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
+
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 var app = builder.Build();
@@ -148,5 +153,7 @@ app.MapRazorPages()
    .WithStaticAssets();
 //app.MapBlazorHub();
 //app.MapFallbackToPage("/_Host");
+
+app.UseRequestLocalization();
 
 app.Run();
