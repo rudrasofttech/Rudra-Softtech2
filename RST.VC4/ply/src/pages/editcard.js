@@ -14,6 +14,7 @@ import ResponsivePreview from '../components/responsivepreview';
 import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
 import Modal from 'react-bootstrap/Modal';
 import ChooseTheme from '../components/choosetheme';
+import ExpandableTextarea from '../components/expandabletextarea';
 
 
 export default function EditCard() {
@@ -415,7 +416,8 @@ export default function EditCard() {
                         </div>
                         <div className="mb-2">
                             <label htmlFor="AddressTxt" className="form-label">Address</label>
-                            <input type="text" className="form-control" id="AddressTxt" value={website.vcard.address} maxLength={200}
+                            <ExpandableTextarea rows={2} className="form-control" id="AddressTxt" 
+                            value={website.vcard.address} maxLength={200}
                                 onChange={(e) => {
                                     setWebsite(prev => ({
                                         ...prev,
@@ -431,13 +433,12 @@ export default function EditCard() {
                                         handleSave();
                                         setIsDirty(false);
                                     }
-                                }}
-                            />
+                                }} />
                             <div className="text-end"><small>Provide full address including zipcode, disctrict, state name.</small></div>
                         </div>
                         <div className="mb-2">
                             <label htmlFor="BioTxt" className="form-label">Bio</label>
-                            <input type="text" className="form-control" id="BioTxt" value={website.vcard.aboutInfo} maxLength={500}
+                            <ExpandableTextarea rows={4} className="form-control" id="BioTxt" value={website.vcard.aboutInfo} maxLength={350}
                                 onChange={(e) => {
                                     setWebsite(prev => ({
                                         ...prev,
@@ -453,8 +454,7 @@ export default function EditCard() {
                                         handleSave();
                                         setIsDirty(false);
                                     }
-                                }}
-                            />
+                                }} />
                             <div className="text-end"><small>Write something about the business/company/yourself.</small></div>
                         </div>
                     </> : null}
