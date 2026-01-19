@@ -16,24 +16,33 @@ namespace RST.Web.Pages
         public string CommonHeadContent { get; set; } = string.Empty;
         public string SiteHeader { get; set; } = string.Empty;
         public string SiteFooter { get; set; } = string.Empty;
+        public string CanonicalUrl { get; set; } = string.Empty;
 
         public void OnGet(string pagename)
         {
-            if (string.IsNullOrEmpty(pagename))
+            try
             {
-                pagename = "home";
+                string pn = pagename;
+                if (string.IsNullOrEmpty(pagename))
+                {
+                    pn = "home";
+                }
+                var cp = db.CustomPages.FirstOrDefault(t => t.Name.ToLower() == pn.ToLower());
+
+                CustomPage = cp ?? new CustomPage();
+
+                CommonHeadContent = _siteSettingsService.GetSiteSetting("CommonHeadContent");
+                SiteFooter = _siteSettingsService.GetSiteSetting("SiteFooter");
+                SiteHeader = _siteSettingsService.GetSiteSetting("SiteHeader");
+                CanonicalUrl = $"{_siteSettingsService.GetSiteSetting("SiteUrl").TrimEnd('/')}/{pagename}";
+                #region Replace Custom Data Source
+                CustomPage.Body = _dataSourceService.ParseAndPopulate(CustomPage.Body);
+                #endregion
             }
-            var cp = db.CustomPages.FirstOrDefault(t => t.Name.ToLower() == pagename.ToLower());
-            
-            CustomPage = cp ?? new CustomPage();
-            
-            CommonHeadContent = _siteSettingsService.GetSiteSetting("CommonHeadContent");
-            SiteFooter = _siteSettingsService.GetSiteSetting("SiteFooter");
-            SiteHeader = _siteSettingsService.GetSiteSetting("SiteHeader");
-            #region Replace Custom Data Source
-            CustomPage.Body = _dataSourceService.ParseAndPopulate(CustomPage.Body);
-            #endregion
-            
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading page {PageName}", pagename);
+            }
         }
     }
 }

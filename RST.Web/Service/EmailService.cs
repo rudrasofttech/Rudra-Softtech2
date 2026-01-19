@@ -217,7 +217,7 @@ namespace RST.Web.Service
         public async Task<bool> SendSMSAsync(string phoneNumber, string message)
         {
             var parsedNumber = ParsePhoneNumber(phoneNumber);
-            string key = _config["2Factor:Key"]; // supply actual key
+            string key = _config["2Factor:Key"] ?? string.Empty; // supply actual key
 
             // Convert key to Base64
             //string base64Key = Convert.ToBase64String(Encoding.UTF8.GetBytes(key));
