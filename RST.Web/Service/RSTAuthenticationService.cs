@@ -99,17 +99,17 @@ namespace RST.Web.Service
 
         public Member? GetUser(Guid publicId)
         {
-            return dc.Members.SingleOrDefault(t => (t.PublicID == publicId) && t.Status != RecordStatus.Deleted);
+            return dc.Members.FirstOrDefault(t => (t.PublicID == publicId) && t.Status != RecordStatus.Deleted);
         }
 
         public Member? GetUser(string username)
         {
-            return dc.Members.SingleOrDefault(t => (t.Email == username ) && t.Status != RecordStatus.Deleted);
+            return dc.Members.FirstOrDefault(t => (t.Email == username ) && t.Status != RecordStatus.Deleted);
         }
 
         public Member? GetUser(string username, string phone)
         {
-            return dc.Members.SingleOrDefault(t => (t.Email == username || t.Phone == phone) && t.Status != RecordStatus.Deleted);
+            return dc.Members.FirstOrDefault(t => (t.Email == username || t.Phone == phone) && t.Status != RecordStatus.Deleted);
         }
 
         public string CreatePasscode(int memberId, PasscodePurpose purpose = PasscodePurpose.AccountVerification)

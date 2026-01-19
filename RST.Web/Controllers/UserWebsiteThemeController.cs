@@ -44,11 +44,11 @@ namespace RST.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string k = "", [FromQuery] int page = 1, [FromQuery] WebsiteType? wstype = WebsiteType.None)
+        public async Task<IActionResult> Get([FromQuery] string k = "", [FromQuery] int page = 1, [FromQuery] WebsiteType? wstype = WebsiteType.None, [FromQuery] int ps = 9)
         {
             try
             {
-                var result = await _themeService.GetThemesAsync(k, page, 10, wstype, HttpContext.Request);
+                var result = await _themeService.GetThemesAsync(k, page, ps, wstype, HttpContext.Request);
                 return Ok(result);
             }
             catch (Exception ex)
