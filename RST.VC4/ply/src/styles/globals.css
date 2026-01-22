@@ -1,7 +1,12 @@
 ﻿
+
 :root {
     --bs-primary: #7CBDFF;
-  }
+}
+
+html, body,input,textarea,select,button {
+    font-size: 0.865rem; /* Reduce from default 16px to 14px, adjust as needed */
+}
 
   
 .fancy-btn {

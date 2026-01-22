@@ -13,6 +13,7 @@ import ResponsivePreview from '../components/responsivepreview';
 import ImageUploaderWithCrop from '../components/imageuploaderwithcrop';
 import Modal from 'react-bootstrap/Modal';
 import ChooseTheme from '../components/choosetheme';
+import ExpandableTextarea from '../components/expandabletextarea';
 
 export default function EditLinkList() {
     const isMobile = useScreenSize();
@@ -235,7 +236,10 @@ export default function EditLinkList() {
                         </div>
                         <div className="mb-2">
                             <label className="form-label">Tag Line</label>
-                            <input type="text" className="form-control" value={website.linklist.line} maxLength={250}
+                            <ExpandableTextarea
+                                className="form-control"
+                                value={website.linklist.line}
+                                maxLength={250}
                                 onChange={e => {
                                     setWebsite(prev => ({
                                         ...prev,

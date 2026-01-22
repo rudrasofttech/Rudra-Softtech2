@@ -18,7 +18,6 @@ import ExpandableTextarea from '../components/expandabletextarea';
 
 
 export default function EditCard() {
-    //const [redirectUrl, setRedirectUrl] = useState("");
     const isMobile = useScreenSize();
     const navigate = useNavigate();
     const params = useParams();
@@ -33,13 +32,8 @@ export default function EditCard() {
     const [showEditThemeModal, setShowEditThemeModal] = useState(false);
     const [showEditPhotosModal, setShowEditPhotosModal] = useState(false);
 
-    //const [addPhotoFile, setAddPhotoFile] = useState(null);
-
 
     const [isDirty, setIsDirty] = useState(false);
-    // const [themes, setThemes] = useState(null);
-    // const [loadingTheme, setLoadingTheme] = useState(false);
-    // const [themePageIndex, setThemePageIndex] = useState(1);
     const [showLogoModal, setShowLogoModal] = useState(false);
 
     const handleLogoModalClose = () => setShowLogoModal(false);
@@ -70,29 +64,6 @@ export default function EditCard() {
         handleSave();
         setLogoChanged(false);
     }, [website && website.vcard && website.vcard.logo]);
-
-    // useEffect(() => {
-    //     async function fetchThemes() {
-    //         setLoadingTheme(true);
-    //         var r = await getWithAuth(`${APIURLS.userWebsiteTheme}/?page=${themePageIndex}&wstype=1`, navigate);
-    //         if (r.result) {
-    //             if (themes === null) {
-    //                 setThemes(r.data);
-    //             } else {
-    //                 setThemes((prev) => ({
-    //                     items: [...prev.items, ...r.data.items],
-    //                     pageIndex: r.data.pageIndex,
-    //                     pageCount: r.data.pageCount,
-    //                     totalRecords: r.data.totalRecords
-    //                 }));
-    //             }
-    //         } else {
-    //             toast.error("Failed to load themes: " + r.errors.join(', '));
-    //         }
-    //         setLoadingTheme(false);
-    //     }
-    //     fetchThemes();
-    // }, [themePageIndex, navigate]);
 
 
     useEffect(() => {
@@ -191,7 +162,7 @@ export default function EditCard() {
         }
     }
 
-    return <>
+    return <div >
         <PlyNavbar showLoginPopup={null}>
             {website !== null ?
                 <Nav className="justify-content-end flex-grow-1 pe-3">
@@ -255,13 +226,13 @@ export default function EditCard() {
         {loading ? <Loader /> : null}
         {website !== null ? <div className="container-fluid border-top">
             <div className="row">
-                {!isMobile ? <div className="col-md-6 col-lg-8 col-sm ">
+                {!isMobile ? <div className="col-md-8 col-sm " style={{overflowY:"auto", height:"calc(100vh - 57px)" }}>
                     <div className='sticky-lg-top' style={{ top: "55px" }}>
                         <HtmlIframe id={website.id} navigate={navigate} dummy={dummy} />
                     </div>
                 </div> : null}
-                <div className="col-md-6 col-lg-4 col-sm p-md-4 p-2 bg-light border-start">
-                    {showEditCompanyModal ? <>
+                <div className="col-md-4 bg-light border-start">
+                    {showEditCompanyModal ? <div style={{overflowY:"auto", height:"calc(100vh - 57px)" }} className="p-3">
                         <div className="fw-bold mb-2 fs-5">Business Information</div>
                         <div className="mb-2">
                             <label htmlFor="companyTxt" className="form-label">Business/Company/Organisation Name</label>
@@ -286,8 +257,13 @@ export default function EditCard() {
                         </div>
                         <div className="mb-2">
                             <label htmlFor="tagLineTxt" className="form-label">Tag Line</label>
-                            <input type="text" className="form-control" id="tagLineTxt" value={website.vcard.tagLine} maxLength={100}
-                                onChange={(e) => {
+                            <ExpandableTextarea
+                                className="form-control"
+                                row="1"
+                                id="tagLineTxt"
+                                value={website.vcard.tagLine}
+                                maxLength={100}
+                                onChange={e => {
                                     setWebsite(prev => ({
                                         ...prev,
                                         vcard: {
@@ -304,10 +280,10 @@ export default function EditCard() {
                                     }
                                 }}
                             />
+                            <div className="text-end"><small>A short catchy phrase that describes your business.</small></div>
                         </div>
                         <div className="mb-2">
                             <label htmlFor="logoTxt" className="form-label">Logo URL</label>
-
                             {website.vcard.logo !== "" ? <div>
                                 <img alt="" src={website.vcard.logo} className="img-fluid" style={{ maxWidth: "200px" }} />
                                 <div className="my-2">
@@ -345,8 +321,8 @@ export default function EditCard() {
                             {/*    </div>*/}
                             {/*)}*/}
                         </div>
-                    </> : null}
-                    {showEditContactModal ? <>
+                    </div> : null}
+                    {showEditContactModal ? <div style={{overflowY:"auto", height:"calc(100vh - 57px)" }} className="p-3">
                         <div className="fw-bold mb-2 fs-5">Contact Information</div>
                         <div className="mb-2">
                             <label htmlFor="personNameTxt" className="form-label">Person Name</label>
@@ -457,8 +433,8 @@ export default function EditCard() {
                                 }} />
                             <div className="text-end"><small>Write something about the business/company/yourself.</small></div>
                         </div>
-                    </> : null}
-                    {showEditPhoneModal ? <>
+                    </div> : null}
+                    {showEditPhoneModal ? <div style={{overflowY:"auto", height:"calc(100vh - 57px)" }} className="p-3">
                         <div className="fw-bold mb-2 fs-5">Phone Numbers</div>
                         <div className="mb-2">
                             <label htmlFor="phone1Txt" className="form-label">Phone 1</label>
@@ -526,8 +502,8 @@ export default function EditCard() {
                             />
                             <div className="text-end"><small>Example: +91 9876543210</small></div>
                         </div>
-                    </> : null}
-                    {showEditSocialModal ? <>
+                    </div> : null}
+                    {showEditSocialModal ? <div style={{overflowY:"auto", height:"calc(100vh - 57px)" }} className="p-3">
                         <div className="fw-bold mb-2 fs-5">Social Media Links</div>
                         <div className="text-start mb-2"><small>These will show as icons on your digital visiting card.</small></div>
                         <div className="mb-2">
@@ -684,14 +660,14 @@ export default function EditCard() {
                             />
                             <div className="text-end"><small>Example- https://www.facebook.com/singhrajkiran</small></div>
                         </div>
-                    </> : null}
+                    </div> : null}
                     {showEditThemeModal ? <ChooseTheme themeType={1} onThemeSelect={(id) => {
                         setWebsite(prev => ({
                                                 ...prev,
                                                 themeId: id
                                             }));
                                             updateTheme(id); }} initialThemeId={website.themeId} /> : null}
-                    {showEditPhotosModal ? <>
+                    {showEditPhotosModal ? <div style={{overflowY:"auto", height:"calc(100vh - 57px)" }} className="p-3">
                         <div className="fw-bold mb-2 fs-5">Photo Gallery</div>
                         <div className="py-2 text-muted">Upload up to 12 photos (JPEG/PNG, max 50kb each).<br /> <strong>Existing: {website.vcard.photos ? website.vcard.photos.length : 0}/12</strong></div>
                         <div className="mb-2">
@@ -802,11 +778,11 @@ export default function EditCard() {
                             </div>
                             {website.vcard.photos && website.vcard.photos.length >= 12 ? <div className="text-danger mt-2">Maximum 12 photos allowed.</div> : null}
                         </div>
-                    </> : null}
+                    </div> : null}
                 </div>
             </div>
         </div> : null}
-    </>;
+    </div>;
 }
 
 function HtmlIframe({ id, navigate, dummy }) {

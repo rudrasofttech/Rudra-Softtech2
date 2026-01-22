@@ -7,7 +7,7 @@ import logo from '../assets/logo.jpg';
 
 export default function PlyNavbar(props) {
     const expand = 'md';
-    return <Navbar key={expand} expand={expand} className="bg-white sticky-lg-top p-md-1">
+    return <Navbar key={expand} expand={expand} className="bg-white p-md-1">
         <Container fluid>
             <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda"><img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' /></Navbar.Brand>
             <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />

@@ -5,95 +5,48 @@ using RST.Services;
 
 namespace VC4.Pages
 {
-    public class IndexModel(RSTContext context, ILogger<IndexModel> logger, IUserWebsiteRenderService _userWebsite) : PageModel
+    public class IndexModel(RSTContext context, ILogger<IndexModel> logger, IUserWebsiteRenderService userWebsite) : PageModel
     {
         private readonly ILogger<IndexModel> _logger = logger;
         private readonly RSTContext _context = context;
-        private readonly IUserWebsiteRenderService userWebsite = _userWebsite;
+        private readonly IUserWebsiteRenderService _userWebsite = userWebsite;
 
         public string? Subdomain { get; private set; }
         public UserWebsite? UserWebsite { get; private set; }
         public string PageHtml { get; set; } = string.Empty;
         public string? WebstatsId { get; set; } = string.Empty;
-        public async void OnGet()
+
+        public async Task OnGetAsync()
         {
             DateTime start = DateTime.UtcNow;
             try
             {
-                var host = Request.Host.Host; // e.g., "user1.vc4.in"
-                var parts = host.Split('.');
+                var host = Request.Host.Host;
+                var subdomain = GetSubdomain(host);
+                var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
 
-                // Assumes domain is like subdomain.domain.tld
-                if (parts.Length > 2)
+                if (subdomain != null)
                 {
-                    Subdomain = parts[0]; // "user1"
+                    Subdomain = subdomain;
                     UserWebsite = _context.UserWebsites.FirstOrDefault(uw => uw.Name == Subdomain);
+
                     if (UserWebsite == null)
                     {
-                        _logger.LogWarning("No UserWebsite found for subdomain: {Subdomain}", Subdomain);
-                        // Read NotFound.html from Pages folder
-                        var notFoundPath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "NotFound.html");
-                        if (System.IO.File.Exists(notFoundPath))
-                        {
-                            var html = System.IO.File.ReadAllText(notFoundPath);
-                            var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
-                            PageHtml = html.Replace("[fullurl]", fullUrl);
-                        }
-                        else
-                        {
-                            PageHtml = "<h1>404 - Not Found</h1><p>The page you are looking for does not exist.</p>";
-                        }
+                        PageHtml = HandleNotFound(fullUrl);
                     }
                     else if (UserWebsite.Status != RecordStatus.Active)
                     {
-                        _logger.LogWarning("UserWebsite found for subdomain: {Subdomain} but status is not Active", Subdomain);
-                        // Read Inactive.html from Pages folder
-                        var inactivePath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "Inactive.html");
-                        if (System.IO.File.Exists(inactivePath))
-                        {
-                            var html = System.IO.File.ReadAllText(inactivePath);
-                            var fullUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}";
-                            PageHtml = html.Replace("[fullurl]", fullUrl);
-                        }
-                        else
-                        {
-                            PageHtml = "<h1>Site Inactive</h1><p>The site you are looking for is currently inactive.</p>";
-                        }
+                        PageHtml = HandleInactive(fullUrl);
                     }
                     else
                     {
-                        if (UserWebsite.WSType == WebsiteType.VCard)
-                        {
-                            UserWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(UserWebsite.JsonData);
-                            PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.VisitingCardDetail);
-                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
-                            WebstatsId = UserWebsite.WebstatsScript;
-                        }
-                        else if (UserWebsite.WSType == WebsiteType.LinkList)
-                        {
-                            UserWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(UserWebsite.JsonData);
-                            PageHtml = await userWebsite.GetRenderedHtmlAsync(UserWebsite.Html, UserWebsite.LinkListDetail);
-                            PageHtml = PageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
-                            WebstatsId = UserWebsite.WebstatsScript;
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Unsupported WebsiteType: {WSType} for UserWebsite: {Subdomain}", UserWebsite.WSType, Subdomain);
-                        }
+                        PageHtml = await RenderUserWebsiteAsync(UserWebsite);
+                        WebstatsId = UserWebsite.WebstatsScript;
                     }
                 }
                 else
                 {
-                    // Read main.html from Pages folder and set PageHtml
-                    var mainHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "main.html");
-                    if (System.IO.File.Exists(mainHtmlPath))
-                    {
-                        PageHtml = System.IO.File.ReadAllText(mainHtmlPath);
-                    }
-                    else
-                    {
-                        PageHtml = "<h1>Main Page</h1><p>main.html not found.</p>";
-                    }
+                    PageHtml = RenderMainPage();
                 }
             }
             catch (Exception ex)
@@ -101,6 +54,65 @@ namespace VC4.Pages
                 _logger.LogError(ex, "Error parsing subdomain from host: {Host}", Request.Host.Host);
             }
             _logger.LogInformation("Request for host: {Host} handled in {Duration} ms", Request.Host.Host, (DateTime.UtcNow - start).TotalSeconds);
+        }
+
+        private string? GetSubdomain(string host)
+        {
+            var parts = host.Split('.');
+            return parts.Length > 2 ? parts[0] : null;
+        }
+
+        private string LoadHtmlFile(string fileName, string fullUrl)
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "Pages", fileName);
+            if (System.IO.File.Exists(path))
+            {
+                var html = System.IO.File.ReadAllText(path);
+                return html.Replace("[fullurl]", fullUrl);
+            }
+            return null!;
+        }
+
+        private string HandleNotFound(string fullUrl)
+            => LoadHtmlFile("NotFound.html", fullUrl) ?? "<h1>404 - Not Found</h1><p>The page you are looking for does not exist.</p>";
+
+        private string HandleInactive(string fullUrl)
+            => LoadHtmlFile("Inactive.html", fullUrl) ?? "<h1>Site Inactive</h1><p>The site you are looking for is currently inactive.</p>";
+
+        private string RenderMainPage()
+        {
+            // Read main.html from Pages folder and set PageHtml
+            var mainHtmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Pages", "main.html");
+            if (System.IO.File.Exists(mainHtmlPath))
+            {
+                return System.IO.File.ReadAllText(mainHtmlPath);
+            }
+            return "<h1>Main Page</h1><p>main.html not found.</p>";
+        }
+
+        private async Task<string> RenderUserWebsiteAsync(UserWebsite userWebsite)
+        {
+            string pageHtml = string.Empty;
+            if (!string.IsNullOrEmpty(userWebsite.Output))
+            {
+                pageHtml = userWebsite.Output;
+            }
+            if (userWebsite.WSType == WebsiteType.VCard)
+            {
+                userWebsite.VisitingCardDetail = System.Text.Json.JsonSerializer.Deserialize<VisitingCardDetail>(userWebsite.JsonData);
+                pageHtml = await _userWebsite.GetRenderedHtmlAsync(userWebsite.Html, userWebsite.VisitingCardDetail);
+            }
+            else if (userWebsite.WSType == WebsiteType.LinkList)
+            {
+                userWebsite.LinkListDetail = System.Text.Json.JsonSerializer.Deserialize<LinkListDetail>(userWebsite.JsonData);
+                pageHtml = await _userWebsite.GetRenderedHtmlAsync(userWebsite.Html, userWebsite.LinkListDetail);
+            }
+            else
+            {
+                _logger.LogWarning("Unsupported WebsiteType: {WSType} for UserWebsite: {Subdomain}", userWebsite.WSType, Subdomain);
+            }
+
+            return pageHtml.Replace("</head>", $"<meta name=\"format-detection\" content=\"telephone=no\" /></head>");
         }
     }
 }

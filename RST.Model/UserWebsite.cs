@@ -28,6 +28,7 @@ namespace RST.Model
         public string Html { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
         public string? WebstatsScript { get; set; } = string.Empty;
+        public string? Output { get; set; }=string.Empty;
     }
 
     public class VisitingCardDetail
