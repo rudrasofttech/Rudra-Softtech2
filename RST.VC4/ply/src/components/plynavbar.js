@@ -7,24 +7,35 @@ import logo from '../assets/logo.jpg';
 
 export default function PlyNavbar(props) {
     const expand = 'md';
-    return <Navbar key={expand} expand={expand} className="bg-white p-md-1">
-        <Container fluid>
-            <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda"><img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' /></Navbar.Brand>
-            <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />
-            <Navbar.Offcanvas
-                id={`offcanvasNavbar-expand-${expand}`}
-                aria-labelledby={`offcanvasNavbarLabel-expand-${expand}`}
-                placement="end">
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title id={`offcanvasNavbarLabel-expand-${expand}`} className="fw-bold merienda">
-                        <img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' />
-                    </Offcanvas.Title>
-                </Offcanvas.Header>
-                <Offcanvas.Body>
-                    {props.children}
-                    <AccountButtons showLoginPopup={props.showLoginPopup} />
-                </Offcanvas.Body>
-            </Navbar.Offcanvas>
-        </Container>
-    </Navbar>;
+    return <Container fluid className="px-3 py-1 bg-white border-bottom">
+        <div className="d-flex justify-content-between align-items-center">
+            <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda">
+                <img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' />
+            </Navbar.Brand>
+            <div className="d-flex align-items-center">
+                {props.children}
+                <AccountButtons showLoginPopup={props.showLoginPopup} />
+            </div>
+        </div>
+    </Container>;
+    // return <Navbar key={expand} expand={expand} className="bg-white p-md-1">
+    //     <Container fluid>
+    //         <Navbar.Brand href="/" className="fw-bold dancing-script fw-bold merienda"><img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' /></Navbar.Brand>
+    //         <Navbar.Toggle aria-controls={`offcanvasNavbar-expand-${expand}`} />
+    //         <Navbar.Offcanvas
+    //             id={`offcanvasNavbar-expand-${expand}`}
+    //             aria-labelledby={`offcanvasNavbarLabel-expand-${expand}`}
+    //             placement="end">
+    //             <Offcanvas.Header closeButton>
+    //                 <Offcanvas.Title id={`offcanvasNavbarLabel-expand-${expand}`} className="fw-bold merienda">
+    //                     <img src={logo} alt="Ply Logo" title='Ply' className='img-fluid logo' />
+    //                 </Offcanvas.Title>
+    //             </Offcanvas.Header>
+    //             <Offcanvas.Body>
+    //                 {props.children}
+    //                 <AccountButtons showLoginPopup={props.showLoginPopup} />
+    //             </Offcanvas.Body>
+    //         </Navbar.Offcanvas>
+    //     </Container>
+    // </Navbar>;
 }

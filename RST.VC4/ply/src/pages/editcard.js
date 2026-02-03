@@ -8,6 +8,7 @@ import PlyNavbar from '../components/plynavbar';
 import Loader from '../components/loader';
 import "../styles/globals.css";
 import Nav from 'react-bootstrap/Nav';
+import Dropdown from 'react-bootstrap/Dropdown';
 import { toast } from 'react-toastify';
 import useScreenSize from '../hooks/useScreenSize';
 import ResponsivePreview from '../components/responsivepreview';
@@ -165,63 +166,133 @@ export default function EditCard() {
     return <div >
         <PlyNavbar showLoginPopup={null}>
             {website !== null ?
-                <Nav className="justify-content-end flex-grow-1 pe-3">
-                    <Nav.Link className={showEditContactModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(false);
-                        setShowEditContactModal(true);
-                        setShowEditPhoneModal(false);
-                        setShowEditSocialModal(false);
-                        setShowEditThemeModal(false);
-                        setShowEditPhotosModal(false);
-                    }}>Contact</Nav.Link>
-                    <Nav.Link className={showEditCompanyModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(true);
-                        setShowEditContactModal(false);
-                        setShowEditPhoneModal(false);
-                        setShowEditSocialModal(false);
-                        setShowEditThemeModal(false);
-                        setShowEditPhotosModal(false);
-                    }}>Business</Nav.Link>
-                    <Nav.Link className={showEditPhoneModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(false);
-                        setShowEditContactModal(false);
-                        setShowEditPhoneModal(true);
-                        setShowEditSocialModal(false);
-                        setShowEditThemeModal(false);
-                        setShowEditPhotosModal(false);
-                    }}>Phone</Nav.Link>
-                    <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(false);
-                        setShowEditContactModal(false);
-                        setShowEditPhoneModal(false);
-                        setShowEditSocialModal(true);
-                        setShowEditThemeModal(false);
-                        setShowEditPhotosModal(false);
-                    }}>Social</Nav.Link>
-                    <Nav.Link className={showEditThemeModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(false);
-                        setShowEditContactModal(false);
-                        setShowEditPhoneModal(false);
-                        setShowEditSocialModal(false);
-                        setShowEditThemeModal(true);
-                        setShowEditPhotosModal(false);
-                    }}>Themes</Nav.Link>
-                    <Nav.Link className={showEditPhotosModal ? "active" : ""} onClick={() => {
-                        setShowEditCompanyModal(false);
-                        setShowEditContactModal(false);
-                        setShowEditPhoneModal(false);
-                        setShowEditSocialModal(false);
-                        setShowEditThemeModal(false);
-                        setShowEditPhotosModal(true);
-                    }}>Photos</Nav.Link>
-                    {website.status === 1 ? <Nav.Link disabled={loading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
-                        updateStatus(0);
-                    }}>Activate</Nav.Link> : null}
-                    {website.status === 0 ? <Nav.Link title="Site is active, click to inactivate." disabled={loading} className="text-danger " onClick={() => {
-                        updateStatus(1);
-                    }}>Inactivate</Nav.Link> : null}
-                    <Nav.Link title="Site is active, click to inactivate." target="_blank" className="text-primary link-underline-primary" href={`https://${website.name}.vc4.in`}>Visit {website.name}</Nav.Link>
-                </Nav> : <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>}
+                !isMobile ? (
+                    <Nav className="justify-content-end flex-grow-1 pe-3">
+                        <Nav.Link className={showEditContactModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(false);
+                            setShowEditContactModal(true);
+                            setShowEditPhoneModal(false);
+                            setShowEditSocialModal(false);
+                            setShowEditThemeModal(false);
+                            setShowEditPhotosModal(false);
+                        }}>Contact</Nav.Link>
+                        <Nav.Link className={showEditCompanyModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(true);
+                            setShowEditContactModal(false);
+                            setShowEditPhoneModal(false);
+                            setShowEditSocialModal(false);
+                            setShowEditThemeModal(false);
+                            setShowEditPhotosModal(false);
+                        }}>Business</Nav.Link>
+                        <Nav.Link className={showEditPhoneModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(false);
+                            setShowEditContactModal(false);
+                            setShowEditPhoneModal(true);
+                            setShowEditSocialModal(false);
+                            setShowEditThemeModal(false);
+                            setShowEditPhotosModal(false);
+                        }}>Phone</Nav.Link>
+                        <Nav.Link className={showEditSocialModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(false);
+                            setShowEditContactModal(false);
+                            setShowEditPhoneModal(false);
+                            setShowEditSocialModal(true);
+                            setShowEditThemeModal(false);
+                            setShowEditPhotosModal(false);
+                        }}>Social</Nav.Link>
+                        <Nav.Link className={showEditThemeModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(false);
+                            setShowEditContactModal(false);
+                            setShowEditPhoneModal(false);
+                            setShowEditSocialModal(false);
+                            setShowEditThemeModal(true);
+                            setShowEditPhotosModal(false);
+                        }}>Themes</Nav.Link>
+                        <Nav.Link className={showEditPhotosModal ? "active" : ""} onClick={() => {
+                            setShowEditCompanyModal(false);
+                            setShowEditContactModal(false);
+                            setShowEditPhoneModal(false);
+                            setShowEditSocialModal(false);
+                            setShowEditThemeModal(false);
+                            setShowEditPhotosModal(true);
+                        }}>Photos</Nav.Link>
+                        {website.status === 1 ? <Nav.Link disabled={loading} title="Site is Inactive, click to activate." className="text-success" onClick={() => {
+                            updateStatus(0);
+                        }}>Activate</Nav.Link> : null}
+                        {website.status === 0 ? <Nav.Link title="Site is active, click to inactivate." disabled={loading} className="text-danger " onClick={() => {
+                            updateStatus(1);
+                        }}>Inactivate</Nav.Link> : null}
+                        <Nav.Link title="Site is active, click to inactivate." target="_blank" className="text-primary link-underline-primary" href={`https://${website.name}.vc4.in`}>Visit {website.name}</Nav.Link>
+                    </Nav>
+                ) : (
+                    <div className="d-flex justify-content-end flex-grow-1 pe-3">
+                        <Dropdown align="end">
+                            <Dropdown.Toggle variant="primary" size="sm" id="navDropdown">
+                                Edit
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                <Dropdown.Item active={showEditContactModal} onClick={() => {
+                                    setShowEditCompanyModal(false);
+                                    setShowEditContactModal(true);
+                                    setShowEditPhoneModal(false);
+                                    setShowEditSocialModal(false);
+                                    setShowEditThemeModal(false);
+                                    setShowEditPhotosModal(false);
+                                }}>Contact</Dropdown.Item>
+                                <Dropdown.Item active={showEditCompanyModal} onClick={() => {
+                                    setShowEditCompanyModal(true);
+                                    setShowEditContactModal(false);
+                                    setShowEditPhoneModal(false);
+                                    setShowEditSocialModal(false);
+                                    setShowEditThemeModal(false);
+                                    setShowEditPhotosModal(false);
+                                }}>Business</Dropdown.Item>
+                                <Dropdown.Item active={showEditPhoneModal} onClick={() => {
+                                    setShowEditCompanyModal(false);
+                                    setShowEditContactModal(false);
+                                    setShowEditPhoneModal(true);
+                                    setShowEditSocialModal(false);
+                                    setShowEditThemeModal(false);
+                                    setShowEditPhotosModal(false);
+                                }}>Phone</Dropdown.Item>
+                                <Dropdown.Item active={showEditSocialModal} onClick={() => {
+                                    setShowEditCompanyModal(false);
+                                    setShowEditContactModal(false);
+                                    setShowEditPhoneModal(false);
+                                    setShowEditSocialModal(true);
+                                    setShowEditThemeModal(false);
+                                    setShowEditPhotosModal(false);
+                                }}>Social</Dropdown.Item>
+                                <Dropdown.Item active={showEditThemeModal} onClick={() => {
+                                    setShowEditCompanyModal(false);
+                                    setShowEditContactModal(false);
+                                    setShowEditPhoneModal(false);
+                                    setShowEditSocialModal(false);
+                                    setShowEditThemeModal(true);
+                                    setShowEditPhotosModal(false);
+                                }}>Themes</Dropdown.Item>
+                                <Dropdown.Item active={showEditPhotosModal} onClick={() => {
+                                    setShowEditCompanyModal(false);
+                                    setShowEditContactModal(false);
+                                    setShowEditPhoneModal(false);
+                                    setShowEditSocialModal(false);
+                                    setShowEditThemeModal(false);
+                                    setShowEditPhotosModal(true);
+                                }}>Photos</Dropdown.Item>
+                                {website.status === 1 ? <Dropdown.Item className="text-success" disabled={loading} title="Site is Inactive, click to activate." onClick={() => {
+                                    updateStatus(0);
+                                }}>Activate</Dropdown.Item> : null}
+                                {website.status === 0 ? <Dropdown.Item className="text-danger" title="Site is active, click to inactivate." disabled={loading} onClick={() => {
+                                    updateStatus(1);
+                                }}>Inactivate</Dropdown.Item> : null}
+                                <Dropdown.Item className="text-primary link-underline-primary" as="a" target="_blank" rel="noopener noreferrer" href={`https://${website.name}.vc4.in`}>
+                                    Visit {website.name}
+                                </Dropdown.Item>
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </div>
+                )
+            : <Nav className="justify-content-end flex-grow-1 pe-3"></Nav>}
         </PlyNavbar>
         {loading ? <Loader /> : null}
         {website !== null ? <div className="container-fluid border-top">
