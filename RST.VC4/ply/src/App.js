@@ -19,7 +19,6 @@ function App() {
         <Route path='/editlinklist/:id' element={<EditLinkList />} />
       </Routes>
       <ToastContainer />
-
     </>
   );
 }

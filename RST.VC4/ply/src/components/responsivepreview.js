@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../styles/responsivepreview.css';
+import useScreenSize from '../hooks/useScreenSize';
 
 const DEVICE_SIZES = {
   mobile: { width: 375, height: "calc(100vh - 120px)" },   // iPhone-like
@@ -9,7 +10,7 @@ const DEVICE_SIZES = {
 
 export default function ResponsivePreview({ html }) {
   const [device, setDevice] = useState('mobile');
-
+  const isMobile = useScreenSize();
   const { width, height } = DEVICE_SIZES[device];
 
   // Scale factor: shrink large devices to fit container
@@ -18,7 +19,7 @@ export default function ResponsivePreview({ html }) {
   return (
     <div className="responsive-preview">
       {/* Device Tabs */}
-      <div className="device-tabs">
+      {!isMobile ? <div className="device-tabs">
         {Object.keys(DEVICE_SIZES).map((key) => (
           <button
             key={key}
@@ -30,7 +31,8 @@ export default function ResponsivePreview({ html }) {
             {key === "desktop" && <i className="bi bi-laptop" title="Laptop, desktops and large screens"></i>}
           </button>
         ))}
-      </div>
+      </div> : null }
+      
 
       {/* Scaled Preview */}
       <div className="iframe-wrapper">
