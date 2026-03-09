@@ -4,8 +4,10 @@ import useAppStore from "../store/useAppStore";
 import { useEffect } from "react";
 import Nav from 'react-bootstrap/Nav';
 import { Button } from 'react-bootstrap';
+import Dropdown from 'react-bootstrap/Dropdown';
 import Form from 'react-bootstrap/Form';
 import { useNavigate } from 'react-router-dom';
+import useScreenSize from "../hooks/useScreenSize";
 
 
 export default function AccountButtons(props) {
@@ -15,8 +17,8 @@ export default function AccountButtons(props) {
     const setToken = useAppStore((state) => state.setToken);
     const setUserInfo = useAppStore((state) => state.setUserInfo);
     const name = useAppStore((state) => state.name);
-const navigate = useNavigate();
-    const isMobile = () => window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const navigate = useNavigate();
+    const isMobile = useScreenSize();
 
     // Extract token info from query string if present and remove from URL after setting
     useEffect(() => {
@@ -35,7 +37,7 @@ const navigate = useNavigate();
 
     const openLoginPopup = () => {
         const url = 'https://www.rudrasofttech.com/account/login?returnUrl=';
-        if (isMobile()) {
+        if (isMobile) {
             window.location.href = url + encodeURIComponent(window.location.href);
         } else {
             popupRef.current = window.open(
@@ -48,7 +50,7 @@ const navigate = useNavigate();
 
     const openRegisterPopup = () => {
         const url = 'https://www.rudrasofttech.com/account/register?returnUrl=';
-        if (isMobile()) {
+        if (isMobile) {
             window.location.href = url + encodeURIComponent(window.location.href);
         } else {
             popupRef.current = window.open(
@@ -93,16 +95,44 @@ const navigate = useNavigate();
     }, []);
 
     return <Form className="d-flex">
-        {isLoggedIn ? <Nav className=" flex-grow-1 pe-3">
-            <Nav.Link>{name}</Nav.Link>
-            <Nav.Link onClick={() => { 
-                resetStore(); 
-                navigate('/');
-                }}><i className="bi bi-box-arrow-right"></i></Nav.Link>
-        </Nav> : null}
-        {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
-            <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={openLoginPopup}>Login</Button>
-            <Button type="button" className=" btn-sm" variant="outline-primary" onClick={openRegisterPopup}>Sign Up</Button>
-        </div>}
+        {isMobile ? (
+            <div className="flex-grow-1 pe-3">
+                <Dropdown align="end">
+                    <Dropdown.Toggle variant="outline-primary" size="sm" id="accountDropdown">
+                        Account
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                        {isLoggedIn ? (
+                            <>
+                            <Dropdown.Item >{name}</Dropdown.Item>
+                            <Dropdown.Item onClick={() => {
+                                resetStore();
+                                navigate('/');
+                            }}><i className="bi bi-box-arrow-right me-2"></i>Logout</Dropdown.Item>
+                            </>
+                        ) : (
+                            <>
+                                <Dropdown.Item onClick={openLoginPopup}>Login</Dropdown.Item>
+                                <Dropdown.Item onClick={openRegisterPopup}>Sign Up</Dropdown.Item>
+                            </>
+                        )}
+                    </Dropdown.Menu>
+                </Dropdown>
+            </div>
+        ) : (
+            <>
+                {isLoggedIn ? <Nav className=" flex-grow-1 pe-3">
+                    <Nav.Link>{name}</Nav.Link>
+                    <Nav.Link onClick={() => { 
+                        resetStore(); 
+                        navigate('/');
+                    }}><i className="bi bi-box-arrow-right"></i></Nav.Link>
+                </Nav> : null}
+                {isLoggedIn ? null : <div className="flex-grow-1 pe-3">
+                    <Button type="button" className="me-2 btn-sm" variant="outline-primary" onClick={openLoginPopup}>Login</Button>
+                    <Button type="button" className=" btn-sm" variant="outline-primary" onClick={openRegisterPopup}>Sign Up</Button>
+                </div>}
+            </>
+        )}
     </Form>;
 }

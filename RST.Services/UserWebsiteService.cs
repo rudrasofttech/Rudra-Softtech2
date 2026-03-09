@@ -656,18 +656,21 @@ namespace RST.Services
 
             if (website == null)
                 return null;
-
+            string html = string.Empty;
             if (website.WSType == WebsiteType.VCard && !string.IsNullOrWhiteSpace(website.JsonData))
             {
                 website.VisitingCardDetail = JsonSerializer.Deserialize<VisitingCardDetail>(website.JsonData) ?? new VisitingCardDetail();
-                return await userWebsiteRenderService.GetRenderedHtmlAsync(website.Html, website.VisitingCardDetail);
+                html = await userWebsiteRenderService.GetRenderedHtmlAsync(website.Html, website.VisitingCardDetail);
             }
             else if (website.WSType == WebsiteType.LinkList && !string.IsNullOrWhiteSpace(website.JsonData))
             {
                 website.LinkListDetail = JsonSerializer.Deserialize<LinkListDetail>(website.JsonData) ?? new LinkListDetail();
-                return await userWebsiteRenderService.GetRenderedHtmlAsync(website.Html, website.LinkListDetail);
+                html = await userWebsiteRenderService.GetRenderedHtmlAsync(website.Html, website.LinkListDetail);
             }
-            return null;
+            website.Output = html;
+            await _db.SaveChangesAsync();
+
+            return html;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
