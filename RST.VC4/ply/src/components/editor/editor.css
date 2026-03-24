@@ -1,5 +1,7 @@
 .draggable-resizable.selected {
-  outline: 2px solid #1976d2;
+  /* Selection outline is now rendered by the visible-region-frame overlay inside
+     DraggableResizable so it tracks the cropped (visible) area, not the full
+     bounding box. No outline on the outer div. */
 }
 .resize-handle {
   box-sizing: border-box;
@@ -35,15 +37,6 @@
   flex: 1;
   min-height: 0;
 }
-.editor-sidebar {
-  width: 180px;
-  background: #f1f3f4;
-  border-right: 1px solid #e0e0e0;
-  padding: 1rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 .editor-canvas-container {
   flex: 1;
   position: relative;
@@ -52,6 +45,200 @@
   display: flex;
   flex-direction: column;
 }
+
+/* ─── Narrow Add Element panel (left) ────────────────────────────────────── */
+.editor-add-panel {
+  width: 80px;
+  min-width: 80px;
+  background: #ffffff;
+  border-right: 1px solid #e4e6ea;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0 1rem;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.add-panel-heading {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #9aa0ab;
+  margin-bottom: 0.5rem;
+  user-select: none;
+}
+
+.add-element-btn {
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0.55rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #505868;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.1s ease;
+  outline: none;
+}
+
+.add-element-btn:hover {
+  background: #eef2ff;
+  color: #1a73e8;
+  transform: translateY(-1px);
+}
+
+.add-element-btn:active {
+  transform: translateY(0);
+  background: #dce8fd;
+}
+
+.add-element-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.add-element-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1;
+}
+
+/* ─── Floating Frosted-Glass Properties Panel (right, over canvas) ────────── */
+.properties-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 272px;
+  max-height: calc(100% - 24px);
+  z-index: 50;
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(220, 224, 232, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease, opacity 0.15s ease;
+  pointer-events: all;
+}
+
+.properties-panel--collapsed {
+  width: 40px;
+}
+
+/* In collapsed state the header stacks items vertically:
+   toggle button on top, title rotated below it.
+   This lets the element name stay visible in the narrow 40px panel. */
+.properties-panel--collapsed .properties-panel-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.4rem 0.2rem;
+  gap: 0.3rem;
+}
+
+/* Rotate the title to vertical writing so it reads bottom-to-top
+   (180° rotation on vertical-rl = bottom-to-top, the natural sidebar convention). */
+.properties-panel--collapsed .properties-panel-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 160px;   /* caps very long names; panel height constrains the rest */
+  text-overflow: clip;
+  letter-spacing: 0.8px;
+}
+
+.properties-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem 0.55rem 0.85rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(248, 249, 252, 0.6);
+  flex-shrink: 0;
+  min-height: 40px;
+  /* Indicates the header is a drag handle */
+  cursor: grab;
+  user-select: none;
+}
+
+/* Grabbing cursor while an active drag is in progress */
+.properties-panel--dragging .properties-panel-header {
+  cursor: grabbing;
+}
+
+/* Suppress text selection globally while dragging the panel */
+.properties-panel--dragging {
+  user-select: none;
+}
+
+.properties-panel-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #4a5568;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.properties-panel-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 5px;
+  color: #9aa0ab;
+  border-radius: 6px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.13s, color 0.13s;
+}
+
+.properties-panel-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+}
+
+.properties-panel-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem 0.85rem 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Compact label style for property rows inside the panel */
+.prop-section-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  margin-bottom: 0.3rem;
+}
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .editor-canvas {
   /* All sizing and aspect ratio is now handled inline in Canvas.js for zoom/aspect */
   background: #f9f9f9;
@@ -68,23 +255,162 @@
   background: #fff;
   border-top: 1px solid #e0e0e0;
 }
-.editor-page-manager {
-  display: flex;
-  gap: 0.25rem;
-  justify-content: center;
-  margin: 0.5rem 0;
+
+/* ─── Page Manager: drop-up panel opened by the "Pages" toolbar button ─────── */
+/* The drop-up floats above the toolbar. It contains a vertically scrollable     */
+/* list of live-preview thumbnails (max 400 px) with "+ Add Page" pinned below.  */
+
+/* Positioning context — the absolute drop-up is relative to this wrapper */
+.page-manager-dropup-wrapper {
+  position: relative;
+  display: inline-block;
 }
-.editor-page-manager button.active {
-  background: #1976d2;
+
+/* Floating panel — positioned above the "Pages" button */
+.page-manager-dropup {
+  position: absolute;
+  bottom: calc(100% + 6px);   /* 6 px gap between the button and the panel */
+  left: 0;
+  z-index: 200;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;             /* clip children to the panel's border-radius */
+}
+
+/* Scrollable vertical list — maxHeight comes from PAGE_DROPUP_MAX_H via inline style */
+.page-manager-dropup-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0.4rem 0.4rem 0.2rem;
+}
+
+/* One row per page — thumbnail + page-number badge + optional × remove button */
+.page-dropup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  background: transparent;
+  user-select: none;
+}
+.page-dropup-item:hover {
+  background: #f5f5f5;
+}
+.page-dropup-item.active {
+  background: #e3f0fd;
+  border-color: #90caf9;
+}
+
+/* Page-number badge overlaid in the bottom-right corner of each thumbnail.
+   Shared constant PAGE_THUMB_LABEL still references this class name. */
+.page-thumb-label {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
   color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 3px;
+  padding: 0 3px;
+  line-height: 1.4;
+  user-select: none;
+  pointer-events: none;
+}
+.page-dropup-item.active .page-thumb-label {
+  background: rgba(25, 118, 210, 0.75);
+}
+
+/* × remove button — small circle on the right of each row */
+.page-dropup-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.page-dropup-remove:hover {
+  background: #fce4ec;
+  color: #e91e63;
+  border-color: #f48fb1;
+}
+
+/* "+ Add Page" button pinned below the scrollable list */
+.page-dropup-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  border-top: 1px solid #eee;
+  border-radius: 0 0 10px 10px;
+  background: transparent;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.85rem;
+  color: #1976d2;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.page-dropup-add:hover {
+  background: #e8f0fe;
+}
+
+/* Clipping container for each page's scaled canvas preview */
+.page-thumb-canvas {
+  display: block;
+  border-radius: 3px;
+  overflow: hidden;
 }
 .editor-element {
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
 }
+
+/* Visible-region frame: absolutely positioned inside the full bounding-box div,
+   inset to match the non-cropped area. At zero crop this coincides with the outer
+   div so existing behaviour is unchanged. The frame is transparent to pointer
+   events; individual handles inside it set pointer-events:auto to remain clickable.
+   Dynamic left/top/right/bottom and the outline colour are applied inline in
+   DraggableResizable.js so they react instantly to crop-state changes. */
+.visible-region-frame {
+  box-sizing: border-box;
+}
+
+/* Teal pill at each edge midpoint — dragging crops the visible content area.
+   Width/height/position come from DraggableResizable's inline style;
+   visual fill and shape come from DEFAULTS (CROP_HANDLE_BG / CROP_HANDLE_BORDER_RADIUS). */
+.crop-handle {
+  box-sizing: border-box;
+  border: 2px solid #fff; /* white border echo of resize-handle style */
+}
 .editor-element.selected {
-  outline: 2px solid #1976d2;
+  /* z-index kept so selected elements paint above peers.
+     The selection outline is now on the visible-region-frame overlay (DraggableResizable)
+     so the border tracks the cropped area rather than the full bounding box. */
   z-index: 2;
 }
 .delete-btn {
@@ -99,4 +425,14 @@
   height: 24px;
   font-size: 1rem;
   cursor: pointer;
+}
+
+/* ─── Snap / Alignment Guide Lines ───────────────────────────────────────── */
+/* Rendered by SnapGuideLines inside the editor-canvas div (overflow:hidden).
+   Inline styles applied by Canvas.js set axis-specific position, size, background
+   colour, and transform. This class only provides base layout guarantees. */
+.snap-guide-line {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
 }

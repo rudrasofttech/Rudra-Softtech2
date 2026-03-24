@@ -4,8 +4,13 @@ import DraggableResizable from './DraggableResizable';
 import { DEFAULTS } from './constants';
 
 // ElementControls: Draggable, resizable, rotatable wrapper for elements
-// Receives 'selected' prop from Canvas
-export default function ElementControls({ element, selected }) {
+// Receives 'selected' prop from Canvas.
+// fitScale (default 1): display-only scale factor from EditorLayout (via Canvas).
+// Forwarded to DraggableResizable as part of the effective zoom so mouse-delta
+// correction stays accurate when the canvas is capped to 90 % of the screen.
+// otherElements / canvasWidth / canvasHeight / onGuideChange: forwarded to
+// DraggableResizable for snap / alignment guide computation.
+export default function ElementControls({ element, selected, fitScale = 1, otherElements = [], canvasWidth = DEFAULTS.CANVAS_MAX_W, canvasHeight = DEFAULTS.CANVAS_MAX_H, onGuideChange }) {
     let content;
     const style = element.style || {};
     // Defensive: fallback for missing props (for backward compatibility)
@@ -68,7 +73,7 @@ export default function ElementControls({ element, selected }) {
 
   // Ref for textarea to measure height
   const textareaRef = useRef();
-  const { dispatch, ActionTypes } = useEditor();
+  const { dispatch, ActionTypes, state } = useEditor();
   const elRef = useRef();
 // Ref for file input (for image element)
   const fileInputRef = useRef();
@@ -86,6 +91,29 @@ export default function ElementControls({ element, selected }) {
       }
     });
   };
+
+  // Crop support: rect, ellipse, and image elements support mid-edge crop handles.
+  // Crop insets are stored in element.props.crop { top, right, bottom, left } (px).
+  // Backward-compatible: elements without a crop field default to DEFAULTS.CROP_EMPTY (all zeros).
+  const CROP_SUPPORTED = element.type === 'rect' || element.type === 'ellipse' || element.type === 'image';
+  const crop = element.props?.crop || DEFAULTS.CROP_EMPTY;
+
+  // Dispatches updated crop insets to the undo-aware store on each RAF tick during a crop drag.
+  const onCropChange = (newCrop) => {
+    dispatch({
+      type: ActionTypes.UPDATE_ELEMENT,
+      payload: { ...element, props: { ...element.props, crop: newCrop } },
+    });
+  };
+
+  // Build a CSS clip-path from the active crop insets so the content appears cropped.
+  // Applied inside editor-element (not on it) so the selection outline stays at full size.
+  // clipPath is omitted when all insets are zero to avoid an unnecessary style property.
+  const activeCrop = CROP_SUPPORTED ? crop : DEFAULTS.CROP_EMPTY;
+  const cropClipPath =
+    activeCrop.top || activeCrop.right || activeCrop.bottom || activeCrop.left
+      ? `inset(${activeCrop.top}px ${activeCrop.right}px ${activeCrop.bottom}px ${activeCrop.left}px)`
+      : null;
             // ...existing code...
             // For all other types, use DraggableResizable
 
@@ -239,13 +267,27 @@ export default function ElementControls({ element, selected }) {
       selected={selected}
       onSelect={onSelect}
       elementId={element.id}
+      zoom={(state.zoom || 1) * fitScale}
+      enableCropHandles={CROP_SUPPORTED}
+      onCropChange={onCropChange}
+      crop={crop}
+      otherElements={otherElements}
+      canvasWidth={canvasWidth}
+      canvasHeight={canvasHeight}
+      onGuideChange={onGuideChange}
     >
       <div
         ref={elRef}
         className={`editor-element${selected ? ' selected' : ''}`}
         style={{ width: '100%', height: '100%' }}
       >
-        {content}
+        {/* Crop clip wrapper: clips content to the visible (non-cropped) region.
+             Kept inside editor-element so the selection outline on editor-element
+             stays at the full bounding-box size and is not clipped. */}
+        {cropClipPath
+          ? <div style={{ width: '100%', height: '100%', clipPath: cropClipPath }}>{content}</div>
+          : content
+        }
         {/* Delete button moved to Sidebar */}
       </div>
     </DraggableResizable>

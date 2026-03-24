@@ -1,12 +1,66 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditor } from './EditorContext';
 import ElementControls from './ElementControls';
 import { DEFAULTS } from './constants';
 
+// SnapGuideLines: renders the active alignment guide lines over the canvas.
+// Lines are absolutely positioned within the editor-canvas div (which has
+// overflow:hidden so they never bleed outside). They are pointer-events:none
+// so they never interfere with mouse events on elements.
+// guides: { axis: 'x'|'y', position: <canvas-px> }[]
+//   'x' → vertical magenta line at position from canvas left
+//   'y' → horizontal blue line at position from canvas top
+function SnapGuideLines({ guides, canvasWidth, canvasHeight }) {
+  if (!guides || guides.length === 0) return null;
+  return (
+    <>
+      {guides.map((g, i) => (
+        <div
+          key={i}
+          className={DEFAULTS.SNAP_GUIDE_CLASS}
+          style={{
+            position: 'absolute',
+            pointerEvents: 'none',
+            zIndex: 1000,
+            // X-axis guide → vertical line spanning full canvas height
+            // Y-axis guide → horizontal line spanning full canvas width
+            ...(g.axis === 'x'
+              ? {
+                  left: g.position,
+                  top: 0,
+                  width: DEFAULTS.SNAP_GUIDE_THICKNESS,
+                  height: canvasHeight,
+                  background: DEFAULTS.SNAP_GUIDE_COLOR_X,
+                  transform: 'translateX(-50%)', // centre the 1px line on the guide position
+                }
+              : {
+                  top: g.position,
+                  left: 0,
+                  height: DEFAULTS.SNAP_GUIDE_THICKNESS,
+                  width: canvasWidth,
+                  background: DEFAULTS.SNAP_GUIDE_COLOR_Y,
+                  transform: 'translateY(-50%)',
+                }
+            ),
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
 // Canvas renders all elements for the current page and handles drag/resize/rotate
-export default function Canvas() {
+// fitScale (default 1): display-only scale factor from EditorLayout that caps the canvas
+// to ZOOM_100_MAX_SCREEN_RATIO (90 %) of the container at 100 % zoom. Forwarded to
+// each ElementControls so DraggableResizable can maintain accurate drag tracking.
+export default function Canvas({ fitScale = 1 }) {
   const { state, dispatch, ActionTypes } = useEditor();
   const page = state.pages[state.currentPage];
+
+  // ── Snap guide state ─────────────────────────────────────────────────────
+  // Holds the currently active guide lines while the user is dragging/resizing/cropping.
+  // Using useState so React re-renders SnapGuideLines on every RAF tick that changes guides.
+  const [activeGuides, setActiveGuides] = useState([]);
 
   // ── Stale-closure fix: stateRef always mirrors latest state ──────────────
   // Lets the single-registration keyboard listeners below read fresh state
@@ -220,7 +274,10 @@ export default function Canvas() {
       style={{
         width: width,
         height: height,
-        transform: `scale(${state.zoom})`,
+        // effectiveZoom = state.zoom × fitScale.
+        // fitScale ≤ 1 ensures the canvas never exceeds ZOOM_100_MAX_SCREEN_RATIO
+        // (90 %) of the container at 100 % zoom (fitScale is 1 when not needed).
+        transform: `scale(${state.zoom * fitScale})`,
         transformOrigin: 'center center',
         transition: 'transform 0.2s',
         margin: '1rem auto',
@@ -236,8 +293,17 @@ export default function Canvas() {
             key={el.id}
             element={el}
             selected={state.selectedElementId === el.id}
+            fitScale={fitScale}
+            // Snap guide props: supply sibling elements and canvas dimensions so
+            // DraggableResizable can compute alignment snaps during gestures.
+            otherElements={page.elements.filter(e => e.id !== el.id)}
+            canvasWidth={width}
+            canvasHeight={height}
+            onGuideChange={setActiveGuides}
           />
         ))}
+        {/* Snap guide lines — rendered above all elements, cleared on mouse-up */}
+        <SnapGuideLines guides={activeGuides} canvasWidth={width} canvasHeight={height} />
       </div>
     </div>
   );

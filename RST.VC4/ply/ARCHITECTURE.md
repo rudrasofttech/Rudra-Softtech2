@@ -1,3 +1,294 @@
+## Pages Drop-up Panel (March 2026)
+
+- **Problem**: The page-navigation bar at the bottom of the editor (previously a compact strip, then a full-sized strip before that) occupied permanent vertical space even when the user was not navigating between pages. On small screens this reduced the available canvas area unnecessarily.
+- **Solution**: The strip is removed entirely from the layout. Instead, a **"Pages" button** is added to the left of the bottom toolbar (`Toolbar.js`). Clicking it opens a **drop-up panel** that floats above the toolbar. The panel contains:
+  - A **vertically scrollable list** of live-preview thumbnails (120×68 px, full 16:9) capped at `PAGE_DROPUP_MAX_H` (400 px) — beyond that the list scrolls.
+  - Each row shows the thumbnail, a page-number overlay badge, and an **× remove button** (only when >1 pages exist). Clicking a row selects that page and closes the panel.
+  - A **"+ Add Page" button** pinned below the scrollable list and always visible.
+  - The panel closes automatically on any outside click (`mousedown` event listener, cleaned up when the panel is closed).
+
+### Architecture changes
+
+| File | Change |
+|---|---|
+| `PageManager.js` | `import` updated to include `useState`, `useRef`, `useEffect`. `PageManager` default export rewritten as a self-contained drop-up widget (owns `open` state + click-outside logic). `ThumbnailElement` and `PageCanvasThumbnail` helpers unchanged. |
+| `Toolbar.js` | Imports `PageManager`; renders `<PageManager />` as the first item inside `<footer>`. |
+| `Editor.js` | Removed `import PageManager` and `<PageManager />` from `EditorLayout` (was rendered below the canvas inside the canvas container). |
+| `constants.js` | Added `PAGE_DROPUP_MAX_H`, `PAGE_THUMB_DROPUP_W`, `PAGE_THUMB_DROPUP_H`, `PAGE_DROPUP_WRAPPER`, `PAGE_DROPUP_BTN_CLASS`, `PAGE_DROPUP_CLASS`, `PAGE_DROPUP_LIST_CLASS`, `PAGE_DROPUP_ITEM_CLASS`, `PAGE_DROPUP_REMOVE`, `PAGE_DROPUP_ADD_CLASS`. Kept all old `PAGE_THUMB_*` and `PAGE_MANAGER` constants for backward compatibility (only `PAGE_THUMB_LABEL` and `PAGE_THUMB_CANVAS` are still actively used by `PageCanvasThumbnail`). |
+| `editor.css` | Replaced the strip CSS block with drop-up panel styles (`.page-manager-dropup-wrapper`, `.page-manager-dropup`, `.page-manager-dropup-list`, `.page-dropup-item`, `.page-dropup-remove`, `.page-dropup-add`). `.page-thumb-label` and `.page-thumb-canvas` retained (still used by `PageCanvasThumbnail`). |
+
+- **Drop-up positioning**: `.page-manager-dropup-wrapper` is `position: relative; display: inline-block` — the drop-up panel (`position: absolute; bottom: calc(100% + 6px); left: 0`) floats above it regardless of the toolbar's own position.
+- **Scroll**: When the page list exceeds `PAGE_DROPUP_MAX_H` (400 px) the list div scrolls via `overflow-y: auto`; the "+ Add Page" button stays pinned outside the scroll area.
+- **Thumbnail size**: Uses `PAGE_THUMB_DROPUP_W: 120` × `PAGE_THUMB_DROPUP_H: 68` (full-size, same as original THUMBNAIL_WIDTH/HEIGHT) — larger and easier to recognise than the old mini-strip thumbnails.
+- **Undo/Redo & JSON**: No changes to `EditorContext`, reducer, `ActionTypes`, or the JSON design schema. All page operations (`ADD_PAGE`, `REMOVE_PAGE`, `SET_CURRENT_PAGE`) were already in the reducer and remain untouched.
+- **Backward Compatibility**: `THUMBNAIL_WIDTH`, `THUMBNAIL_HEIGHT`, `PAGE_THUMB_MINI_W`, `PAGE_THUMB_MINI_H`, and all old strip class-name constants are retained in `constants.js`. `PageCanvasThumbnail` still accepts `thumbWidth`/`thumbHeight` props (defaulting to the old dimensions) so any external caller is unaffected.
+
+## Properties Panel Title Always Visible (March 2026)
+
+- **Bug fixed**: The element title in the floating Properties Panel was hidden when the panel was collapsed. Clicking the collapse toggle left the narrow 40 px strip with no label, giving no visual cue about which element was selected.
+- **Fix — `Sidebar.js`**: Removed the `{!collapsed && (...)}` guard that wrapped the `<span className="properties-panel-title">` element. The title span is now rendered unconditionally in the panel header, in both expanded and collapsed states.
+- **Layout in collapsed state — `editor.css`**:
+  - `.properties-panel--collapsed .properties-panel-header` — overrides the default `flex-direction: row` / `justify-content: space-between` layout with `flex-direction: column; align-items: center; justify-content: flex-start` so the toggle button sits at the top and the title flows below it within the 40 px width.
+  - `.properties-panel--collapsed .properties-panel-title` — applies `writing-mode: vertical-rl` and `transform: rotate(180deg)` so the text reads bottom-to-top (the standard convention for vertical sidebar labels). `max-height: 160px` caps very long names; `overflow: hidden` with `text-overflow: clip` prevents spillover.
+- **Expanded state unchanged**: The added CSS rules are scoped to `.properties-panel--collapsed *`, so the expanded panel layout (horizontal flexbox, horizontal title) is completely unaffected.
+- **No constants needed**: All new CSS values are layout/typography sizes that belong in the stylesheet rather than in `constants.js`; no design-state or behavioural values are involved.
+- **Undo/Redo & JSON**: Pure UI — no dispatch calls, no changes to element props, page schema, or EditorContext. Fully backward compatible.
+- **Files changed**: `Sidebar.js` (`!collapsed &&` guard removed from the title span; inline comment updated), `editor.css` (two new rule blocks scoped to `.properties-panel--collapsed`).
+
+## Smart Alignment Snap Guides (March 2026)
+
+- **Feature**: While dragging, resizing, or cropping any selected element, coloured guide lines appear on the canvas whenever the moving element's edge or centre aligns (within a threshold) with any other element's edge/centre or the canvas boundary/centre. The element simultaneously snaps to that position. Lines disappear the instant the gesture ends.
+- **Snap axes and reference points**:
+  - **X-axis** (vertical magenta lines): element left edge, right edge, horizontal centre — compared against the same three values of every other element and against the canvas left edge, right edge, and horizontal centre.
+  - **Y-axis** (horizontal blue lines): element top edge, bottom edge, vertical centre — compared against the same three values of every other element and against the canvas top edge, bottom edge, and vertical centre.
+- **Threshold**: `DEFAULTS.SNAP_THRESHOLD` (6 canvas-px). Within this distance the element snaps; outside it moves freely.
+- **Gesture coverage**:
+  - **Drag** — snap applied to the moved top-left `(x, y)` position.
+  - **Resize** — snap applied to the resized bounding box `(newX, newY, newWidth, newHeight)`.
+  - **Crop** — snap applied to the **visible bounding box** (element origin + crop insets), so the visible edge snaps to adjacent elements and canvas references.
+- **Architecture** (zero changes to EditorContext, reducer, ActionTypes, or JSON schema):
+
+### `snapGuides.js` (new file)
+  Pure module — no React, no side-effects. Exports `computeSnap({ x, y, width, height, otherElements, canvasWidth, canvasHeight })`.
+  - `collectCandidates(axis, otherElements, canvasSize)` — builds the set of reference values (3 per element + 3 canvas values) for one axis.
+  - `snapAxis(keyValues, candidates, threshold)` — finds the closest snap within threshold; returns `{ delta, guidePos }`.
+  - `computeSnap` — calls both axes, returns `{ snappedX, snappedY, guides }`.
+  - `guides` format: `{ axis: 'x'|'y', position: <canvas-px> }[]`. `'x'` → vertical line; `'y'` → horizontal line.
+
+### `DraggableResizable.js`
+  - Imports `computeSnap` from `./snapGuides`.
+  - New props (all with backward-compatible defaults): `otherElements = []`, `canvasWidth = DEFAULTS.CANVAS_MAX_W`, `canvasHeight = DEFAULTS.CANVAS_MAX_H`, `onGuideChange` (callback).
+  - **Drag branch** (RAF `onMouseMove`): computes raw position, calls `computeSnap`, reports guides via `onGuideChange`, calls `onChange` with snapped position.
+  - **Resize branch**: calls `computeSnap` on the post-resize bounding box; snap corrects `newX`/`newY` (width and height are kept at their computed values so the resize direction is preserved).
+  - **Crop branch**: constructs the visible bounding box from the new crop insets and the element's bounding box, calls `computeSnap` for guides only (crop insets are not modified by snap so the element doesn't jump), emits guides, then calls `onCropChange`.
+  - **`onMouseUp`**: calls `onGuideChange([])` to clear all guide lines immediately.
+
+### `Canvas.js`
+  - Imports `useState`.
+  - `activeGuides` state (`useState([])`): updated by `setActiveGuides` passed as `onGuideChange` to each `ElementControls`.
+  - Each `<ElementControls>` now receives: `otherElements={page.elements.filter(e => e.id !== el.id)}`, `canvasWidth={width}`, `canvasHeight={height}`, `onGuideChange={setActiveGuides}`.
+  - New `SnapGuideLines({ guides, canvasWidth, canvasHeight })` component (defined in `Canvas.js`): renders one `<div className="snap-guide-line">` per active guide with inline styles for position, colour, thickness, and a `translateX(-50%)` / `translateY(-50%)` centring transform. `pointer-events: none`, `z-index: 1000`. Returns `null` when `guides` is empty — zero DOM overhead at rest.
+  - `<SnapGuideLines>` is rendered as a sibling of the element divs inside `.editor-canvas`.
+
+### `ElementControls.js`
+  - Accepts four new props (all backward-compatible defaults): `otherElements = []`, `canvasWidth = DEFAULTS.CANVAS_MAX_W`, `canvasHeight = DEFAULTS.CANVAS_MAX_H`, `onGuideChange`.
+  - Forwards all four directly to `<DraggableResizable>`.
+
+### `editor.css`
+  - New `.snap-guide-line` rule: `position: absolute; pointer-events: none; z-index: 1000`. All dynamic styles (colour, thickness, axis-specific dimension/position, centring transform) are applied inline so guide appearance is fully driven by `DEFAULTS` constants.
+
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `SNAP_THRESHOLD` | `6` | Canvas-px within which snap fires |
+  | `SNAP_GUIDE_COLOR_X` | `'#e91e63'` | Magenta — vertical guide lines (X alignments) |
+  | `SNAP_GUIDE_COLOR_Y` | `'#1976d2'` | Blue — horizontal guide lines (Y alignments) |
+  | `SNAP_GUIDE_THICKNESS` | `1` | px — guide line stroke width |
+  | `SNAP_GUIDE_CLASS` | `'snap-guide-line'` | CSS class name for guide line divs |
+
+- **Undo/Redo & JSON**: Snap corrects the in-flight position before calling `onChange`; `onChange` dispatches `UPDATE_ELEMENT` exactly as without snap. The undo stack entry is identical to a non-snapped move — snapping is transparent to the history. No schema changes.
+- **Backward Compatibility**: All new props on `DraggableResizable` and `ElementControls` have defaults (`otherElements = []`, canvas dims = `DEFAULTS.CANVAS_MAX_W/H`, `onGuideChange` absent → no callback). With empty `otherElements`, only canvas-boundary snap candidates exist. Existing call sites that omit the new props are completely unaffected.
+- **Files changed**: `constants.js` (5 new constants), `snapGuides.js` (new pure module), `DraggableResizable.js` (import + 4 new props + snap in drag/resize/crop + clear guides on mouseup), `Canvas.js` (import `useState`; `SnapGuideLines` component; `activeGuides` state; new props on `<ElementControls>`; `<SnapGuideLines>` in render), `ElementControls.js` (4 new props; forwarded to `<DraggableResizable>`), `editor.css` (`.snap-guide-line` rule).
+
+## Crop Selection Outline and Handle Tracking (March 2026)
+
+- **Bug fixed**: After cropping an element, the blue selection outline and all resize/crop handles remained anchored to the element's **full bounding box** instead of shrinking to match the visible (non-cropped) area. The handles were therefore partially or fully hidden inside the cropped-away region.
+- **Root cause**: The selection outline was applied via CSS (`.draggable-resizable.selected { outline: … }` and `.editor-element.selected { outline: … }`) directly on the full-sized outer divs. Resize and crop handles were direct children of the outer `draggable-resizable` div and used corner/midpoint anchoring relative to that full box.
+- **Fix — visible-region frame** (`DraggableResizable.js`):
+  - Four **crop inset variables** (`cropLeft`, `cropTop`, `cropRight`, `cropBottom`) are derived from the `crop` prop (defaulting to `0` when crop is absent or `enableCropHandles` is false — fully backward compatible).
+  - A new inner `<div className="visible-region-frame">` is rendered **inside** the outer `draggable-resizable` div whenever the element is selected. Its CSS `left / top / right / bottom` are set to `cropLeft / cropTop / cropRight / cropBottom` respectively, so its edges coincide exactly with the visible (non-cropped) boundaries.
+    - At **zero crop** the overlay fills the entire outer div → identical visual to before the fix.
+    - At **non-zero crop** the overlay shrinks inward by exactly the crop insets → outline and handles track the visible region live as crop is dragged.
+  - `pointer-events: none` on the frame makes it transparent to drag clicks; individual handles inside it set `pointer-events: auto` to remain independently clickable.
+  - The `2px solid` selection **outline** is on this frame (inline style via `DEFAULTS.SELECTION_OUTLINE_COLOR`), replacing the CSS outlines on `.draggable-resizable.selected` and `.editor-element.selected`.
+  - All **resize handles** (corner circles) are now children of the frame. Their `left/top/right/bottom: -6px` anchoring resolves relative to the frame's (= visible region's) corners — correct at any crop depth.
+  - All **crop handles** (teal pills) are also children of the frame. Their midpoint anchoring (`top: -(hs/2)`, `bottom: -(hs/2)`, etc.) resolves relative to the frame's edges, so each pill sits precisely on the corresponding visible-region boundary and slides with it as crop grows.
+- **`onMouseDown` guard** (`DraggableResizable.js`): added `|| e.target.classList.contains('crop-handle')` so that crop-handle clicks can never accidentally start a drag even in edge cases where `e.stopPropagation()` in `onCropHandleDown` is not reached first.
+- **`editor.css`**:
+  - `.draggable-resizable.selected`: outline removed (comment explains the new location).
+  - `.editor-element.selected`: outline removed; `z-index: 2` kept so selected elements still paint above siblings.
+  - New `.visible-region-frame` rule: `box-sizing: border-box` only — all dynamic styles applied inline to react instantly to crop state changes.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `SELECTION_OUTLINE_COLOR` | `'#1976d2'` | Shared selection-blue colour for the frame outline and resize-handle fill |
+  | `VISIBLE_REGION_CLASS` | `'visible-region-frame'` | CSS class name for the overlay div |
+- **Crop math unchanged**: `onCropHandleDown` / `onMouseMove` crop branch / `onCropChange` are unmodified. Crop insets continue to be stored in `element.props.crop` and dispatched via `UPDATE_ELEMENT` — fully undo-aware.
+- **Undo/Redo & JSON**: No changes to `EditorContext`, reducer, `ActionTypes`, or the JSON design schema. The fix is entirely within the render of `DraggableResizable` and the CSS.
+- **Backward Compatibility**: At zero crop the visible-region frame is flush with the outer div → identical visual. Elements without `props.crop` default to zero insets. `ElementControls` (`clipPath` crop clipping) is unchanged. `enableCropHandles = false` (default) sets all insets to 0, so non-crop element types (text, line) are completely unaffected.
+- **Files changed**: `constants.js` (2 new constants), `DraggableResizable.js` (crop-handle `onMouseDown` guard; `cropLeft/Top/Right/Bottom` inset variables; visible-region frame with handles inside), `editor.css` (outlines removed from `.draggable-resizable.selected` and `.editor-element.selected`; `.visible-region-frame` rule added).
+
+## Mid-Edge Crop Handles for Selected Elements (March 2026)
+
+- **Feature**: When a `rect`, `ellipse`, or `image` element is selected, four teal pill-shaped handles appear at the midpoint of each edge (N / S / E / W). Dragging a handle inward crops — hides — the corresponding edge of the element. The crop can be un-done via the normal undo/redo stack.
+- **Supported element types**: `rect`, `ellipse`, `image`. Line and text elements are excluded (text editing and width-only resize take priority). The guard lives in `ElementControls.js` as `const CROP_SUPPORTED = element.type === 'rect' || element.type === 'ellipse' || element.type === 'image'`.
+- **Crop data structure**: `element.props.crop` — `{ top, right, bottom, left }` in canvas-space pixels. Absent on pre-existing elements; `DEFAULTS.CROP_EMPTY` (`{ top:0, right:0, bottom:0, left:0 }`) is used as the backward-compatible fallback wherever the field is missing.
+- **Drag interaction** (`DraggableResizable.js` — pre-existing logic, now connected):
+  - `onCropHandleDown(e, edge)` — snapshots the current crop insets and mouse position in `cropOriginRef`. `e.stopPropagation()` prevents the main-box `onMouseDown` from also firing (drag conflict avoided).
+  - RAF `onMouseMove` — when `cropping` is not null, computes `dx / zoom` and `dy / zoom` (same zoom compensation as drag/resize) and applies them to the snapshotted inset for the active edge, clamped so that at least `DEFAULTS.CROP_MIN_VISIBLE` px remain visible on both opposing axes.
+  - `onMouseUp` — sets `cropping` back to `null`.
+  - Drag direction semantics: N handle dragged **south** → `crop.top` grows. S handle dragged **north** → `crop.bottom` grows. E handle dragged **west** → `crop.right` grows. W handle dragged **east** → `crop.left` grows.
+- **Visual crop** (`ElementControls.js`):
+  - `cropClipPath = inset(top bottom right left)` — a CSS `clip-path` string built from the active crop insets (non-null only when at least one inset > 0).
+  - Applied to a thin **inner wrapper div** placed directly around `{content}` inside `editor-element`. Keeping the clip on the inner wrapper ensures the selection outline on `editor-element.selected` and the selection outline on `draggable-resizable.selected` both remain at the full bounding-box size and are not visually clipped.
+  - When all insets are zero the inner wrapper is omitted (content is rendered directly) — no unnecessary DOM node or style property.
+- **Crop handle visuals** (`DraggableResizable.js` + `editor.css`):
+  - Inline styles use `DEFAULTS.CROP_HANDLE_BG` (`#00897b` — teal), `DEFAULTS.CROP_HANDLE_BORDER_RADIUS` (`999` — full pill), `DEFAULTS.CROP_HANDLE_Z_INDEX` (`12` — above the corner resize handles at z-index 10).
+  - Edge-specific dimensions and positions come from the per-handle `h.style` spread (long axis `DEFAULTS.CROP_HANDLE_LONG` = 28 px, short axis `DEFAULTS.CROP_HANDLE_SHORT` = 10 px).
+  - `.crop-handle` CSS class adds `box-sizing: border-box` and a `2px solid #fff` border (mirroring the resize-handle treatment).
+- **Props wired in `ElementControls.js`**: `enableCropHandles={CROP_SUPPORTED}`, `onCropChange={onCropChange}`, `crop={crop}` passed to `<DraggableResizable>`. `onCropChange` dispatches `UPDATE_ELEMENT` with the new `props.crop` — fully undo-aware (one stack entry per mouse movement, same as resize).
+- **Zoom / fitScale accuracy**: Crop mouse deltas are divided by the same `zoom` prop passed to `DraggableResizable` (`state.zoom × fitScale`). Crop accuracy is therefore preserved at all zoom levels, including when the 90 % screen cap is active.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `CROP_HANDLE_BG` | `'#00897b'` | Teal fill colour for crop handle pills |
+  | `CROP_HANDLE_BORDER_RADIUS` | `999` | Fully rounded short axis → pill shape |
+  | `CROP_HANDLE_Z_INDEX` | `12` | Above corner resize handles (z-index 10) |
+- **Undo/Redo & JSON**: `element.props.crop` is stored in the design JSON exactly like any other prop. `UPDATE_ELEMENT` is dispatched through the existing reducer, so undo/redo works out of the box. Existing saved designs without a `crop` field load correctly (fallback to `DEFAULTS.CROP_EMPTY`). No reducer changes.
+- **Backward Compatibility**: `enableCropHandles` defaults to `false` in `DraggableResizable` — any call site that omits it renders no crop handles, identical to the previous behaviour. `element.props.crop` is optional; elements without it display without clipping.
+- **Files changed**: `constants.js` (3 new constants; comment updated to mention ellipse), `DraggableResizable.js` (crop handle div gains inline visual styles from DEFAULTS), `ElementControls.js` (`CROP_SUPPORTED` guard + `crop` read + `onCropChange` handler + `cropClipPath` computation + props wired to `DraggableResizable` + inner clip wrapper around `{content}`), `editor.css` (new `.crop-handle` rule).
+
+## 100 % Zoom 90 % Screen Cap (March 2026)
+
+- **Feature**: At 100 % zoom (`state.zoom = 1`), the canvas now never occupies more than 90 % of the `editor-canvas-container` in either dimension. On smaller screens or when the design canvas is large, the canvas is automatically scaled down to fit within 90 % of the available area. On large screens the cap does not apply and the canvas renders at its natural pixel dimensions.
+- **`fitScale` — the cap factor**:
+  - A display-only scalar (`fitScale ≤ 1`) computed each render in `EditorLayout` (`Editor.js`).
+  - Formula: `fitScale = min(1, containerW × 0.9 / canvasW, containerH × 0.9 / canvasH)`.
+  - 1 when the container is large enough (no cap); < 1 when the container is smaller than the natural canvas size × (1 / 0.9).
+  - `fitScale` is **not** stored in `EditorContext`, the undo stack, or the design JSON — it is pure display-time UI state.
+- **Container measurement** (`Editor.js`):
+  - `containerSize` (`useState`) stores the live `{ width, height }` of `editor-canvas-container`.
+  - A `ResizeObserver` registered once (empty `useEffect` deps) updates `containerSize` whenever the container is resized (window resize, sidebar open/close, etc.). The initial size is snapshot synchronously in the same effect via `el.offsetWidth/offsetHeight` so `fitScale` is accurate on first paint.
+  - Canvas natural dimensions are resolved by the new `resolveCanvasDims(state)` helper (module-level pure function), which mirrors the identical fallback logic in `Canvas.js` and `Canvas.js::getCanvasDims()`.
+- **Transform application** (`Canvas.js`):
+  - Canvas.js accepts a new `fitScale = 1` prop (backward-compatible default).
+  - The outer wrapper's transform changes from `scale(state.zoom)` to `scale(state.zoom × fitScale)`, so the rendered canvas visual size is always `state.zoom × fitScale` of the natural canvas dimensions.
+  - Each `<ElementControls>` now receives `fitScale={fitScale}` as a prop so the drag correction stays accurate.
+- **Drag accuracy** (`ElementControls.js`):
+  - `ElementControls` accepts a new `fitScale = 1` prop (backward-compatible default).
+  - The `zoom` prop forwarded to `DraggableResizable` changes from `state.zoom` to `state.zoom × fitScale`.
+  - `DraggableResizable` divides mouse deltas by `zoom`; with the updated value it divides by `state.zoom × fitScale`, which correctly maps screen pixels to canvas pixels at the actual rendered scale.
+- **Canvas dimension resolution — `resolveCanvasDims(state)`** (`Editor.js`):
+  - New module-level helper that replicates Canvas.js's page-level fallback chain: explicit `canvasWidth`/`canvasHeight` → one side + aspect ratio → `DEFAULTS.CANVAS_MAX_W/H` with aspect clamping.
+  - Used only for fitScale computation; does not affect the canvas render itself.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `ZOOM_100_MAX_SCREEN_RATIO` | `0.9` | Maximum fraction of the container the canvas may occupy at 100 % zoom |
+- **Undo/Redo & JSON**: `fitScale` is never serialised. Design JSON, undo stack, and all action types are unchanged. Existing saved designs load and render identically (fitScale = 1 on large screens; auto-scaled on small ones).
+- **Backward Compatibility**: `fitScale` defaults to `1` in both `Canvas` and `ElementControls`, so any external call that omits it behaves exactly as before. `DraggableResizable` is unchanged.
+- **Files changed**: `constants.js` (1 new constant), `Editor.js` (`useState` import; `resolveCanvasDims` helper; `containerSize` state + ResizeObserver effect + `fitScale` computation in `EditorLayout`; `fitScale` prop on `<Canvas>`), `Canvas.js` (`fitScale` prop; `scale(state.zoom × fitScale)` transform; `fitScale` forwarded to `<ElementControls>`), `ElementControls.js` (`fitScale` prop; `zoom={(state.zoom || 1) × fitScale}` on `<DraggableResizable>`).
+
+## Ctrl+Wheel Zoom (March 2026)
+
+- **Feature**: Holding `Ctrl` (or `Cmd` on Mac) and scrolling the mouse wheel over the canvas area now zooms in and out. Plain scroll (no modifier) passes through unchanged and scrolls the canvas container normally.
+- **Why a ref-based listener**: React's synthetic `onWheel` cannot call `e.preventDefault()` reliably because browsers mark wheel event listeners as **passive** by default to improve scroll performance. A passive listener ignores `preventDefault`, so the browser's native pinch-to-zoom would still trigger when `Ctrl` is held. The fix uses `containerRef` + `useEffect` to attach a **non-passive** native listener (`{ passive: false }`) to the `editor-canvas-container` div.
+- **Stale-closure fix**: The handler reads the current zoom via `stateRef.current` (a `useRef` kept in sync by a separate `useEffect`), following the same pattern already used in `Canvas.js` for arrow-key nudge. This lets the `useEffect` dependency array be `[dispatch, ActionTypes]` — both stable — so the listener is registered **once** for the component's lifetime.
+- **Zoom formula**: `next = clamp(current + direction × ZOOM_WHEEL_STEP, ZOOM_MIN, ZOOM_MAX)`. `toFixed(2)` prevents floating-point drift (e.g. `0.30000000000000004`). `direction` = `+1` for scroll-up (zoom in), `−1` for scroll-down (zoom out).
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `ZOOM_MIN` | `0.2` | Minimum zoom level (20%) — was hardcoded `0.2` in Toolbar |
+  | `ZOOM_MAX` | `2` | Maximum zoom level (200%) — was hardcoded `2` in Toolbar |
+  | `ZOOM_WHEEL_STEP` | `0.05` | Zoom delta per wheel notch — finer than the +/− button step of 0.1 |
+- **`Toolbar.js`**: `zoomIn`/`zoomOut` handlers and the range slider `min`/`max` now use `DEFAULTS.ZOOM_MIN` / `DEFAULTS.ZOOM_MAX` instead of magic numbers, keeping all zoom bounds in one place.
+- **Undo/Redo & JSON**: Zoom is dispatched via the existing `SET_ZOOM` action, which is already handled by the reducer. Zoom is session-level UI state stored in `EditorContext` (not serialised to the design JSON), so undo/redo and saved designs are unaffected.
+- **Backward Compatibility**: No changes to element props, page schema, or any other reducer actions. All existing zoom interactions (slider, +/− buttons) continue to work identically.
+- **Files changed**: `constants.js` (3 new constants), `Editor.js` (`useRef`/`useEffect` imports; `containerRef` + `stateRef` + non-passive wheel listener in `EditorLayout`; `ref={containerRef}` on canvas container div), `Toolbar.js` (import `DEFAULTS`; use `DEFAULTS.ZOOM_MIN`/`ZOOM_MAX` in handlers and slider).
+
+## Zoom-Aware Drag and Resize (March 2026)
+
+- **Bug Fixed**: Dragging or resizing a selected element when the canvas was zoomed out (zoom < 1) caused the element to lag behind the mouse. The faster the zoom-out, the larger the gap. The same problem affected resize handles and crop handles.
+- **Root Cause**: `DraggableResizable.js` computed all mouse deltas (`dx`, `dy`) in raw screen pixels: `dx = event.clientX − origin.x`. But the canvas is rendered inside a `transform: scale(zoom)` wrapper, so 1 screen pixel corresponds to `1/zoom` canvas pixels. At zoom = 0.5, every 10px of mouse movement only moved the element 10px in canvas space instead of the correct 20px, making it feel sluggish.
+- **Fix**: Divide each delta by the current `zoom` before applying it: `dx = (event.clientX − origin.x) / zoom`. This converts screen-space pixels to canvas-space coordinates, so element position always tracks the mouse exactly regardless of zoom level.
+- **Scope**: Applied to all three delta sites in `DraggableResizable.js`:
+  1. `onMouseMove` RAF path — drag branch.
+  2. `onMouseMove` RAF path — resize branch.
+  3. `onMouseMove` RAF path — crop-handle branch.
+  4. `patchedOnMouseMove` (text/line width-only resize path) — drag branch.
+  5. `patchedOnMouseMove` — resize branch.
+- **New prop**: `zoom` (number, default `1`) added to `DraggableResizable`. The default ensures full backward compatibility — any call site that omits `zoom` behaves identically to before.
+- **`ElementControls.js`**: Reads `state` (previously only `dispatch` and `ActionTypes`) from `useEditor()` and passes `zoom={state.zoom || 1}` to `<DraggableResizable>`. The `|| 1` guard protects against a `null`/`undefined` zoom in edge cases.
+- **Constants**: No new constants needed. `state.zoom` is the existing zoom scalar already stored in `EditorContext`.
+- **Undo/Redo & JSON**: No changes to `EditorContext`, reducer, `ActionTypes`, or the JSON design state schema. The fix is entirely within the mouse-event math in `DraggableResizable`.
+- **Backward Compatibility**: `zoom` defaults to `1`. Existing saved designs, undo stacks, and all other components are unaffected. Arrow-key nudge (handled separately in `Canvas.js`) is not affected.
+- **Files changed**: `DraggableResizable.js` (5 delta sites updated, `zoom` prop added), `ElementControls.js` (reads `state` from `useEditor()`, passes `zoom` to `DraggableResizable`).
+
+## Live Canvas Thumbnails for Page Navigation (March 2026)
+
+- **Feature**: The page navigation strip at the bottom of the editor now shows a live scaled-down preview of each page's canvas instead of plain "Page 1", "Page 2", … text buttons. Thumbnails update automatically on every design state change.
+- **Approach**: Pure CSS/React — no external libraries (e.g. `html2canvas`). Each thumbnail is a full-resolution replica of the page canvas that is CSS-scaled down using `transform: scale(scaleFactor)` inside a fixed-size clipping container. React re-renders the thumbnails automatically because they read from the shared `EditorContext` state.
+- **Dimension resolution**: `PageCanvasThumbnail` resolves canvas width/height with the exact same fallback logic as `Canvas.js` (reads `page.canvasWidth`/`page.canvasHeight`, falls back to `DEFAULTS.CANVAS_MAX_W`/`CANVAS_MAX_H` with aspect-ratio math). This guarantees the thumbnail perspective always matches the main canvas view.
+- **Scale factor**: `scale = Math.min(THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height)` — object-fit:contain behaviour; the full canvas fits inside the thumbnail slot. The replica is centred within the slot using `offsetX = (THUMB_W − width*scale) / 2`, `offsetY = (THUMB_H − height*scale) / 2`.
+- **Element rendering** (`ThumbnailElement`): Each element type (rect, ellipse, line, image, text) is rendered as a lightweight, non-interactive DOM replica. Styling mirrors `ElementControls.js` exactly — same border, borderRadius, background, text styles, z-index paint order — but with `pointerEvents: none` and no drag/resize/edit wiring.
+- **Components added** (`PageManager.js`):
+  - `parseAspectRatio(ratio)` — local helper (mirrors Canvas.js) for dimension resolution.
+  - `ThumbnailElement({ element })` — lightweight replica of one design element for thumbnail rendering.
+  - `PageCanvasThumbnail({ page, aspectRatio })` — CSS-scaled live canvas clone; contains the fixed-size clipping box + full-res scaled div + sorted element replicas.
+  - `PageManager` (default export, refactored) — renders the strip of thumbnail buttons + add/remove controls. CSS class names from `DEFAULTS` constants.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `THUMBNAIL_WIDTH` | 120 | px — thumbnail button preview width |
+  | `THUMBNAIL_HEIGHT` | 68 | px — thumbnail preview height (≈ 16:9 default) |
+  | `PAGE_MANAGER` | `'editor-page-manager'` | CSS class for the strip container |
+  | `PAGE_THUMB_BTN` | `'page-thumb-btn'` | CSS class for each thumbnail button |
+  | `PAGE_THUMB_LABEL` | `'page-thumb-label'` | CSS class for the page number label |
+  | `PAGE_THUMB_ADD` | `'page-thumb-add'` | CSS class for the add-page button |
+  | `PAGE_THUMB_REMOVE` | `'page-thumb-remove'` | CSS class for the remove-page button |
+  | `PAGE_THUMB_CANVAS` | `'page-thumb-canvas'` | CSS class for the clipping container div |
+- **CSS additions** (`editor.css`):
+  - `.editor-page-manager` — updated to `flex`, `align-items: flex-end`, `padding`, and `background: #f0f1f5`.
+  - `.page-thumb-btn` — column flex, border, border-radius, box-shadow, hover/active highlight ring (`#1976d2`).
+  - `.page-thumb-label` — small page-number label below each thumbnail.
+  - `.page-thumb-add` / `.page-thumb-remove` — circular action buttons, hover colour `#1976d2`.
+  - `.page-thumb-canvas` — clipping container block with `overflow: hidden` and `border-radius: 3px`.
+- **Undo/Redo & JSON**: No changes to `EditorContext`, reducer, `ActionTypes`, or the JSON design state schema. Thumbnails are pure UI derived from existing state — zero impact on undo/redo stack or serialisation.
+- **Backward Compatibility**: Existing saved designs load unchanged. New pages added with `ADD_PAGE` instantly appear as thumbnails. Designs with no explicit `canvasWidth`/`canvasHeight` fall back to `DEFAULTS` — same as the main canvas.
+- **Files changed**: `constants.js` (8 new constants), `PageManager.js` (full rewrite with `ThumbnailElement`, `PageCanvasThumbnail`, updated `PageManager`), `editor.css` (updated `.editor-page-manager` + 5 new rule blocks).
+
+## Add Image: File-First Flow (March 2026)
+
+- **Change**: Clicking "Add Image" in the Add Element panel now opens the OS file dialog **before** anything is added to the canvas. The element (with real src and real dimensions) is dispatched to the canvas only after the user confirms a file selection. If the user cancels the dialog, nothing is added.
+- **Previously**: The old flow added a placeholder element immediately, then used `setTimeout` + `document.querySelector` to find and click the file input that existed inside the already-rendered `ElementControls` wrapper. This was fragile (required the element to already exist in the DOM) and left a placeholder on the canvas if the selector failed.
+- **Implementation** (`Sidebar.js`, `Sidebar` component):
+  - `imageFileInputRef` — `React.useRef()` attached to a hidden `<input type="file">` rendered at the bottom of the Add Element panel.
+  - `handleImageFileSelected(e)` — reads the selected file via `FileReader`, loads it into a temporary `Image` to measure natural dimensions, clamps to `DEFAULTS.IMAGE_MAX` (preserving aspect ratio), centres the result on the canvas using the same dimension-fallback logic already present in `handleAdd`, then dispatches `ADD_ELEMENT` with `{ src, width, height, x, y }` — **no placeholder is ever created**.
+  - `handleAdd` for `type === 'image'` — triggers `imageFileInputRef.current.click()` and returns immediately (no `base` object is built, no `ADD_ELEMENT` is dispatched at this point).
+  - The hidden `<input>` uses `DEFAULTS.IMAGE_ACCEPT` (`'image/*'`) as the `accept` filter.
+- **`ElementControls.js` unchanged** — the file input inside image elements (used by the "Select Image File" button in the Properties Panel to replace an existing element's src) is a separate, orthogonal mechanism and is not affected.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `IMAGE_ACCEPT` | `'image/*'` | `accept` attribute for image file inputs |
+- **Undo/Redo & JSON**: `ADD_ELEMENT` is dispatched once with the complete, final element payload. The undo stack captures a single entry (the element as added). Cancelling the dialog produces zero undo entries. Fully backward compatible — existing saved designs with image elements (which carry `props.src`) are unaffected.
+- **Backward Compatibility**: `DEFAULTS.PLACEHOLDER_IMAGE` is retained in `constants.js` (still used by `ElementControls.js` as a fallback `src` when an image element's `props.src` is absent).
+- **Files changed**: `constants.js` (1 new constant), `Sidebar.js` (`handleAdd` image branch + new ref + new handler + hidden input in render).
+
+## Draggable Properties Panel (March 2026)
+
+- **Feature**: The floating frosted-glass Properties Panel (right side, over the canvas) is now draggable. Users can click-and-drag its header to reposition it anywhere within the editor canvas container while continuing to work.
+- **Boundary Clamping**: The panel is clamped strictly within the `editor-canvas-container` bounds — it cannot be dragged outside the editing area or off-screen. Clamping uses live `container.offsetWidth`/`offsetHeight` minus measured `panel.offsetWidth`/`offsetHeight`, so it adapts correctly if the window is resized.
+- **Implementation** (all changes isolated to `PropertiesPanel` in `Sidebar.js`):
+  - `panelPos` state (`null | {x, y}`) — `null` means CSS-positioned (default top-right corner via `right: 12px, top: 12px`). Once the user drags, it switches to explicit `left`/`top` inline style (`right: auto`).
+  - `isDragging` state — controls the `.properties-panel--dragging` CSS class (grabbing cursor, text-selection suppressed).
+  - `panelRef` — `React.useRef` attached to the panel `<div>` for reading live geometry (`getBoundingClientRect`, `offsetWidth`, etc.).
+  - `dragRef` — `React.useRef` for mutable drag data (`active`, start mouse/panel coords). Avoids stale closures inside the `window` event handlers, following the same pattern as the arrow-key nudge implementation.
+  - `onHeaderMouseDown` — reads the panel's current screen position on drag start (`getBoundingClientRect` relative to `offsetParent`), records it in `dragRef`, and sets `isDragging = true`. Bails out if the event target is the collapse toggle button.
+  - `useEffect` (empty deps, runs once) — binds `mousemove`/`mouseup` on `window`. `mousemove` computes the new clamped position and calls `setPanelPos`; `mouseup` resets `dragRef.current.active` and clears `isDragging`. Cleanup removes both listeners. Empty dependency array is intentional — both `panelRef` and `dragRef` are stable refs.
+- **CSS additions** (`editor.css`):
+  - `.properties-panel-header` gets `cursor: grab` and `user-select: none`.
+  - `.properties-panel--dragging .properties-panel-header` sets `cursor: grabbing`.
+  - `.properties-panel--dragging` adds `user-select: none` to prevent text selection across the whole panel during drag.
+- **Constants added** (`constants.js`):
+  | Constant | Value | Purpose |
+  |---|---|---|
+  | `PROPS_PANEL_WIDTH` | 272 | px — panel width (mirrors `.properties-panel` CSS) |
+  | `PROPS_PANEL_OFFSET` | 12 | px — default margin from container edges |
+- **Undo/Redo & JSON**: Panel position is purely UI state (`React.useState`) — it is never serialised into the design JSON or the undo/redo stack. This is intentional: panel position is ephemeral session state, not part of the design document.
+- **Backward Compatibility**: No changes to `EditorContext`, reducer, `ActionTypes`, or design JSON schema. All existing element behaviours and canvas dispatch calls are unaffected.
+- **Files changed**: `constants.js` (2 new constants), `Sidebar.js` (`PropertiesPanel` drag logic), `editor.css` (3 new/updated rules).
+
 ## Ellipse Border-Radius as Percentage (March 2026)
 
 - **Bug Fixed**: The ellipse element's "Border Radius" slider in the Sidebar had no visible effect on the shape. The `case 'ellipse'` in `ElementControls.js` hardcoded `borderRadius: '50%'` first, then spread `...style` which overwrote it with the raw pixel number stored in `style.borderRadius`, ignoring the percentage.

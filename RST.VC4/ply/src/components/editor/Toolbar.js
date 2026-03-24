@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { useEditor } from './EditorContext';
 import ExportJpegPopup from './ExportJpegPopup';
 import { exportCanvasToJpeg } from '../../utils/exportUtils';
+import { DEFAULTS } from './constants';
+import PageManager from './PageManager';
 
 // Toolbar for zoom, undo/redo, export
 export default function Toolbar() {
@@ -17,9 +19,10 @@ export default function Toolbar() {
     return document.querySelector('.editor-canvas');
   }
 
-  // Zoom handlers
-  const zoomIn = () => dispatch({ type: ActionTypes.SET_ZOOM, payload: Math.min(state.zoom + 0.1, 2) });
-  const zoomOut = () => dispatch({ type: ActionTypes.SET_ZOOM, payload: Math.max(state.zoom - 0.1, 0.2) });
+  // Zoom handlers — clamp to DEFAULTS.ZOOM_MIN / DEFAULTS.ZOOM_MAX for consistency
+  // with the Ctrl+wheel handler in Editor.js
+  const zoomIn  = () => dispatch({ type: ActionTypes.SET_ZOOM, payload: Math.min(state.zoom + 0.1, DEFAULTS.ZOOM_MAX) });
+  const zoomOut = () => dispatch({ type: ActionTypes.SET_ZOOM, payload: Math.max(state.zoom - 0.1, DEFAULTS.ZOOM_MIN) });
   const handleZoomSlider = (e) => {
     const value = parseFloat(e.target.value);
     dispatch({ type: ActionTypes.SET_ZOOM, payload: value });
@@ -67,11 +70,13 @@ export default function Toolbar() {
 
   return (
     <footer className="editor-toolbar">
-      <button onClick={zoomOut}>-</button>
-      <input
+      {/* Pages drop-up — manage multi-page navigation from the bottom toolbar */}
+      <PageManager />
+      <button type='button' className='btn btn-light btn-sm' onClick={zoomOut}>-</button>
+      <input className="form-range"
         type="range"
-        min={0.2}
-        max={2}
+        min={DEFAULTS.ZOOM_MIN}
+        max={DEFAULTS.ZOOM_MAX}
         step={0.01}
         value={state.zoom}
         onChange={handleZoomSlider}
@@ -79,13 +84,13 @@ export default function Toolbar() {
         aria-label="Zoom slider"
       />
       <span style={{ minWidth: 60, display: 'inline-block', textAlign: 'center' }}>Zoom: {(state.zoom * 100).toFixed(0)}%</span>
-      <button onClick={zoomIn}>+</button>
-      <button onClick={undo} disabled={history.length === 0}>Undo</button>
-      <button onClick={redo} disabled={future.length === 0}>Redo</button>
-      <button onClick={() => exportAs('PDF')}>Export PDF</button>
-      <button onClick={() => exportAs('Word')}>Export Word</button>
-      <button onClick={() => exportAs('JPEG')}>Export JPEG</button>
-      <button onClick={() => exportAs('PNG')}>Export PNG</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={zoomIn}>+</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={undo} disabled={history.length === 0}>Undo</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={redo} disabled={future.length === 0}>Redo</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('PDF')}>Export PDF</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('Word')}>Export Word</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('JPEG')}>Export JPEG</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('PNG')}>Export PNG</button>
       {/* Export JPEG Popup */}
       <ExportJpegPopup
         open={showJpegPopup}

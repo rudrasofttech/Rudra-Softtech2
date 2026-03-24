@@ -55,7 +55,7 @@ export const DEFAULTS = {
   BUTTON_ACTIVE: ' active',
   FORM_LABEL: 'form-label',
   FORM_GROUP: 'form-group mb-2',
-  FORM_CONTROL_COLOR: 'form-control form-control-color',
+  FORM_CONTROL_COLOR: 'form-control w-50',
   FORM_CONTROL_SM: 'form-control form-control-sm',
   FORM_CHECK_INPUT: 'form-check-input',
   FORM_CHECK_LABEL: 'form-check-label',
@@ -76,6 +76,69 @@ export const DEFAULTS = {
   ARROW_MOVE_STEP_LARGE: 10,    // px per tick (Shift+arrow, overrides acceleration)
   ARROW_MOVE_STEP_ACCEL: 5,     // px per tick after hold threshold
   ARROW_HOLD_ACCEL_DELAY: 500,  // ms of continuous hold before step size increases
+  // Zoom level constraints and wheel step (used by Toolbar.js and Editor.js)
+  ZOOM_MIN: 0.2,                 // minimum zoom level (20%)
+  ZOOM_MAX: 2,                   // maximum zoom level (200%)
+  ZOOM_WHEEL_STEP: 0.05,         // zoom delta per wheel notch (Ctrl+scroll)
+  // At 100% zoom the canvas must not occupy more than this fraction of the
+  // editor-canvas-container. Editor.js measures the container via ResizeObserver
+  // and computes fitScale = min(1, ratio*containerW/cnvW, ratio*cnvH/cnvH).
+  // Canvas.js multiplies state.zoom by fitScale for the transform; ElementControls.js
+  // forwards the same multiplied value to DraggableResizable for correct drag accuracy.
+  ZOOM_100_MAX_SCREEN_RATIO: 0.9,
+  // Floating Properties Panel geometry
+  PROPS_PANEL_WIDTH: 272,        // px — panel width (matches .properties-panel CSS)
+  PROPS_PANEL_OFFSET: 12,        // px — default margin from container edges
+  // Image file input filter
+  IMAGE_ACCEPT: 'image/*',       // accepted MIME types for image file dialogs
+  // Crop handle geometry and behaviour (rect, ellipse, and image element types)
+  CROP_MIN_VISIBLE: 20,          // px — minimum visible content in either axis after cropping
+  CROP_HANDLE_LONG: 28,          // px — long dimension of the pill-shaped crop handle
+  CROP_HANDLE_SHORT: 10,         // px — short dimension of the pill-shaped crop handle
+  CROP_HANDLE_BG: '#00897b',     // teal fill for crop handle pills
+  CROP_HANDLE_BORDER_RADIUS: 999, // fully rounded short axis → pill shape
+  CROP_HANDLE_Z_INDEX: 12,       // above corner resize handles (z-index 10)
+  CROP_EMPTY: { top: 0, right: 0, bottom: 0, left: 0 }, // default no-crop inset — backward-compat fallback
+  // Snap / alignment guides — active during drag, resize, and crop gestures.
+  // Guides appear as coloured lines spanning the full canvas when the moving
+  // element's edge or centre comes within SNAP_THRESHOLD canvas-px of any
+  // reference edge/centre on another element or the canvas boundary.
+  SNAP_THRESHOLD: 6,              // canvas-px — within this distance, snap fires
+  SNAP_GUIDE_COLOR_X: '#e91e63', // magenta — vertical guide lines (X-axis alignment)
+  SNAP_GUIDE_COLOR_Y: '#1976d2', // blue    — horizontal guide lines (Y-axis alignment)
+  SNAP_GUIDE_THICKNESS: 1,        // px — rendered guide line stroke width
+  // CSS class applied to each rendered guide line div (used for cleanup/styling)
+  SNAP_GUIDE_CLASS: 'snap-guide-line',
+  // Selection outline colour — shared by the visible-region frame border and resize-handle fill.
+  // Centralised here so changing the theme colour only requires one edit.
+  SELECTION_OUTLINE_COLOR: '#1976d2',
+  // CSS class name for the visible-region frame overlay rendered by DraggableResizable.
+  VISIBLE_REGION_CLASS: 'visible-region-frame',
+  // Page thumbnail dimensions and CSS class names (used by PageManager.js)
+  THUMBNAIL_WIDTH: 120,           // px — full-size thumbnail (kept for backward compat)
+  THUMBNAIL_HEIGHT: 68,           // px — full-size thumbnail (kept for backward compat)
+  PAGE_THUMB_MINI_W: 64,          // px — kept for backward compat (no longer rendered in strip)
+  PAGE_THUMB_MINI_H: 36,          // px — kept for backward compat (no longer rendered in strip)
+  // Pages drop-up panel — "Pages" toolbar button opens a panel above the toolbar
+  // with a vertical scrollable list (max PAGE_DROPUP_MAX_H) and "+ Add Page" pinned below.
+  PAGE_DROPUP_MAX_H: 400,          // px — max height of the scrollable thumbnail list
+  PAGE_THUMB_DROPUP_W: 120,        // px — thumbnail width inside the drop-up panel
+  PAGE_THUMB_DROPUP_H: 68,         // px — thumbnail height inside the drop-up panel
+  PAGE_DROPUP_WRAPPER: 'page-manager-dropup-wrapper', // positioning context div
+  PAGE_DROPUP_BTN_CLASS: 'pages-toolbar-btn',          // "Pages" button in toolbar
+  PAGE_DROPUP_CLASS: 'page-manager-dropup',            // floating panel div
+  PAGE_DROPUP_LIST_CLASS: 'page-manager-dropup-list',  // inner scrollable list
+  PAGE_DROPUP_ITEM_CLASS: 'page-dropup-item',          // one row per page
+  PAGE_DROPUP_REMOVE: 'btn btn-sm btn-outline-danger',            // × remove button on each row
+  PAGE_DROPUP_ADD_CLASS: 'page-dropup-add',            // "+ Add Page" button
+  // Legacy class names — kept for backward compat; PAGE_THUMB_LABEL / PAGE_THUMB_CANVAS
+  // are still used by PageCanvasThumbnail for the overlay badge and clip container.
+  PAGE_MANAGER: 'editor-page-manager',
+  PAGE_THUMB_BTN: 'page-thumb-btn',
+  PAGE_THUMB_LABEL: 'page-thumb-label',
+  PAGE_THUMB_ADD: 'page-thumb-add',
+  PAGE_THUMB_REMOVE: 'page-thumb-remove',
+  PAGE_THUMB_CANVAS: 'page-thumb-canvas',
 };
 
 export const ACTIONS = {
