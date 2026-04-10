@@ -11,6 +11,7 @@
         Educational = 6,
         LandingPage = 7,
         Resume = 8,
+        Canvas = 9
     }
     public enum RecordStatus
     {

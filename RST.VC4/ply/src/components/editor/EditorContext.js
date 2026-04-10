@@ -1,9 +1,13 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useCallback, useRef } from 'react';
 import { DEFAULTS } from './constants';
+import { getWithAuth, postWithAuth } from '../../utils/api';
+import { APIURLS } from '../../utils/config';
 
 // JSON schema for design state (sample structure)
 const initialDesignState = {
   projectName: 'Untitled Project',
+  projectTag: '',
+  projectDescription: '',
   aspectRatio: '16:9',
   pages: [
     {
@@ -21,6 +25,8 @@ const initialDesignState = {
 // Action types for reducer
 const ActionTypes = {
   SET_PROJECT_NAME: 'SET_PROJECT_NAME',
+  SET_PROJECT_TAG: 'SET_PROJECT_TAG',
+  SET_PROJECT_DESCRIPTION: 'SET_PROJECT_DESCRIPTION',
   SET_ASPECT_RATIO: 'SET_ASPECT_RATIO',
   UPDATE_PAGE_BACKGROUND: 'UPDATE_PAGE_BACKGROUND',
   UPDATE_PAGE_BORDER: 'UPDATE_PAGE_BORDER',
@@ -203,6 +209,12 @@ function editorReducer(state, action) {
     case ActionTypes.SET_PROJECT_NAME:
       newState = { ...state, projectName: action.payload };
       break;
+    case ActionTypes.SET_PROJECT_TAG:
+      newState = { ...state, projectTag: action.payload };
+      break;
+    case ActionTypes.SET_PROJECT_DESCRIPTION:
+      newState = { ...state, projectDescription: action.payload };
+      break;
     case ActionTypes.SET_ASPECT_RATIO:
       newState = { ...state, aspectRatio: action.payload };
       break;
@@ -339,24 +351,109 @@ function stripHistory(state) {
 
 const EditorContext = createContext();
 
-export function EditorProvider({ children }) {
-  // Load state from localStorage for persistence
-  const [state, dispatch] = useReducer(editorReducer, initialDesignState, (init) => {
-    try {
-      const saved = localStorage.getItem('editorDesignState');
-      return saved ? JSON.parse(saved) : init;
-    } catch {
-      return init;
-    }
-  });
+export function EditorProvider({ children, websiteId, navigate }) {
+  // State lives entirely in memory — no localStorage
+  const [state, dispatch] = useReducer(editorReducer, initialDesignState);
 
-  // Persist state to localStorage
+  // 'idle' | 'saving' | 'saved' | 'error'
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const autoSaveTimerRef = useRef(null);
+  const saveStatusTimerRef = useRef(null);
+  // Always-fresh state ref so saveToServer callback never goes stale
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  // Tracks last serialized meaningful state to avoid redundant saves
+  const prevMeaningfulRef = useRef(null);
+  // Internal design ID — starts from URL param, or gets assigned after create
+  const designIdRef = useRef(websiteId || null);
+
+  // On mount: if ID exists load from server, otherwise create a new design
   useEffect(() => {
-    localStorage.setItem('editorDesignState', JSON.stringify(stripHistory(state)));
-  }, [state]);
+    if (!navigate) return;
+    async function initDesign() {
+      if (designIdRef.current) {
+        // Load existing design
+        const r = await getWithAuth(`${APIURLS.userWebsite}/${designIdRef.current}`, navigate);
+        if (r.result && r.data && r.data.jsonData) {
+          try {
+            const loaded = JSON.parse(r.data.jsonData);
+            dispatch({
+              type: ActionTypes.LOAD_STATE,
+              payload: { ...initialDesignState, ...loaded, history: [], future: [] },
+            });
+          } catch { /* malformed JSON — keep initial state */ }
+        }
+      } else {
+        // No ID — create a new design on the server
+        setSaveStatus('saving');
+        const { history, future, selectedElementId, zoom, ...designData } = initialDesignState;
+        const payload = {
+          WebsiteName: initialDesignState.projectName || 'Untitled Project',
+          Tag: initialDesignState.projectTag || '',
+          Description: initialDesignState.projectDescription || '',
+          JsonData: JSON.stringify(designData),
+          Thumbnail: null,
+        };
+        const response = await postWithAuth(`${APIURLS.userWebsite}/createcanvas`, navigate, payload);
+        if (response.result && response.data && response.data.id) {
+          designIdRef.current = response.data.id;
+          setSaveStatus('saved');
+          clearTimeout(saveStatusTimerRef.current);
+          saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
+        } else {
+          setSaveStatus('error');
+        }
+      }
+    }
+    initDesign();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save current state to server (update)
+  const saveToServer = useCallback(async () => {
+    if (!designIdRef.current || !navigate) return;
+    setSaveStatus('saving');
+    const current = stateRef.current;
+    const { history, future, selectedElementId, zoom, ...designData } = current;
+    const payload = {
+      Id: designIdRef.current,
+      Tag: current.projectTag || '',
+      Description: current.projectDescription || '',
+      JsonData: JSON.stringify(designData),
+      Thumbnail: null,
+    };
+    const response = await postWithAuth(`${APIURLS.userWebsite}/updatecanvas`, navigate, payload);
+    if (response.result) {
+      setSaveStatus('saved');
+      clearTimeout(saveStatusTimerRef.current);
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
+    } else {
+      setSaveStatus('error');
+    }
+  }, [navigate]);
+
+  // Debounced auto-save: fires 2 s after the last meaningful state change.
+  // Gated on designIdRef so saves are blocked until create completes.
+  useEffect(() => {
+    if (!designIdRef.current || !navigate) return;
+    const { zoom, selectedElementId, history, future, ...meaningful } = stripHistory(state);
+    const serialized = JSON.stringify(meaningful);
+    if (prevMeaningfulRef.current === serialized) return; // UI-only change, skip
+    prevMeaningfulRef.current = serialized;
+    clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(saveToServer, 1000);
+  }, [state, navigate, saveToServer]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(autoSaveTimerRef.current);
+      clearTimeout(saveStatusTimerRef.current);
+    };
+  }, []);
 
   return (
-    <EditorContext.Provider value={{ state, dispatch, ActionTypes }}>
+    <EditorContext.Provider value={{ state, dispatch, ActionTypes, saveStatus, saveToServer }}>
       {children}
     </EditorContext.Provider>
   );

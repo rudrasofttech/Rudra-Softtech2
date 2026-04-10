@@ -1,5 +1,4 @@
-﻿
-namespace RST.Model.DTO.UserWebsite
+﻿namespace RST.Model.DTO.UserWebsite
 {
     public class UserWebsiteListItemDTO
     {
@@ -12,5 +11,6 @@ namespace RST.Model.DTO.UserWebsite
         public RecordStatus Status { get; set; } = RecordStatus.Active;
         public WebsiteType WSType { get; set; } = WebsiteType.None;
         public string WebstatsId { get; set; } = string.Empty;
+        public string? Thumbnail { get; set; } = string.Empty;
     }
 }

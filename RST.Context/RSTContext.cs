@@ -30,6 +30,7 @@ namespace RST.Context
         public virtual DbSet<UserWebsite> UserWebsites { get; set; }
         public virtual DbSet<UserWebsiteTheme> UserWebsiteThemes { get; set; }
         public virtual DbSet<Passcode> Passcodes { get; set; }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +56,7 @@ namespace RST.Context
             modelBuilder.Entity<UserWebsite>().ToTable("UserWebsite");
             modelBuilder.Entity<UserWebsiteTheme>().ToTable("UserWebsiteTheme");
             modelBuilder.Entity<Passcode>().ToTable("Passcode");
+            
         }
     }
 

@@ -5,7 +5,7 @@ import { Container } from "react-bootstrap";
 import PlyNavbar from "../components/plynavbar";
 import "../styles/globals.css";
 import Loader from '../components/loader';
-import { getWithAuth } from '../utils/api';
+import { getWithAuth, postWithAuth } from '../utils/api';
 import { APIURLS } from '../utils/config';
 import { StatusDisplay, WebsiteTypeDisplay } from '../components/statusdisplay';
 import Swal from 'sweetalert2';
@@ -112,6 +112,25 @@ function Home() {
     setShowShareModal(false);
   }
 
+  const handleCreateDesign = async () => {
+    setLoading(true);
+    setError('');
+    const payload = {
+      WebsiteName: 'Untitled Design',
+      Tag: '',
+      Description: '',
+      JsonData: JSON.stringify({ pages: [{ id: 'page-1', elements: [] }] }),
+      Thumbnail: null,
+    };
+    const res = await postWithAuth(`${APIURLS.userWebsite}/createcanvas`, navigate, payload);
+    if (res.result && res.data && res.data.id) {
+      navigate(`/editor/${res.data.id}`);
+    } else {
+      setError(res.errors ? res.errors.join(', ') : 'Failed to create design.');
+    }
+    setLoading(false);
+  };
+
   const handleDelete = (id) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -164,9 +183,15 @@ function Home() {
                   <div className='col-xl-3 col-md-4'>
                     <button type="button" onClick={() => {
                       setRedirectUrl('/createlinklist');
-                    }} className="fancy-btn w-100 mb-2 mb-md-0 linklist">
+                    }} className="fancy-btn w-100 mb-2 mb-md-0 linklist me-3">
                       <span className="icon">🔗</span>
                       Create Link List
+                    </button>
+                  </div>
+                  <div className='col-xl-3 col-md-4'>
+                    <button type="button" onClick={handleCreateDesign} className="fancy-btn w-100 mb-2 mb-md-0 linklist">
+                      <span className="icon">🎨</span>
+                      Create Design
                     </button>
                   </div>
                 </div>
@@ -209,6 +234,7 @@ function Home() {
              
             </div>
             <div className="d-flex flex-wrap gap-2 mt-3">
+              {site.wsType === 1 || site.wsType === 2 ?
               <a
                 rel="noreferrer"
                 href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
@@ -216,7 +242,7 @@ function Home() {
                 className="btn btn-outline-secondary btn-sm rounded-pill px-3"
               >
                 <i className="bi bi-bar-chart-line"></i> Report
-              </a>
+              </a> : null}
               <button
                 type="button"
                 className="btn btn-outline-primary btn-sm rounded-pill px-3"
@@ -233,6 +259,8 @@ function Home() {
                     setRedirectUrl(`/editcard/${site.id}`);
                   } else if (site.wsType === 2) {
                     setRedirectUrl(`/editlinklist/${site.id}`);
+                  }else if (site.wsType === 9) {
+                    setRedirectUrl(`/editor/${site.id}`);
                   }
                 }}
               >
@@ -253,56 +281,6 @@ function Home() {
     );
   })}
 </div>
-
-
-              {/* <div className='table-responsive'>
-                <table className="table table-hover table-bordered">
-                <thead >
-                  <tr>
-                    <th>Website</th>
-                    <th>Created</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th colSpan={4}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {designs.map((site, index) => (
-                    <tr key={index}>
-                      <td><a rel="noreferrer" href={`https://${site.name}.vc4.in`} target="_blank">{site.name}</a></td>
-                      <td>
-                        {new Date(site.created).toLocaleDateString()}
-                        {site.modified ? <div className="text-muted d-none d-md-block"> (Last modified: {new Date(site.modified).toLocaleDateString()})</div> : null}
-                      </td>
-                      <td>
-                        <WebsiteTypeDisplay wt={site.wsType} />
-                      </td>
-                      <td>
-                        <StatusDisplay status={site.status} />
-                      </td>
-                      <td>
-                        <a rel="noreferrer" href={`https://www.webstats.co.in/report?id=${site.webstatsId}`} target="_blank">Report</a>
-                      </td>
-                      <td>
-                        <button type="button" className="btn btn-link text-primary" onClick={() => handleShare(site)}>
-                          <i className="bi bi-share"></i>
-                        </button>
-                      </td>
-                      <td>
-                        <button type="button" className="btn btn-link text-dark" disabled={loading || loadingDelete} onClick={() => {
-                          if (site.wsType === 1) {
-                            setRedirectUrl(`/editcard/${site.id}`);
-                          } else if (site.wsType === 2) {
-                            setRedirectUrl(`/editlinklist/${site.id}`);
-                          }
-                        }}><i className="bi bi-pencil-square"></i></button>
-                      </td>
-                      <td><button type="button" className="btn btn-link text-danger" disabled={loading || loadingDelete} onClick={() => { handleDelete(site.id); }}><i className="bi bi-trash3"></i></button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div> */}
               </>
           ) : <>
             <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
@@ -312,7 +290,10 @@ function Home() {
               }} className="btn btn-success btn-lg fs-3 me-4">Create Visiting Card</button>
               <button type="button" onClick={() => {
                 setRedirectUrl('/createlinklist');
-              }} className="btn btn-primary btn-lg fs-3">Create Link List</button>
+              }} className="btn btn-primary btn-lg fs-3 me-4">Create Link List</button>
+              <button type="button" onClick={handleCreateDesign} className="btn btn-primary btn-lg fs-3">
+                      Create Design
+                    </button>
             </div>
           </>}</> : <>Loading websites...</>}
         </Container>

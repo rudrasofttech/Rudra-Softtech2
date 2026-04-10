@@ -9,9 +9,9 @@ import { DEFAULTS } from './constants';
 import './editor.css';
 
 // Main Editor module layout
-export default function Editor() {
+export default function Editor({ websiteId, navigate }) {
   return (
-    <EditorProvider>
+    <EditorProvider websiteId={websiteId} navigate={navigate}>
       <EditorLayout />
     </EditorProvider>
   );

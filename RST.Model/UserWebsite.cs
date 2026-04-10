@@ -28,7 +28,8 @@ namespace RST.Model
         public string Html { get; set; } = string.Empty;
         public Guid ThemeId { get; set; } = Guid.Empty;
         public string? WebstatsScript { get; set; } = string.Empty;
-        public string? Output { get; set; }=string.Empty;
+        public string? Output { get; set; } = string.Empty;
+        public string? Thumbnail { get; set; } = string.Empty;
     }
 
     public class VisitingCardDetail
@@ -81,7 +82,7 @@ namespace RST.Model
     {
         [MaxLength(100)]
         public string Title { get; set; } = string.Empty;
-        
+
         public string Photo { get; set; } = string.Empty;
     }
 }
