@@ -5,10 +5,9 @@ namespace RST.Model.DTO.UserWebsite
 {
     public class CreateCanvasWebsiteDTO
     {
-        [Required(ErrorMessage = "Website name is required.")]
-        [MaxLength(150, ErrorMessage = "Website name cannot exceed 150 characters in length.")]
-        [MinLength(3, ErrorMessage = "Website name must be minimum 3 characters.")]
-        public string WebsiteName { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Design name is required.")]
+        [MaxLength(150, ErrorMessage = "Design name cannot exceed 150 characters in length.")]
+        public string Name { get; set; } = string.Empty;
 
         [MaxLength(200)]
         public string Tag { get; set; } = string.Empty;
@@ -35,6 +34,10 @@ namespace RST.Model.DTO.UserWebsite
     {
         [Required]
         public Guid Id { get; set; }
+
+        
+        [MaxLength(150, ErrorMessage = "Design name cannot exceed 150 characters in length.")]
+        public string Name { get; set; } = string.Empty;
 
         [MaxLength(200)]
         public string Tag { get; set; } = string.Empty;

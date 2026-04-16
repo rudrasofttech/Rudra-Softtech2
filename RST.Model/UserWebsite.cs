@@ -11,7 +11,7 @@ namespace RST.Model
         public string Name { get; set; } = string.Empty;
         [MaxLength(250)]
         public string Domain { get; set; } = string.Empty;
-        [JsonIgnore]
+        
         public string JsonData { get; set; } = string.Empty;
         [JsonIgnore]
         public Member Owner { get; set; } = null!;

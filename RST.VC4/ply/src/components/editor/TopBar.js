@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useEditor } from './EditorContext';
+import logo from '../../assets/logo.jpg';
 
 // TopBar for project name and aspect ratio
 export default function TopBar() {
   const { state, dispatch, ActionTypes, saveStatus, saveToServer } = useEditor();
+  const navigate = useNavigate();
   const [popupOpen, setPopupOpen] = useState(false);
   const [draft, setDraft] = useState({ name: '', tag: '', description: '' });
   const popupRef = useRef(null);
@@ -45,6 +48,14 @@ export default function TopBar() {
 
   return (
     <header className="editor-topbar">
+      <a
+        href="/"
+        onClick={(e) => { e.preventDefault(); navigate('/'); }}
+        title="Go to Home"
+        style={{ display: 'flex', alignItems: 'center', marginRight: 8, flexShrink: 0 }}
+      >
+        <img src={logo} alt="Ply" style={{ height: 32, width: 'auto' }} />
+      </a>
       <button className="project-name-btn" onClick={openPopup} title="Edit project details">
         <span className="project-name-label">{state.projectName || 'Untitled Project'}</span>
         <svg className="project-name-edit-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,7 +79,7 @@ export default function TopBar() {
             <button
               onClick={saveToServer}
               title="Save failed — click to retry"
-              style={{ background: 'none', border: 'none', color: '#d9534f', cursor: 'pointer', padding: 0, fontSize: 13 }}
+              className='btn btn-sm btn-danger'
             >
               ⚠ Save failed — Retry
             </button>
@@ -77,7 +88,7 @@ export default function TopBar() {
             <button
               onClick={saveToServer}
               title="Save to server"
-              style={{ background: 'none', border: '1px solid #ccc', borderRadius: 4, color: '#555', cursor: 'pointer', padding: '2px 8px', fontSize: 12 }}
+              className='btn btn-sm btn-light'
             >
               Save
             </button>
@@ -133,7 +144,7 @@ export default function TopBar() {
         </div>
       )}
 
-      <select value={state.aspectRatio} onChange={onAspectChange}>
+      <select value={state.aspectRatio} className="form-select ms-2 form-select-sm" style={{width:'auto'}} onChange={onAspectChange}>
         <option value="16:9">16:9</option>
         <option value="4:3">4:3</option>
         <option value="1:1">1:1</option>

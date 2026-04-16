@@ -355,6 +355,9 @@ export function EditorProvider({ children, websiteId, navigate }) {
   // State lives entirely in memory — no localStorage
   const [state, dispatch] = useReducer(editorReducer, initialDesignState);
 
+  // true while the initial design is being fetched from the server
+  const [isLoading, setIsLoading] = useState(!!websiteId);
+
   // 'idle' | 'saving' | 'saved' | 'error'
   const [saveStatus, setSaveStatus] = useState('idle');
   const autoSaveTimerRef = useRef(null);
@@ -383,12 +386,13 @@ export function EditorProvider({ children, websiteId, navigate }) {
             });
           } catch { /* malformed JSON — keep initial state */ }
         }
+        setIsLoading(false);
       } else {
         // No ID — create a new design on the server
         setSaveStatus('saving');
         const { history, future, selectedElementId, zoom, ...designData } = initialDesignState;
         const payload = {
-          WebsiteName: initialDesignState.projectName || 'Untitled Project',
+          Name: initialDesignState.projectName || 'Untitled Project',
           Tag: initialDesignState.projectTag || '',
           Description: initialDesignState.projectDescription || '',
           JsonData: JSON.stringify(designData),
@@ -417,6 +421,7 @@ export function EditorProvider({ children, websiteId, navigate }) {
     const { history, future, selectedElementId, zoom, ...designData } = current;
     const payload = {
       Id: designIdRef.current,
+      Name: current.projectName || 'Untitled Project',
       Tag: current.projectTag || '',
       Description: current.projectDescription || '',
       JsonData: JSON.stringify(designData),
@@ -453,7 +458,7 @@ export function EditorProvider({ children, websiteId, navigate }) {
   }, []);
 
   return (
-    <EditorContext.Provider value={{ state, dispatch, ActionTypes, saveStatus, saveToServer }}>
+    <EditorContext.Provider value={{ state, dispatch, ActionTypes, saveStatus, saveToServer, isLoading }}>
       {children}
     </EditorContext.Provider>
   );

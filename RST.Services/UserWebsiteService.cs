@@ -324,7 +324,7 @@ namespace RST.Services
             {
                 Id = websiteId,
                 Created = DateTime.UtcNow,
-                Name = model.WebsiteName,
+                Name = model.Name,
                 Owner = member,
                 WSType = WebsiteType.Canvas,
                 Status = RecordStatus.Active,
@@ -701,7 +701,7 @@ namespace RST.Services
             {
                 uw.Thumbnail = model.Thumbnail;
             }
-
+            uw.Name = model.Name ?? string.Empty;
             uw.Keywords = model.Tag ?? string.Empty;
             uw.Description = model.Description ?? string.Empty;
             uw.PublishStatus = model.PublishStatus;

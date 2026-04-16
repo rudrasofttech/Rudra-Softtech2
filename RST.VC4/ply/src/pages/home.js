@@ -167,12 +167,8 @@ function Home() {
           {!loading ? <>{designs.length > 0 ? (
             <>
               <div className="mb-4">
-                <div className='row align-items-center'>
-                  <div className='col-xl-6 col-md-3'>
-                    <h1 className="me-auto text-center text-md-start mb-2 mb-md-0">My Sites</h1>
-                  </div>
-                  <div className='col-xl-3 col-md-5'>
-
+                <div className='row align-items-center justify-content-center'>
+                  <div className='col-xl-3 col-md-3'>
                     <button type="button" onClick={() => {
                       setRedirectUrl('/createvcard');
                     }} className="fancy-btn w-100 mb-2 mb-md-0">
@@ -180,7 +176,7 @@ function Home() {
                       Create Visiting Card
                     </button>
                   </div>
-                  <div className='col-xl-3 col-md-4'>
+                  <div className='col-xl-3 col-md-3'>
                     <button type="button" onClick={() => {
                       setRedirectUrl('/createlinklist');
                     }} className="fancy-btn w-100 mb-2 mb-md-0 linklist me-3">
@@ -188,7 +184,7 @@ function Home() {
                       Create Link List
                     </button>
                   </div>
-                  <div className='col-xl-3 col-md-4'>
+                  <div className='col-xl-3 col-md-3'>
                     <button type="button" onClick={handleCreateDesign} className="fancy-btn w-100 mb-2 mb-md-0 linklist">
                       <span className="icon">🎨</span>
                       Create Design
@@ -196,92 +192,93 @@ function Home() {
                   </div>
                 </div>
               </div>
-              
+              <h1 className="my-3">My Projects</h1>
+              <div className="row g-4">
+                {designs.map((site, index) => {
+                  // Set title color based on status
+                  let titleColor = "text-primary";
+                  if (site.status === 0) titleColor = "text-success";
+                  else if (site.status === 1) titleColor = "text-secondary";
+                  else if (site.status === 2) titleColor = "text-danger";
+                  else if (site.status === 3) titleColor = "text-warning";
 
-<div className="row g-4">
-  {designs.map((site, index) => {
-    // Set title color based on status
-    let titleColor = "text-primary";
-    if (site.status === 0) titleColor = "text-success";
-    else if (site.status === 1) titleColor = "text-secondary";
-    else if (site.status === 2) titleColor = "text-danger";
-    else if (site.status === 3) titleColor = "text-warning";
+                  return (
+                    <div className="col-12 col-md-6 col-lg-4" key={index}>
+                      <div className="card h-100 shadow-lg border-0 rounded-4">
+                        <div className="card-body d-flex flex-column justify-content-between">
+                          <div className="mb-2">
+                            <h5 className={`card-title mb-3 d-flex align-items-center gap-2 ${titleColor}`}>
+                              <WebsiteTypeDisplay wt={site.wsType} />
+                              <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
+                                target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
+                                style={{ fontSize: "1.25rem" }}>
+                                {site.name}
+                              </a>
+                              <span className="ms-auto">
+                                <StatusDisplay status={site.status} />
+                              </span>
+                            </h5>
+                            <div className="mb-2">
+                              <span className="badge bg-light text-dark me-2">
+                                Created: {new Date(site.created).toLocaleDateString()}
+                              </span>
+                              {site.modified ? (
+                                <span className="badge bg-light text-dark">
+                                  Last modified: {new Date(site.modified).toLocaleDateString()}
+                                </span>
+                              ) : null}
+                            </div>
 
-    return (
-      <div className="col-12 col-md-6 col-lg-4" key={index}>
-        <div className="card h-100 shadow-lg border-0 rounded-4">
-          <div className="card-body d-flex flex-column justify-content-between">
-            <div>
-              <h5 className={`card-title mb-2 d-flex align-items-center gap-2 ${titleColor}`}>
-                <WebsiteTypeDisplay wt={site.wsType} />
-                <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
-                  target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
-                  style={{ fontSize: "1.25rem" }}>
-                  {site.name}
-                </a>
-                <StatusDisplay status={site.status} />
-              </h5>
-              <div className="mb-2">
-                <span className="badge bg-light text-dark me-2">
-                  Created: {new Date(site.created).toLocaleDateString()}
-                </span>
-                {site.modified ? (
-                  <span className="badge bg-light text-dark">
-                    Last modified: {new Date(site.modified).toLocaleDateString()}
-                  </span>
-                ) : null}
+                          </div>
+                          <div className="d-flex flex-wrap gap-2 mt-3">
+                            {site.wsType === 1 || site.wsType === 2 ?
+                              <a
+                                rel="noreferrer"
+                                href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
+                                target="_blank"
+                                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                              >
+                                <i className="bi bi-bar-chart-line"></i> Report
+                              </a> : null}
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary btn-sm rounded-pill px-3"
+                              onClick={() => handleShare(site)}
+                            >
+                              <i className="bi bi-share"></i> Share
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-dark btn-sm rounded-pill px-3"
+                              disabled={loading || loadingDelete}
+                              onClick={() => {
+                                if (site.wsType === 1) {
+                                  setRedirectUrl(`/editcard/${site.id}`);
+                                } else if (site.wsType === 2) {
+                                  setRedirectUrl(`/editlinklist/${site.id}`);
+                                } else if (site.wsType === 9) {
+                                  setRedirectUrl(`/editor/${site.id}`);
+                                }
+                              }}
+                            >
+                              <i className="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm rounded-pill px-3"
+                              disabled={loading || loadingDelete}
+                              onClick={() => { handleDelete(site.id); }}
+                            >
+                              <i className="bi bi-trash3"></i> Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-             
-            </div>
-            <div className="d-flex flex-wrap gap-2 mt-3">
-              {site.wsType === 1 || site.wsType === 2 ?
-              <a
-                rel="noreferrer"
-                href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
-                target="_blank"
-                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-              >
-                <i className="bi bi-bar-chart-line"></i> Report
-              </a> : null}
-              <button
-                type="button"
-                className="btn btn-outline-primary btn-sm rounded-pill px-3"
-                onClick={() => handleShare(site)}
-              >
-                <i className="bi bi-share"></i> Share
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-dark btn-sm rounded-pill px-3"
-                disabled={loading || loadingDelete}
-                onClick={() => {
-                  if (site.wsType === 1) {
-                    setRedirectUrl(`/editcard/${site.id}`);
-                  } else if (site.wsType === 2) {
-                    setRedirectUrl(`/editlinklist/${site.id}`);
-                  }else if (site.wsType === 9) {
-                    setRedirectUrl(`/editor/${site.id}`);
-                  }
-                }}
-              >
-                <i className="bi bi-pencil-square"></i> Edit
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-danger btn-sm rounded-pill px-3"
-                disabled={loading || loadingDelete}
-                onClick={() => { handleDelete(site.id); }}
-              >
-                <i className="bi bi-trash3"></i> Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
-              </>
+            </>
           ) : <>
             <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
             <div className="text-center mt-3">
@@ -292,8 +289,8 @@ function Home() {
                 setRedirectUrl('/createlinklist');
               }} className="btn btn-primary btn-lg fs-3 me-4">Create Link List</button>
               <button type="button" onClick={handleCreateDesign} className="btn btn-primary btn-lg fs-3">
-                      Create Design
-                    </button>
+                Create Design
+              </button>
             </div>
           </>}</> : <>Loading websites...</>}
         </Container>

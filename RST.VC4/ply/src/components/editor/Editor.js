@@ -38,7 +38,7 @@ function resolveCanvasDims(state) {
 
 function EditorLayout() {
   // Use context to get zoom for scaling the whole design
-  const { state, dispatch, ActionTypes } = useEditor();
+  const { state, dispatch, ActionTypes, isLoading } = useEditor();
   // Ref to the canvas container so we can attach a non-passive wheel listener.
   // React synthetic onWheel events cannot call preventDefault in passive mode
   // (browsers mark wheel listeners passive by default), so we use a ref + useEffect.
@@ -120,6 +120,20 @@ function EditorLayout() {
 
   return (
     <div className="editor-root">
+      {isLoading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(255,255,255,0.85)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          gap: 16, fontSize: 18, color: '#555',
+        }}>
+          <svg style={{ animation: 'spin 1s linear infinite', width: 40, height: 40 }} viewBox="0 0 24 24" fill="none" stroke="#6c63ff" strokeWidth="2">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+          Loading design…
+        </div>
+      )}
       <TopBar />
       <div className="editor-main">
         <Sidebar />

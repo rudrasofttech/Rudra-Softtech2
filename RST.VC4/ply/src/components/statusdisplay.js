@@ -2,26 +2,26 @@
 export function StatusDisplay({ status }) {
     if (status === 0)
         return (
-            <span className="text-success" title="Active">
-                <i className="bi bi-check-circle-fill me-1"></i>
+            <span className="ms-2 text-success" title="Active" style={{fontSize:"0.9rem"}}>
+                <i className="bi bi-check-circle-fill me-1"></i> Active
             </span>
         );
     else if (status === 1)
         return (
-            <span className="text-secondary" title="Inactive">
-                <i className="bi bi-x-circle-fill me-1"></i>
+            <span className="ms-2 text-secondary" title="Inactive" style={{fontSize:"0.9rem"}}>
+                <i className="bi bi-x-circle-fill me-1"></i> Inactive
             </span>
         );
     else if (status === 2)
         return (
-            <span className="text-danger" title="Deleted">
-                <i className="bi bi-trash-fill me-1"></i>
+            <span className="ms-2 text-danger" title="Deleted" style={{fontSize:"0.9rem"}}>
+                <i className="bi bi-trash-fill me-1"></i> Deleted
             </span>
         );
     else if (status === 3)
         return (
-            <span className="text-warning" title="Unverified">
-                <i className="bi bi-exclamation-circle-fill me-1"></i>
+            <span className="ms-2 text-warning" title="Unverified" style={{fontSize:"0.9rem"}}>
+                <i className="bi bi-exclamation-circle-fill me-1"></i> Unverified
             </span>
         );
     else
@@ -53,6 +53,8 @@ export function WebsiteTypeDisplay({ wt }) {
         return <span title="Portfolio"><i className="bi bi-briefcase-fill me-1"></i></span>;
     else if (wt === 8)
         return <span title="Resume"><i className="bi bi-file-earmark-person-fill me-1"></i></span>;
+    else if (wt === 9)
+        return <span title="Design"><i className="bi bi-palette-fill me-1"></i></span>;
     else
         return null;
 }
