@@ -16,6 +16,8 @@ namespace RST.Model.DTO.UserWebsite
         [MaxLength(1000)]
         public string Description { get; set; } = string.Empty;
 
+        public DesignPublishStatus PublishStatus { get; set; } = DesignPublishStatus.Public;
+
         /// <summary>
         /// Raw JSON string representing the canvas elements/design data.
         /// Stored directly in UserWebsite.JsonData.
@@ -39,6 +41,7 @@ namespace RST.Model.DTO.UserWebsite
 
         [MaxLength(1000)]
         public string Description { get; set; } = string.Empty;
+        public DesignPublishStatus PublishStatus { get; set; } = DesignPublishStatus.Public;
 
         /// <summary>
         /// Raw JSON string representing the canvas elements/design data.

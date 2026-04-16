@@ -29,7 +29,13 @@ namespace RST.Model
         public Guid ThemeId { get; set; } = Guid.Empty;
         public string? WebstatsScript { get; set; } = string.Empty;
         public string? Output { get; set; } = string.Empty;
+        [MaxLength(500)]
         public string? Thumbnail { get; set; } = string.Empty;
+        [MaxLength(1000)]
+        public string? Description { get; set; } = string.Empty;
+        [MaxLength(500)]
+        public string? Keywords { get; set; } = string.Empty;
+        public DesignPublishStatus? PublishStatus { get; set; } = DesignPublishStatus.Public;
     }
 
     public class VisitingCardDetail
@@ -71,7 +77,6 @@ namespace RST.Model
         public string? Phone3 { get; set; } = string.Empty;
 
         public string? Address { get; set; } = string.Empty;
-        [MaxLength(500)]
         public string? AboutInfo { get; set; } = string.Empty;
         public List<VCardPhoto> Photos { get; set; } = [];
 

@@ -21,6 +21,12 @@
         Unverified = 3
     }
 
+    public enum DesignPublishStatus
+    {
+        Public = 1,
+        Private = 2
+    }
+
     public enum PostStatus
     {
         Draft = 1,

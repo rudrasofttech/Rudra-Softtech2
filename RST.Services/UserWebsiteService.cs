@@ -331,7 +331,10 @@ namespace RST.Services
                 ThemeId = Guid.Empty,
                 Html = string.Empty,
                 JsonData = model.JsonData,
-                Thumbnail = thumbnailPath
+                Thumbnail = thumbnailPath,
+                Description = model.Description,
+                Keywords = model.Tag,
+                PublishStatus = model.PublishStatus
             };
 
             _db.UserWebsites.Add(userWebsite);
@@ -699,6 +702,9 @@ namespace RST.Services
                 uw.Thumbnail = model.Thumbnail;
             }
 
+            uw.Keywords = model.Tag ?? string.Empty;
+            uw.Description = model.Description ?? string.Empty;
+            uw.PublishStatus = model.PublishStatus;
             uw.JsonData = model.JsonData;
             uw.Modified = DateTime.UtcNow;
 
