@@ -124,7 +124,7 @@ function Home() {
     };
     const res = await postWithAuth(`${APIURLS.userWebsite}/createcanvas`, navigate, payload);
     if (res.result && res.data && res.data.id) {
-      navigate(`/editor/${res.data.id}`);
+      navigate(`/designeditor/${res.data.id}`);
     } else {
       setError(res.errors ? res.errors.join(', ') : 'Failed to create design.');
     }
@@ -257,7 +257,7 @@ function Home() {
                                 } else if (site.wsType === 2) {
                                   setRedirectUrl(`/editlinklist/${site.id}`);
                                 } else if (site.wsType === 9) {
-                                  setRedirectUrl(`/editor/${site.id}`);
+                                  setRedirectUrl(`/designeditor/${site.id}`);
                                 }
                               }}
                             >

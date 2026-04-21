@@ -11,7 +11,9 @@ namespace RST.Model
         public string Name { get; set; } = string.Empty;
         [MaxLength(250)]
         public string Domain { get; set; } = string.Empty;
-        
+        /// <summary>
+        /// This property will store the JSON data for each design. Linklist, Webpages it will store structure data to be displayed on page and for Designs it will store Json schema and data for custom canvas design. 
+        /// </summary>
         public string JsonData { get; set; } = string.Empty;
         [JsonIgnore]
         public Member Owner { get; set; } = null!;
@@ -25,7 +27,13 @@ namespace RST.Model
         [NotMapped]
         [JsonPropertyName("linklist")]
         public LinkListDetail? LinkListDetail { get; set; } = null!;
+        /// <summary>
+        /// This will contain the template html that is used to create this webpage, if WSType is not web related it will contain nothing.
+        /// </summary>
         public string Html { get; set; } = string.Empty;
+        /// <summary>
+        /// This is the user template id that is used to create this userwebsite. It will not be used anymore.
+        /// </summary>
         public Guid ThemeId { get; set; } = Guid.Empty;
         public string? WebstatsScript { get; set; } = string.Empty;
         public string? Output { get; set; } = string.Empty;

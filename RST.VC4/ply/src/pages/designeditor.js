@@ -1,7 +1,7 @@
 // Editor page for routing integration
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Editor from '../components/editor';
+import Editor from '../components/designeditor';
 
 export default function EditorPage() {
   const navigate = useNavigate();
