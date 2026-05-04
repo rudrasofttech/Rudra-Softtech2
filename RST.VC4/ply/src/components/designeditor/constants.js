@@ -40,6 +40,9 @@ export const DEFAULTS = {
   ELLIPSE_RADIUS: 60,
   RECT_HEIGHT: 60,
   LINE_HEIGHT_PX: 4,
+  // Extra vertical padding (px) added above and below the stroke so the SVG bounding
+  // box comfortably contains the stroke without clipping.  height = strokeWidth + 2×PADDING.
+  LINE_STROKE_HEIGHT_PADDING: 6,
   IMAGE_HEIGHT: 80,
   IMAGE_WIDTH: 120,
   TEXT_HEIGHT: 40,
@@ -98,6 +101,7 @@ export const DEFAULTS = {
   CROP_HANDLE_BG: '#00897b',     // teal fill for crop handle pills
   CROP_HANDLE_BORDER_RADIUS: 999, // fully rounded short axis → pill shape
   CROP_HANDLE_Z_INDEX: 12,       // above corner resize handles (z-index 10)
+  SIDE_RESIZE_HANDLE_Z_INDEX: 15, // above crop handles (12) so side handles are always clickable
   CROP_EMPTY: { top: 0, right: 0, bottom: 0, left: 0 }, // default no-crop inset — backward-compat fallback
   // Snap / alignment guides — active during drag, resize, and crop gestures.
   // Guides appear as coloured lines spanning the full canvas when the moving
@@ -109,9 +113,32 @@ export const DEFAULTS = {
   SNAP_GUIDE_THICKNESS: 1,        // px — rendered guide line stroke width
   // CSS class applied to each rendered guide line div (used for cleanup/styling)
   SNAP_GUIDE_CLASS: 'snap-guide-line',
+  // Rotation snap — for line elements a guide appears and the angle snaps when the
+  // rotating element comes within ROTATE_SNAP_THRESHOLD degrees of any entry in
+  // ROTATE_SNAP_ANGLES.  Multiples of 90° keep lines axis-aligned.
+  ROTATE_SNAP_ANGLES: [0, 90, 180, 270],  // degrees — angles that trigger snap
+  ROTATE_SNAP_THRESHOLD: 8,               // degrees — proximity to fire snap
+  ROTATE_SNAP_GUIDE_COLOR: '#ff9800',     // orange — rotation snap guide line
   // Selection outline colour — shared by the visible-region frame border and resize-handle fill.
   // Centralised here so changing the theme colour only requires one edit.
   SELECTION_OUTLINE_COLOR: '#1976d2',
+  // Line element centre (move) handle — hollow circle to distinguish from resize handles.
+  LINE_MOVE_HANDLE_BG: '#ffffff',
+  LINE_MOVE_HANDLE_BORDER: '2px solid #1976d2',
+  // ── Canvas rulers ─────────────────────────────────────────────────────────
+  // Thin rulers rendered adjacent to the top and left edges of each canvas page.
+  // All visual values are centralised here so a theme change is a one-line edit.
+  RULER_THICKNESS: 20,          // px — width of vertical ruler / height of horizontal ruler
+  RULER_BG: '#f0f0f0',          // ruler background colour
+  RULER_TICK_COLOR: '#888',     // tick mark and label colour
+  RULER_FONT_SIZE: 9,           // px — label font size
+  RULER_FONT_FAMILY: 'monospace',
+  // Tick intervals (canvas-px).  The renderer picks the coarsest interval whose
+  // screen-px gap (= interval × zoom) is at least RULER_MIN_TICK_GAP_PX.
+  RULER_TICK_INTERVALS: [500, 200, 100, 50, 25, 10, 5, 1],
+  RULER_MIN_TICK_GAP_PX: 40,    // minimum screen-px between labelled ticks
+  RULER_SUB_TICK_DIVS: 5,       // number of un-labelled sub-ticks per major interval
+  RULER_CORNER_BG: '#e0e0e0',   // corner square (intersection of H + V rulers)
   // CSS class name for the visible-region frame overlay rendered by DraggableResizable.
   VISIBLE_REGION_CLASS: 'visible-region-frame',
   // Page thumbnail dimensions and CSS class names (used by PageManager.js)
@@ -139,6 +166,17 @@ export const DEFAULTS = {
   PAGE_THUMB_ADD: 'page-thumb-add',
   PAGE_THUMB_REMOVE: 'page-thumb-remove',
   PAGE_THUMB_CANVAS: 'page-thumb-canvas',
+};
+
+// ─── Resize mode constants ────────────────────────────────────────────────────
+// Used by DraggableResizable and its helpers to determine which handles to show
+// and how to compute resized dimensions.  Adding a new resize behaviour only
+// requires a new entry here and corresponding branches in the helper functions.
+export const RESIZE_MODE = {
+  FULL:       'full',       // 4-corner handles — rect, ellipse, image
+  WIDTH_ONLY: 'width-only', // east / west handles only — text (non-line)
+  LINE:       'line',       // left / center-move / right handles — line elements only
+  NONE:       'none',       // no resize handles
 };
 
 export const ACTIONS = {

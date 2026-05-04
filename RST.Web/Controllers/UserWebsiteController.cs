@@ -6,6 +6,7 @@ using RST.Model.DTO.UserWebsite;
 using RST.Services;
 using RST.Web.Service;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace RST.Web.Controllers
 {
@@ -36,20 +37,38 @@ namespace RST.Web.Controllers
             return _db.Members.FirstOrDefault(d => d.Email == email);
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int psize = 20)
+        //{
+        //    var member = GetCurrentMember();
+        //    if (member == null || !member.IsAdmin)
+        //        return Unauthorized(new { error = Utility.UnauthorizedMessage });
+        //    try
+        //    {
+        //        var result = await _userWebsiteService.GetPagedAsync(page, psize, member);
+        //        return Ok(result);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error fetching user websites");
+        //        return StatusCode(500, new { error = Utility.ServerErrorMessage });
+        //    }
+        //}
+
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int psize = 20)
+        [Route("templates")]
+        public async Task<IActionResult> GetTemplatesAsync([FromQuery]int p = 1, [FromQuery]WebsiteType ws= WebsiteType.None, [FromQuery]string k = "")
         {
-            var member = GetCurrentMember();
-            if (member == null || !member.IsAdmin)
-                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+            
             try
             {
-                var result = await _userWebsiteService.GetPagedAsync(page, psize, member);
+                var result = await _userWebsiteService.GetTemplatesPagedAsync(p, 20, ws, k);
+
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching user websites");
+                _logger.LogError(ex, "Error fetching templates");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
@@ -146,8 +165,33 @@ namespace RST.Web.Controllers
                 var member = GetCurrentMember();
                 if (member == null)
                     return Unauthorized(new { error = "User not found." });
+                
+                model.HTML = SanitizeHtml(model.HTML);
 
                 var uw = await _userWebsiteService.CreateAsync(model, member);
+                if (uw == null)
+                    return BadRequest(new { error = "Website with this name already exists or theme not found." });
+
+                return Ok(uw);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user website");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
+            }
+        }
+
+        [HttpPost("update")]
+        public async Task<IActionResult> Update([FromBody] UpdateUserWebsiteDTO model)
+        {
+            try
+            {
+                var member = GetCurrentMember();
+                if (member == null)
+                    return Unauthorized(new { error = "User not found." });
+
+                model.HTML = SanitizeHtml(model.HTML);
+                var uw = await _userWebsiteService.UpdateAsync(model, member);
                 if (uw == null)
                     return BadRequest(new { error = "Website with this name already exists or theme not found." });
 
@@ -412,6 +456,31 @@ namespace RST.Web.Controllers
                     _userWebsiteService.Token = headerValue["Bearer ".Length..].Trim();
                 }
             }
+        }
+
+        private static string SanitizeHtml(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return string.Empty;
+
+            // Remove <script>...</script> blocks (case-insensitive, multiline, non-greedy)
+            html = Regex.Replace(html, @"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script\s*>", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            // Remove server-side code blocks: <% ... %> (ASP.NET), @{ ... } (Razor), <!--# ... --> (SSI)
+            html = Regex.Replace(html, @"<%.*?%>", string.Empty, RegexOptions.Singleline);
+            html = Regex.Replace(html, @"@\{.*?\}", string.Empty, RegexOptions.Singleline);
+            html = Regex.Replace(html, @"<!--#.*?-->", string.Empty, RegexOptions.Singleline);
+
+            // Remove PHP code blocks: <?php ... ?> and <?= ... ?>
+            html = Regex.Replace(html, @"<\?(php|=)?[\s\S]*?\?>", string.Empty, RegexOptions.IgnoreCase);
+
+            // Remove Ruby ERB code blocks: <% ... %> and <%= ... %>
+            html = Regex.Replace(html, @"<%=?[\s\S]*?%>", string.Empty, RegexOptions.Singleline);
+
+            // Optionally, remove inline event handlers (e.g., onclick="...", onload='...')
+            html = Regex.Replace(html, @"\son\w+\s*=\s*(['""]).*?\1", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            return html;
         }
     }
 }

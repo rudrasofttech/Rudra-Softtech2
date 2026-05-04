@@ -1,7 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useEditor } from './EditorContext';
 import DraggableResizable from './DraggableResizable';
 import { DEFAULTS } from './constants';
+import { SHAPE_BY_ID, renderShapeSvgContent } from './shapes';
+import { LINE_BY_ID, renderLineSvgContent } from './lines';
 
 // ElementControls: Draggable, resizable, rotatable wrapper for elements
 // Receives 'selected' prop from Canvas.
@@ -75,27 +77,42 @@ export default function ElementControls({ element, selected, fitScale = 1, other
   const textareaRef = useRef();
   const { dispatch, ActionTypes, state } = useEditor();
   const elRef = useRef();
-// Ref for file input (for image element)
+  // Ref for file input (for image element)
   const fileInputRef = useRef();
+
+  // isEditing: true only when the user double-clicks a selected text element to type.
+  // While false the text element renders a plain div, so mouse-drag is forwarded to
+  // DraggableResizable and the element can be repositioned normally.
+  const [isEditing, setIsEditing] = useState(false);
+  // Exit edit mode automatically whenever this element is deselected.
+  useEffect(() => {
+    if (!selected) setIsEditing(false);
+  }, [selected]);
   
-  // Handler for updating element position/size/rotation
-  const onChange = (props) => {
+  // Handler for updating element position/size/rotation.
+  // For line elements the bounding-box height is derived from strokeWidth, so any
+  // height value coming from a drag/resize gesture is discarded — only width changes.
+  const onChange = (newProps) => {
+    const { crop: incomingCrop, ...rest } = newProps;
+    const merged = { ...element.props, ...rest };
+    if (element.type === 'line') {
+      const sw = element.style?.strokeWidth ?? 2;
+      merged.height = sw + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2;
+    }
+    // If a side-axis resize clamped an existing crop inset, persist the updated crop too.
+    if (incomingCrop !== undefined) {
+      merged.crop = incomingCrop;
+    }
     dispatch({
       type: ActionTypes.UPDATE_ELEMENT,
-      payload: {
-        ...element,
-        props: {
-          ...element.props,
-          ...props
-        }
-      }
+      payload: { ...element, props: merged },
     });
   };
 
   // Crop support: rect, ellipse, and image elements support mid-edge crop handles.
   // Crop insets are stored in element.props.crop { top, right, bottom, left } (px).
   // Backward-compatible: elements without a crop field default to DEFAULTS.CROP_EMPTY (all zeros).
-  const CROP_SUPPORTED = element.type === 'rect' || element.type === 'ellipse' || element.type === 'image';
+  const CROP_SUPPORTED = element.type === 'rect' || element.type === 'ellipse' || element.type === 'image' || element.type === 'shape';
   const crop = element.props?.crop || DEFAULTS.CROP_EMPTY;
 
   // Dispatches updated crop insets to the undo-aware store on each RAF tick during a crop drag.
@@ -128,9 +145,62 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                 content = <div style={{ width: '100%', height: '100%', ...style, border, borderRadius: ellipseRadius }} />;
                 break;
               }
-              case 'line':
-                content = <div style={{ width: '100%', height: '100%', background: style.background || '#222222', borderRadius: 2 }} />;
+              case 'line': {
+                // SVG-based line (has lineId): rendered with the lines catalog.
+                // The bounding-box height is always strokeWidth + 2×LINE_STROKE_HEIGHT_PADDING
+                // so the SVG fills the container correctly regardless of the stored height.
+                if (element.lineId) {
+                  const lineDef = LINE_BY_ID[element.lineId];
+                  const sw = style.strokeWidth ?? 2;
+                  const lineH = sw + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2;
+                  content = (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
+                      viewBox={`0 0 ${props.width} ${lineH}`}
+                      preserveAspectRatio="none"
+                    >
+                      {renderLineSvgContent(
+                        lineDef,
+                        props.width,
+                        lineH,
+                        style.stroke ?? '#222222',
+                        sw,
+                        style.fill ?? style.stroke ?? '#222222',
+                      )}
+                    </svg>
+                  );
+                } else {
+                  // Legacy div-based line (backward compat)
+                  content = <div style={{ width: '100%', height: '100%', background: style.background || '#222222', borderRadius: 2 }} />;
+                }
                 break;
+              }
+              case 'shape': {
+                // SVG-based shape — dimensions come from DraggableResizable's container
+                const shapeDef = SHAPE_BY_ID[element.shapeId];
+                const sw  = style.strokeWidth ?? 0;
+                const svgPad = sw; // add half-stroke padding so stroke isn't clipped
+                content = (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
+                    viewBox={`${-svgPad} ${-svgPad} ${props.width + svgPad * 2} ${props.height + svgPad * 2}`}
+                    preserveAspectRatio="none"
+                  >
+                    {renderShapeSvgContent(
+                      shapeDef,
+                      props.width,
+                      props.height,
+                      style.fill ?? DEFAULTS.BACKGROUND_RECT,
+                      style.stroke ?? 'none',
+                      sw,
+                      style,
+                    )}
+                  </svg>
+                );
+                break;
+              }
               case 'image':
                 // Image element: file dialog only from Sidebar or Add Image, not on image click
                 content = (
@@ -220,30 +290,37 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                   padding: (style.padding || 0) + 'px',
                   textAlign: style.textAlign || DEFAULTS.TEXT_ALIGN,
                   whiteSpace: 'pre-wrap',
-                  lineHeight: DEFAULTS.LINE_HEIGHT,
+                  lineHeight: style.lineHeight ?? DEFAULTS.LINE_HEIGHT,
+                  letterSpacing: (style.letterSpacing ?? 0) + 'px',
                   boxSizing: 'border-box',
                   overflow: 'hidden',
                 };
-                if (selected) {
-                  // When selected: show a textarea for inline editing
+                if (selected && isEditing) {
+                  // Actively editing: show textarea, block mouse events so drag doesn't fire
                   content = (
                     <textarea
                       ref={textareaRef}
-                      style={{ ...textStyle, resize: 'none', outline: 'none' }}
+                      style={{ ...textStyle, resize: 'none', outline: 'none', cursor: 'text' }}
                       value={element.content || ''}
+                      autoFocus
                       onChange={e => dispatch({
                         type: ActionTypes.UPDATE_ELEMENT,
                         payload: { ...element, content: e.target.value },
                       })}
-                      // Stop pointer events from bubbling to drag handler while editing
+                      onBlur={() => setIsEditing(false)}
+                      onKeyDown={e => { if (e.key === 'Escape') setIsEditing(false); }}
                       onMouseDown={e => e.stopPropagation()}
                       onClick={e => e.stopPropagation()}
                     />
                   );
                 } else {
-                  // When not selected: render a read-only styled div
+                  // Selected (but not editing) or unselected: plain div so drag works freely.
+                  // Double-click on a selected element enters edit mode.
                   content = (
-                    <div style={textStyle}>
+                    <div
+                      style={{ ...textStyle, cursor: selected ? 'move' : 'default' }}
+                      onDoubleClick={e => { if (selected) { e.stopPropagation(); setIsEditing(true); } }}
+                    >
                       {element.content || ''}
                     </div>
                   );
@@ -256,12 +333,30 @@ export default function ElementControls({ element, selected, fitScale = 1, other
 // ...existing code...
   
 
+  // For line elements lock the rendered height to strokeWidth + padding so the
+  // bounding box always matches visual thickness.  DraggableResizable receives
+  // this derived height so handles and snap guides are also correctly positioned.
+  const lineLockedHeight = element.type === 'line'
+    ? (element.style?.strokeWidth ?? 2) + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2
+    : null;
+
+  // Flip transform applied to the inner content div so handles/outline stay unaffected
+  const flipTransform = [
+    props.flipX ? 'scaleX(-1)' : '',
+    props.flipY ? 'scaleY(-1)' : '',
+  ].filter(Boolean).join(' ');
+
+  // Box-shadow CSS string computed from individual style fields
+  const boxShadowCSS = style.boxShadowEnabled
+    ? `${style.boxShadowX ?? 2}px ${style.boxShadowY ?? 4}px ${style.boxShadowBlur ?? 8}px 0px ${style.boxShadowColor ?? 'rgba(0,0,0,0.25)'}`
+    : undefined;
+
   return (
     <DraggableResizable
       x={props.x}
       y={props.y}
       width={props.width}
-      height={props.height}
+      height={lineLockedHeight !== null ? lineLockedHeight : props.height}
       rotation={props.rotation || 0}
       onChange={onChange}
       selected={selected}
@@ -275,11 +370,18 @@ export default function ElementControls({ element, selected, fitScale = 1, other
       canvasWidth={canvasWidth}
       canvasHeight={canvasHeight}
       onGuideChange={onGuideChange}
+      opacity={style.opacity ?? 1}
+      locked={!!element.locked}
     >
       <div
         ref={elRef}
         className={`editor-element${selected ? ' selected' : ''}`}
-        style={{ width: '100%', height: '100%' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          transform: flipTransform || undefined,
+          boxShadow: boxShadowCSS,
+        }}
       >
         {/* Crop clip wrapper: clips content to the visible (non-cropped) region.
              Kept inside editor-element so the selection outline on editor-element

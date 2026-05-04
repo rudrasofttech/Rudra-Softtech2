@@ -3,10 +3,18 @@ import { LayeringControls } from './ElementControls';
 import { useEditor } from './EditorContext';
 import { DEFAULTS } from './constants';
 import CanvasSizePopup from './CanvasSizePopup';
+import ShapePicker from './ShapePicker';
+import { SHAPE_BY_ID, SHAPE_CATALOG } from './shapes';
+import LinePicker from './LinePicker';
+import { LINE_BY_ID, LINE_CATALOG } from './lines';
 
 // ─── Add Element Panel (narrow left sidebar) ─────────────────────────────────
 export default function Sidebar() {
   const { state, dispatch, ActionTypes } = useEditor();
+  const [showShapePicker, setShowShapePicker] = React.useState(false);
+  const [showLinePicker,  setShowLinePicker]  = React.useState(false);
+  const shapesBtnRef = React.useRef();
+  const linesBtnRef  = React.useRef();
 
   // Hidden file-input ref: triggered by "Add Image" before any element is created
   const imageFileInputRef = React.useRef();
@@ -80,9 +88,7 @@ export default function Sidebar() {
     }
     // Determine element height by type to calculate vertical center offset
     let elH = DEFAULTS.LINE_HEIGHT_PX;
-    if (type === 'rect') elH = DEFAULTS.RECT_HEIGHT;
-    else if (type === 'ellipse') elH = DEFAULTS.ELLIPSE_RADIUS;
-    else if (type === 'text') elH = DEFAULTS.TEXT_HEIGHT;
+    if (type === 'text') elH = DEFAULTS.TEXT_HEIGHT;
     else if (type === 'image') elH = DEFAULTS.IMAGE_HEIGHT;
     // Place new element near center of canvas using DEFAULTS element width
     const centerX = Math.max(0, Math.round((cW - DEFAULTS.IMAGE_WIDTH) / 2));
@@ -95,14 +101,7 @@ export default function Sidebar() {
       props: { x: centerX, y: centerY, width: DEFAULTS.IMAGE_WIDTH, height: DEFAULTS.LINE_HEIGHT_PX, rotation: DEFAULTS.ROTATION },
       style: {},
     };
-    if (type === 'rect') {
-      base.props.height = DEFAULTS.RECT_HEIGHT;
-      base.style = { background: DEFAULTS.BACKGROUND_RECT, borderRadius: DEFAULTS.BORDER_RADIUS };
-    } else if (type === 'ellipse') {
-      base.props.height = DEFAULTS.ELLIPSE_RADIUS;
-      // borderRadius is stored as a percentage (0–100 → 0%–100%) for ellipse elements
-      base.style = { background: DEFAULTS.BACKGROUND_RECT, borderRadius: DEFAULTS.ELLIPSE_BORDER_RADIUS_PCT };
-    } else if (type === 'text') {
+    if (type === 'text') {
       base.props.height = DEFAULTS.TEXT_HEIGHT;
       base.content = 'Text';
       base.style = { fontSize: DEFAULTS.FONT_SIZE, color: DEFAULTS.TEXT_COLOR, background: DEFAULTS.BACKGROUND_TEXT, borderRadius: DEFAULTS.BORDER_RADIUS };
@@ -118,17 +117,121 @@ export default function Sidebar() {
     dispatch({ type: ActionTypes.ADD_ELEMENT, payload: base });
   };
 
+  // Handler for adding a shape element from the ShapePicker
+  const handleAddShape = (shapeId) => {
+    setShowShapePicker(false);
+    const shapeDef = SHAPE_BY_ID[shapeId];
+    if (!shapeDef) return;
+    const page = state.pages[state.currentPage];
+    const parseAR = r => { if (!r) return 16 / 9; const [w, h] = r.split(':').map(Number); return (w && h) ? w / h : 16 / 9; };
+    const ar = parseAR(state.aspectRatio);
+    let cW = page.canvasWidth, cH = page.canvasHeight;
+    if (typeof cW === 'number' && typeof cH === 'number') { /* both set */ }
+    else if (typeof cW === 'number') { cH = Math.round(cW / ar); }
+    else if (typeof cH === 'number') { cW = Math.round(cH * ar); }
+    else {
+      cW = DEFAULTS.CANVAS_MAX_W;
+      cH = Math.round(cW / ar);
+      if (cH > DEFAULTS.CANVAS_MAX_H) { cH = DEFAULTS.CANVAS_MAX_H; cW = Math.round(cH * ar); }
+    }
+    const w = shapeDef.defaultW;
+    const h = shapeDef.defaultH;
+    const centerX = Math.max(0, Math.round((cW - w) / 2));
+    const centerY = Math.max(0, Math.round((cH - h) / 2));
+    dispatch({
+      type: ActionTypes.ADD_ELEMENT,
+      payload: {
+        id: `el-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        type: 'shape',
+        shapeId,
+        props: { x: centerX, y: centerY, width: w, height: h, rotation: DEFAULTS.ROTATION },
+        style: { fill: DEFAULTS.BACKGROUND_RECT, stroke: 'none', strokeWidth: 0, cornerRadius: 0 },
+      },
+    });
+  };
+
+  // Handler for adding a line element from the LinePicker
+  const handleAddLine = (lineId) => {
+    setShowLinePicker(false);
+    const lineDef = LINE_BY_ID[lineId];
+    if (!lineDef) return;
+    const page = state.pages[state.currentPage];
+    const parseAR = r => { if (!r) return 16 / 9; const [w, h] = r.split(':').map(Number); return (w && h) ? w / h : 16 / 9; };
+    const ar = parseAR(state.aspectRatio);
+    let cW = page.canvasWidth, cH = page.canvasHeight;
+    if (typeof cW === 'number' && typeof cH === 'number') { /* both set */ }
+    else if (typeof cW === 'number') { cH = Math.round(cW / ar); }
+    else if (typeof cH === 'number') { cW = Math.round(cH * ar); }
+    else {
+      cW = DEFAULTS.CANVAS_MAX_W;
+      cH = Math.round(cW / ar);
+      if (cH > DEFAULTS.CANVAS_MAX_H) { cH = DEFAULTS.CANVAS_MAX_H; cW = Math.round(cH * ar); }
+    }
+    const w = lineDef.defaultW;
+    const h = lineDef.defaultH;
+    const centerX = Math.max(0, Math.round((cW - w) / 2));
+    const centerY = Math.max(0, Math.round((cH - h) / 2));
+    dispatch({
+      type: ActionTypes.ADD_ELEMENT,
+      payload: {
+        id: `el-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        type: 'line',
+        lineId,
+        props: { x: centerX, y: centerY, width: w, height: h, rotation: DEFAULTS.ROTATION },
+        style: { stroke: '#222222', strokeWidth: 2, fill: '#222222' },
+      },
+    });
+  };
+
   const elementTypes = [
-    { type: 'rect',    icon: 'bi-square',   label: 'Rect'    },
-    { type: 'ellipse', icon: 'bi-circle',   label: 'Ellipse' },
-    { type: 'line',    icon: 'bi-dash-lg',  label: 'Line'    },
-    { type: 'text',    icon: 'bi-fonts',    label: 'Text'    },
-    { type: 'image',   icon: 'bi-image',    label: 'Image'   },
+    { type: 'text',  icon: 'bi-fonts',  label: 'Text'  },
+    { type: 'image', icon: 'bi-image',  label: 'Image' },
   ];
 
   return (
     <div className="editor-add-panel">
       <span className="add-panel-heading">Add</span>
+
+      {/* Shapes button — opens ShapePicker popup */}
+      <div className="add-element-btn-wrapper" style={{ position: 'relative' }}>
+        <button
+          ref={shapesBtnRef}
+          className={`add-element-btn${showShapePicker ? ' active' : ''}`}
+          onClick={() => { setShowLinePicker(false); setShowShapePicker(v => !v); }}
+          title="Add Shape"
+        >
+          <i className="bi bi-pentagon add-element-icon" />
+          <span className="add-element-label">Shapes</span>
+        </button>
+        {showShapePicker && (
+          <ShapePicker
+            onSelect={handleAddShape}
+            onClose={() => setShowShapePicker(false)}
+            anchorRef={shapesBtnRef}
+          />
+        )}
+      </div>
+
+      {/* Lines button — opens LinePicker popup */}
+      <div className="add-element-btn-wrapper" style={{ position: 'relative' }}>
+        <button
+          ref={linesBtnRef}
+          className={`add-element-btn${showLinePicker ? ' active' : ''}`}
+          onClick={() => { setShowShapePicker(false); setShowLinePicker(v => !v); }}
+          title="Add Line"
+        >
+          <i className="bi bi-hr add-element-icon" />
+          <span className="add-element-label">Lines</span>
+        </button>
+        {showLinePicker && (
+          <LinePicker
+            onSelect={handleAddLine}
+            onClose={() => setShowLinePicker(false)}
+            anchorRef={linesBtnRef}
+          />
+        )}
+      </div>
+
       {elementTypes.map(el => (
         <button
           key={el.type}
@@ -140,9 +243,7 @@ export default function Sidebar() {
           <span className="add-element-label">{el.label}</span>
         </button>
       ))}
-      {/* Hidden file input used exclusively by the "Add Image" button.
-          The dialog opens before any element is created; the element is added
-          only after the user confirms file selection in handleImageFileSelected. */}
+      {/* Hidden file input used exclusively by the "Add Image" button. */}
       <input
         type="file"
         accept={DEFAULTS.IMAGE_ACCEPT}
@@ -252,6 +353,113 @@ export function PropertiesPanel() {
     dispatch({ type: ActionTypes.UPDATE_ELEMENT, payload: { ...selectedElement, [field]: value } });
   }
 
+  // Common controls rendered for every selected element type:
+  // opacity, flip H/V, lock/unlock, and box shadow (not for line).
+  function renderCommonControls() {
+    if (!selectedElement) return null;
+    const { type, style = {}, props = {} } = selectedElement;
+    return (
+      <div className="mb-2" style={{ borderBottom: '1px solid #e0e0e0', paddingBottom: 8 }}>
+        {/* Opacity */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Opacity: {Math.round((style.opacity ?? 1) * 100)}%</label>
+          <input
+            type="range" min={0} max={100}
+            value={Math.round((style.opacity ?? 1) * 100)}
+            onChange={e => handleStyleChange('opacity', parseFloat(e.target.value) / 100)}
+            className="form-range"
+          />
+        </div>
+        {/* Flip */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Flip</label>
+          <div className="btn-group w-100">
+            <button
+              type="button"
+              className={`btn btn-sm btn-outline-secondary${props.flipX ? ' active' : ''}`}
+              title="Flip Horizontal"
+              onClick={() => dispatch({
+                type: ActionTypes.UPDATE_ELEMENT,
+                payload: { ...selectedElement, props: { ...props, flipX: !props.flipX } },
+              })}
+            >⇔ Flip H</button>
+            <button
+              type="button"
+              className={`btn btn-sm btn-outline-secondary${props.flipY ? ' active' : ''}`}
+              title="Flip Vertical"
+              onClick={() => dispatch({
+                type: ActionTypes.UPDATE_ELEMENT,
+                payload: { ...selectedElement, props: { ...props, flipY: !props.flipY } },
+              })}
+            >⇕ Flip V</button>
+          </div>
+        </div>
+        {/* Lock */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <button
+            type="button"
+            className={`btn btn-sm w-100 ${selectedElement.locked ? 'btn-warning' : 'btn-outline-secondary'}`}
+            onClick={() => dispatch({
+              type: ActionTypes.UPDATE_ELEMENT,
+              payload: { ...selectedElement, locked: !selectedElement.locked },
+            })}
+            title={selectedElement.locked ? 'Unlock element' : 'Lock element (prevent drag/resize)'}
+          >
+            <i className={`bi bi-${selectedElement.locked ? 'lock-fill' : 'unlock'} me-1`} />
+            {selectedElement.locked ? 'Locked' : 'Lock Element'}
+          </button>
+        </div>
+        {/* Box Shadow (not for lines) */}
+        {type !== 'line' && (
+          <div className={DEFAULTS.FORM_GROUP}>
+            <div className="form-check mb-1">
+              <input
+                type="checkbox"
+                className={DEFAULTS.FORM_CHECK_INPUT}
+                id="box-shadow-enabled"
+                checked={!!style.boxShadowEnabled}
+                onChange={e => handleStyleChange('boxShadowEnabled', e.target.checked)}
+              />
+              <label className={DEFAULTS.FORM_CHECK_LABEL} htmlFor="box-shadow-enabled">Box Shadow</label>
+            </div>
+            {style.boxShadowEnabled && (
+              <div style={{ paddingLeft: 4 }}>
+                <div className="d-flex gap-1 mb-1" style={{ fontSize: 11 }}>
+                  <div style={{ flex: 1 }}>
+                    <label className={DEFAULTS.FORM_LABEL} style={{ fontSize: 10 }}>X: {style.boxShadowX ?? 2}</label>
+                    <input type="range" min={-30} max={30} value={style.boxShadowX ?? 2}
+                      onChange={e => handleStyleChange('boxShadowX', parseInt(e.target.value))}
+                      className="form-range" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className={DEFAULTS.FORM_LABEL} style={{ fontSize: 10 }}>Y: {style.boxShadowY ?? 4}</label>
+                    <input type="range" min={-30} max={30} value={style.boxShadowY ?? 4}
+                      onChange={e => handleStyleChange('boxShadowY', parseInt(e.target.value))}
+                      className="form-range" />
+                  </div>
+                </div>
+                <div className="d-flex gap-1 mb-1" style={{ fontSize: 11 }}>
+                  <div style={{ flex: 1 }}>
+                    <label className={DEFAULTS.FORM_LABEL} style={{ fontSize: 10 }}>Blur: {style.boxShadowBlur ?? 8}</label>
+                    <input type="range" min={0} max={60} value={style.boxShadowBlur ?? 8}
+                      onChange={e => handleStyleChange('boxShadowBlur', parseInt(e.target.value))}
+                      className="form-range" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className={DEFAULTS.FORM_LABEL} style={{ fontSize: 10 }}>Color</label>
+                    <input type="color" value={style.boxShadowColor ?? '#00000040'}
+                      onChange={e => handleStyleChange('boxShadowColor', e.target.value)}
+                      className={DEFAULTS.FORM_CONTROL_COLOR} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Handler for deleting selected element
   function handleDelete() {
     if (!selectedElement) return;
@@ -277,6 +485,36 @@ export function PropertiesPanel() {
     );
   }
 
+  // Text element shortcuts and style controls
+  function renderTextShortcuts() {
+    if (!selectedElement || selectedElement.type !== 'text') return null;
+    const style = selectedElement.style || {};
+    // Helper to apply preset while preserving fontFamily
+    function applyPreset(preset) {
+      dispatch({
+        type: ActionTypes.UPDATE_ELEMENT,
+        payload: {
+          ...selectedElement,
+          style: {
+            ...style,
+            ...preset,
+            fontFamily: style.fontFamily || '',
+          },
+        },
+      });
+    }
+    return (
+      <div className="mb-2">
+        <label className="prop-section-label">Text Presets</label>
+        <div className="btn-group w-100 mb-2" role="group">
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => applyPreset({ fontSize: 32, fontWeight: 'bold', letterSpacing: 0.5 })}>Heading</button>
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => applyPreset({ fontSize: 24, fontWeight: 600, letterSpacing: 0.2 })}>Sub Heading</button>
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => applyPreset({ fontSize: 16, fontWeight: 'normal', letterSpacing: 0 })}>Body Text</button>
+        </div>
+      </div>
+    );
+  }
+
   // Render property fields for the selected element
   function renderFields() {
     if (!selectedElement) return null;
@@ -295,6 +533,96 @@ export function PropertiesPanel() {
         </div>
       </>
     );
+    // Shape (SVG-based)
+    if (type === 'shape') {
+      const shapeDef = SHAPE_BY_ID[selectedElement.shapeId];
+      const isFillTransparent = style.fill === 'transparent' || style.fill === 'none';
+      const hasCornerRadius   = shapeDef && (shapeDef.id === 'rectangle' || shapeDef.id === 'rounded-rect');
+      return <>
+        {/* Shape switcher */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Shape</label>
+          <select
+            className="form-select form-select-sm"
+            value={selectedElement.shapeId || ''}
+            onChange={e => dispatch({
+              type: ActionTypes.UPDATE_ELEMENT,
+              payload: { ...selectedElement, shapeId: e.target.value },
+            })}
+          >
+            {SHAPE_CATALOG.map(s => (
+              <option key={s.id} value={s.id}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+        {/* Fill */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Fill Color</label>
+          <input
+            type="color"
+            value={isFillTransparent ? '#eeeeee' : (style.fill || '#eeeeee')}
+            onChange={e => handleStyleChange('fill', e.target.value)}
+            className={DEFAULTS.FORM_CONTROL_COLOR}
+            disabled={isFillTransparent}
+          />
+          <div className="form-check mt-1">
+            <input
+              type="checkbox"
+              className={DEFAULTS.FORM_CHECK_INPUT}
+              id="fill-transp-shape"
+              checked={isFillTransparent}
+              onChange={e => handleStyleChange('fill', e.target.checked ? 'transparent' : '#eeeeee')}
+            />
+            <label className={DEFAULTS.FORM_CHECK_LABEL} htmlFor="fill-transp-shape">Transparent</label>
+          </div>
+        </div>
+        {/* Stroke */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Stroke Color</label>
+          <input
+            type="color"
+            value={style.stroke === 'none' || !style.stroke ? '#000000' : style.stroke}
+            onChange={e => handleStyleChange('stroke', e.target.value)}
+            className={DEFAULTS.FORM_CONTROL_COLOR}
+            disabled={style.stroke === 'none' || !style.stroke}
+          />
+          <div className="form-check mt-1">
+            <input
+              type="checkbox"
+              className={DEFAULTS.FORM_CHECK_INPUT}
+              id="stroke-none-shape"
+              checked={!style.stroke || style.stroke === 'none'}
+              onChange={e => handleStyleChange('stroke', e.target.checked ? 'none' : '#000000')}
+            />
+            <label className={DEFAULTS.FORM_CHECK_LABEL} htmlFor="stroke-none-shape">No Stroke</label>
+          </div>
+        </div>
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Stroke Width: {style.strokeWidth ?? 0}</label>
+          <input
+            type="range"
+            min={0} max={20}
+            value={style.strokeWidth ?? 0}
+            onChange={e => handleStyleChange('strokeWidth', parseInt(e.target.value) || 0)}
+            className="form-range"
+            disabled={style.stroke === 'none' || !style.stroke}
+          />
+        </div>
+        {/* Corner radius — only shown for rectangle shapes */}
+        {hasCornerRadius && (
+          <div className={DEFAULTS.FORM_GROUP}>
+            <label className={DEFAULTS.FORM_LABEL}>Corner Radius: {style.cornerRadius ?? 0}</label>
+            <input
+              type="range"
+              min={0} max={60}
+              value={style.cornerRadius ?? 0}
+              onChange={e => handleStyleChange('cornerRadius', parseInt(e.target.value) || 0)}
+              className="form-range"
+            />
+          </div>
+        )}
+      </>;
+    }
     // Rectangle & Ellipse
     if (type === 'rect' || type === 'ellipse') {
       const isTransparent = style.background === DEFAULTS.BACKGROUND;
@@ -309,10 +637,96 @@ export function PropertiesPanel() {
 
         </div>
         {borderFields}
+        {/* Letter Spacing & Line Height — text only */}
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Letter Spacing: {style.letterSpacing ?? 0}px</label>
+          <input type="range" className="form-range" min={-5} max={20} step={0.5}
+            value={style.letterSpacing ?? 0}
+            onChange={e => handleStyleChange('letterSpacing', parseFloat(e.target.value))}
+          />
+        </div>
+        <div className={DEFAULTS.FORM_GROUP}>
+          <label className={DEFAULTS.FORM_LABEL}>Line Height: {style.lineHeight ?? 1.4}</label>
+          <input type="range" className="form-range" min={0.8} max={4} step={0.1}
+            value={style.lineHeight ?? 1.4}
+            onChange={e => handleStyleChange('lineHeight', parseFloat(e.target.value))}
+          />
+        </div>
       </>;
     }
-    // Line element: show width/height range fields, no resize handles
+    // Line element
     if (type === 'line') {
+      // ── New SVG line (has lineId) ─────────────────────────────────────────
+      if (selectedElement.lineId) {
+        const lineDef = LINE_BY_ID[selectedElement.lineId];
+        const isSymbolLine = lineDef && ['Card Suits', 'Symbols'].includes(lineDef.category);
+        return <>
+          {/* Line type switcher */}
+          <div className={DEFAULTS.FORM_GROUP}>
+            <label className={DEFAULTS.FORM_LABEL}>Line Type</label>
+            <select
+              className="form-select form-select-sm"
+              value={selectedElement.lineId || ''}
+              onChange={e => dispatch({
+                type: ActionTypes.UPDATE_ELEMENT,
+                payload: { ...selectedElement, lineId: e.target.value },
+              })}
+            >
+              {LINE_CATALOG.map(l => (
+                <option key={l.id} value={l.id}>{l.label}</option>
+              ))}
+            </select>
+          </div>
+          {/* Color */}
+          <div className={DEFAULTS.FORM_GROUP}>
+            <label className={DEFAULTS.FORM_LABEL}>Color</label>
+            <input
+              type="color"
+              value={style.stroke || '#222222'}
+              onChange={e => handleStyleChange('stroke', e.target.value)}
+              className={DEFAULTS.FORM_CONTROL_COLOR}
+            />
+          </div>
+          {/* Stroke width — controls both visual thickness and bounding-box height */}
+          {!isSymbolLine && (
+            <div className={DEFAULTS.FORM_GROUP}>
+              <label className={DEFAULTS.FORM_LABEL}>Stroke Width: {style.strokeWidth ?? 2}</label>
+              <input
+                type="range" min={1} max={24}
+                value={style.strokeWidth ?? 2}
+                onChange={e => {
+                  const sw = parseInt(e.target.value) || 2;
+                  // Update both style.strokeWidth and the bounding-box height together so
+                  // the element's visual size always matches what is stored in props.
+                  const newH = sw + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2;
+                  dispatch({
+                    type: ActionTypes.UPDATE_ELEMENT,
+                    payload: {
+                      ...selectedElement,
+                      style: { ...(selectedElement.style || {}), strokeWidth: sw },
+                      props: { ...(selectedElement.props || {}), height: newH },
+                    },
+                  });
+                }}
+                className="form-range"
+              />
+            </div>
+          )}
+          {/* Symbol fill color — shown for card suit / symbol lines */}
+          {isSymbolLine && (
+            <div className={DEFAULTS.FORM_GROUP}>
+              <label className={DEFAULTS.FORM_LABEL}>Symbol Color</label>
+              <input
+                type="color"
+                value={style.fill || style.stroke || '#222222'}
+                onChange={e => handleStyleChange('fill', e.target.value)}
+                className={DEFAULTS.FORM_CONTROL_COLOR}
+              />
+            </div>
+          )}
+        </>;
+      }
+      // ── Legacy line (no lineId — backward compat) ─────────────────────────
       const canvasWidth = state.pages[state.currentPage].canvasWidth || DEFAULTS.CANVAS_MAX_W;
       return <>
         <div className={DEFAULTS.FORM_GROUP}>
@@ -320,12 +734,27 @@ export function PropertiesPanel() {
           <input type="color" value={style.background || '#222222'} onChange={e => handleStyleChange('background', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} />
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
-          <label className={DEFAULTS.FORM_LABEL}>Width: {props.width || DEFAULTS.LINE_HEIGHT_PX}</label>
+          <label className={DEFAULTS.FORM_LABEL}>Length: {props.width || 20}</label>
           <input type="range" min={20} max={canvasWidth} value={props.width || 20} onChange={e => handlePropChange('width', parseInt(e.target.value) || 20)} />
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
-          <label className={DEFAULTS.FORM_LABEL}>Height: {props.height || DEFAULTS.LINE_HEIGHT_PX}</label>
-          <input type="range" min={1} max={15} value={props.height || DEFAULTS.LINE_HEIGHT_PX} onChange={e => handlePropChange('height', parseInt(e.target.value) || DEFAULTS.LINE_HEIGHT_PX)} />
+          <label className={DEFAULTS.FORM_LABEL}>Stroke Width: {style.strokeWidth ?? DEFAULTS.LINE_HEIGHT_PX}</label>
+          <input
+            type="range" min={1} max={24}
+            value={style.strokeWidth ?? DEFAULTS.LINE_HEIGHT_PX}
+            onChange={e => {
+              const sw = parseInt(e.target.value) || DEFAULTS.LINE_HEIGHT_PX;
+              const newH = sw + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2;
+              dispatch({
+                type: ActionTypes.UPDATE_ELEMENT,
+                payload: {
+                  ...selectedElement,
+                  style: { ...(selectedElement.style || {}), strokeWidth: sw },
+                  props: { ...(selectedElement.props || {}), height: newH },
+                },
+              });
+            }}
+          />
         </div>
       </>;
     }
@@ -438,7 +867,11 @@ export function PropertiesPanel() {
 
   // Determine panel title based on selection
   const panelTitle = selectedElement
-    ? selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)
+    ? selectedElement.type === 'shape'
+      ? (SHAPE_BY_ID[selectedElement.shapeId]?.label ?? 'Shape')
+      : selectedElement.type === 'line' && selectedElement.lineId
+        ? (LINE_BY_ID[selectedElement.lineId]?.label ?? 'Line')
+        : selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)
     : 'Canvas';
 
   // Inline position style: switches from CSS right/top to explicit left/top once dragged
@@ -459,10 +892,11 @@ export function PropertiesPanel() {
              readable inside the narrow 40px panel (see editor.css). */}
         <span className="properties-panel-title">
           {selectedElement && <i className={`bi bi-${
-            selectedElement.type === 'rect' ? 'square' :
+            selectedElement.type === 'shape'   ? 'pentagon' :
+            selectedElement.type === 'rect'    ? 'square' :
             selectedElement.type === 'ellipse' ? 'circle' :
-            selectedElement.type === 'line' ? 'dash-lg' :
-            selectedElement.type === 'text' ? 'fonts' : 'image'
+            selectedElement.type === 'line'    ? 'dash-lg' :
+            selectedElement.type === 'text'    ? 'fonts' : 'image'
           } me-1`} />}
           {panelTitle}
         </span>
@@ -497,7 +931,9 @@ export function PropertiesPanel() {
                   style={{ width: 72 }}
                 />
               </div>
+              {renderTextShortcuts()}
               {renderTextStyleControls()}
+              {renderCommonControls()}
               {renderFields()}
               <button
                 className="btn btn-danger btn-sm mt-3 w-100"

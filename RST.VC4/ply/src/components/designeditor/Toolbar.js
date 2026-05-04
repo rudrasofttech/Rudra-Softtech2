@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useEditor } from './EditorContext';
 import ExportJpegPopup from './ExportJpegPopup';
-import { exportCanvasToJpeg } from '../../utils/exportUtils';
+import { exportAllPagesToJpeg, exportAllPagesToPng } from './exportPages';
 import { DEFAULTS } from './constants';
 import PageManager from './PageManager';
 
@@ -11,6 +11,7 @@ export default function Toolbar() {
   const history = Array.isArray(state.history) ? state.history : [];
   const future = Array.isArray(state.future) ? state.future : [];
   const [showJpegPopup, setShowJpegPopup] = useState(false);
+  const [exporting, setExporting] = useState(false);
   // Ref to the canvas DOM node
   const canvasRef = useRef();
 
@@ -36,37 +37,52 @@ export default function Toolbar() {
   const exportAs = (format) => {
     if (format === 'JPEG') {
       setShowJpegPopup(true);
+    } else if (format === 'PNG') {
+      handleExportPng();
     } else {
       alert(`Export as ${format} not implemented yet.`);
     }
   };
 
-  // Handle export JPEG from popup
+  // Deselect element then run an async export action
+  async function runExport(action) {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      if (state.selectedElementId) {
+        dispatch({ type: ActionTypes.DESELECT_ELEMENT });
+        // Allow React one paint cycle to remove selection UI before capturing
+        await new Promise(r => setTimeout(r, 60));
+      }
+      await action();
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  // Handle export JPEG from popup — exports all pages
   const handleExportJpeg = (quality) => {
     setShowJpegPopup(false);
-    // Deselect any selected element before export for a clean image
-    if (state.selectedElementId) {
-      dispatch({ type: ActionTypes.DESELECT_ELEMENT });
-      // Wait for the UI to update before exporting
-      setTimeout(() => doExport(quality), 50);
-    } else {
-      doExport(quality);
-    }
+    runExport(() =>
+      exportAllPagesToJpeg(
+        state.pages,
+        state.aspectRatio,
+        state.projectName,
+        quality,
+      )
+    );
   };
 
-  // Actual export logic
-  function doExport(quality) {
-    const canvasNode = getCanvasNode();
-    if (!canvasNode) {
-      alert('Canvas not found.');
-      return;
-    }
-    import('html2canvas').then(({ default: html2canvas }) => {
-      html2canvas(canvasNode, { backgroundColor: null }).then(canvas => {
-        exportCanvasToJpeg(canvas, quality, `${state.projectName || 'canvas'}.jpg`);
-      });
-    });
-  }
+  // Handle PNG export — exports all pages directly (no quality setting needed)
+  const handleExportPng = () => {
+    runExport(() =>
+      exportAllPagesToPng(
+        state.pages,
+        state.aspectRatio,
+        state.projectName,
+      )
+    );
+  };
 
   return (
     <footer className="editor-toolbar">
@@ -89,8 +105,12 @@ export default function Toolbar() {
       <button type='button' className='btn btn-light btn-sm' onClick={redo} disabled={future.length === 0}>Redo</button>
       <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('PDF')}>Export PDF</button>
       <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('Word')}>Export Word</button>
-      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('JPEG')}>Export JPEG</button>
-      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('PNG')}>Export PNG</button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('JPEG')} disabled={exporting}>
+        {exporting ? 'Exporting…' : 'Export JPEG'}
+      </button>
+      <button type='button' className='btn btn-light btn-sm' onClick={() => exportAs('PNG')} disabled={exporting}>
+        {exporting ? 'Exporting…' : 'Export PNG'}
+      </button>
       {/* Export JPEG Popup */}
       <ExportJpegPopup
         open={showJpegPopup}

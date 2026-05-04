@@ -220,9 +220,13 @@ function editorReducer(state, action) {
       break;
     case ActionTypes.ADD_ELEMENT: {
       const pages = [...state.pages];
+      const existingElements = pages[state.currentPage].elements;
+      // Assign a z-index one above the current highest so the new element is always on top
+      const maxZ = existingElements.reduce((m, el) => Math.max(m, el.z ?? 0), -1);
+      const newElement = { ...action.payload, z: maxZ + 1 };
       pages[state.currentPage] = {
         ...pages[state.currentPage],
-        elements: [...pages[state.currentPage].elements, action.payload],
+        elements: [...existingElements, newElement],
       };
       newState = { ...state, pages };
       break;

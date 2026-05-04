@@ -2,49 +2,84 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useEditor } from './EditorContext';
 import ElementControls from './ElementControls';
 import { DEFAULTS } from './constants';
+import CanvasRuler, { RulerCorner } from './Ruler';
 
 // SnapGuideLines: renders the active alignment guide lines over the canvas.
 // Lines are absolutely positioned within the editor-canvas div (which has
 // overflow:hidden so they never bleed outside). They are pointer-events:none
 // so they never interfere with mouse events on elements.
 // guides: { axis: 'x'|'y', position: <canvas-px> }[]
-//   'x' → vertical magenta line at position from canvas left
-//   'y' → horizontal blue line at position from canvas top
+//         { axis: 'angle', angle: <deg>, cx, cy }   — rotation snap guide
+//   'x'     → vertical magenta line at position from canvas left
+//   'y'     → horizontal blue line at position from canvas top
+//   'angle' → orange line through (cx,cy) at the given angle
 function SnapGuideLines({ guides, canvasWidth, canvasHeight }) {
   if (!guides || guides.length === 0) return null;
   return (
     <>
-      {guides.map((g, i) => (
-        <div
-          key={i}
-          className={DEFAULTS.SNAP_GUIDE_CLASS}
-          style={{
-            position: 'absolute',
-            pointerEvents: 'none',
-            zIndex: 1000,
-            // X-axis guide → vertical line spanning full canvas height
-            // Y-axis guide → horizontal line spanning full canvas width
-            ...(g.axis === 'x'
-              ? {
-                  left: g.position,
-                  top: 0,
-                  width: DEFAULTS.SNAP_GUIDE_THICKNESS,
-                  height: canvasHeight,
-                  background: DEFAULTS.SNAP_GUIDE_COLOR_X,
-                  transform: 'translateX(-50%)', // centre the 1px line on the guide position
-                }
-              : {
-                  top: g.position,
-                  left: 0,
-                  height: DEFAULTS.SNAP_GUIDE_THICKNESS,
-                  width: canvasWidth,
-                  background: DEFAULTS.SNAP_GUIDE_COLOR_Y,
-                  transform: 'translateY(-50%)',
-                }
-            ),
-          }}
-        />
-      ))}
+      {guides.map((g, i) => {
+        if (g.axis === 'angle') {
+          // Draw a long diagonal line through the element centre at the snap angle.
+          // We extend in both directions far enough to always span the whole canvas.
+          const span = Math.max(canvasWidth, canvasHeight) * 1.5;
+          const rad  = (g.angle * Math.PI) / 180;
+          const dx   = Math.cos(rad) * span;
+          const dy   = Math.sin(rad) * span;
+          return (
+            <svg
+              key={i}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1001,
+                overflow: 'visible',
+              }}
+            >
+              <line
+                x1={g.cx - dx} y1={g.cy - dy}
+                x2={g.cx + dx} y2={g.cy + dy}
+                stroke={DEFAULTS.ROTATE_SNAP_GUIDE_COLOR}
+                strokeWidth={1.5}
+                strokeDasharray="6 4"
+              />
+            </svg>
+          );
+        }
+        return (
+          <div
+            key={i}
+            className={DEFAULTS.SNAP_GUIDE_CLASS}
+            style={{
+              position: 'absolute',
+              pointerEvents: 'none',
+              zIndex: 1000,
+              // X-axis guide → vertical line spanning full canvas height
+              // Y-axis guide → horizontal line spanning full canvas width
+              ...(g.axis === 'x'
+                ? {
+                    left: g.position,
+                    top: 0,
+                    width: DEFAULTS.SNAP_GUIDE_THICKNESS,
+                    height: canvasHeight,
+                    background: DEFAULTS.SNAP_GUIDE_COLOR_X,
+                    transform: 'translateX(-50%)', // centre the 1px line on the guide position
+                  }
+                : {
+                    top: g.position,
+                    left: 0,
+                    height: DEFAULTS.SNAP_GUIDE_THICKNESS,
+                    width: canvasWidth,
+                    background: DEFAULTS.SNAP_GUIDE_COLOR_Y,
+                    transform: 'translateY(-50%)',
+                  }
+              ),
+            }}
+          />
+        );
+      })}
     </>
   );
 }
@@ -71,6 +106,9 @@ export default function Canvas({ fitScale = 1 }) {
   // Tracks the in-flight arrow-key hold sequence between keydown and keyup
   // { key, holdStart, startPages, elId, accX, accY }
   const keyMoveRef = useRef(null);
+
+  // In-editor clipboard for copy/paste and duplicate (Ctrl+C / Ctrl+V / Ctrl+D)
+  const clipboardRef = useRef(null);
 
   // ── Keyboard handler (registered once) ───────────────────────────────────
   // Arrow keys        → Nudge 1px; hold >500ms → auto-accelerates to 5px/tick
@@ -156,10 +194,26 @@ export default function Canvas({ fitScale = 1 }) {
         const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
         const dy = e.key === 'ArrowUp'   ? -step : e.key === 'ArrowDown'  ? step : 0;
 
-        // Clamp to canvas bounds so the element stays fully inside
+        // Clamp to canvas bounds so the visual bounding box stays fully inside.
+        // For rotated elements the unrotated x/y origin must be allowed outside [0, cW-w]
+        // because CSS rotates around the element centre — the visual edges shift inward.
+        // Formula (pivot = element centre):
+        //   rotatedW = |w·cos θ| + |h·sin θ|,  rotatedH = |w·sin θ| + |h·cos θ|
+        //   clampMinX = rotatedW/2 − w/2   (may be negative → allows negative x)
+        //   xMin = clampMinX,  xMax = cW − w − clampMinX
+        // At rotation=0 this reduces to the original Math.max(0, Math.min(cW-w, …)) ✓
         const { cW, cH } = getCanvasDims(s);
-        const newX = Math.max(0, Math.min(cW - (el.props.width  || DEFAULTS.IMAGE_WIDTH),  (el.props.x || 0) + dx));
-        const newY = Math.max(0, Math.min(cH - (el.props.height || DEFAULTS.SIZE.height), (el.props.y || 0) + dy));
+        const elW = el.props.width  || DEFAULTS.IMAGE_WIDTH;
+        const elH = el.props.height || DEFAULTS.SIZE.height;
+        const radians  = ((el.props.rotation || 0) * Math.PI) / 180;
+        const cosA     = Math.abs(Math.cos(radians));
+        const sinA     = Math.abs(Math.sin(radians));
+        const rotW     = elW * cosA + elH * sinA;
+        const rotH     = elW * sinA + elH * cosA;
+        const clampMinX = rotW / 2 - elW / 2;
+        const clampMinY = rotH / 2 - elH / 2;
+        const newX = Math.max(clampMinX, Math.min(cW - elW - clampMinX, (el.props.x || 0) + dx));
+        const newY = Math.max(clampMinY, Math.min(cH - elH - clampMinY, (el.props.y || 0) + dy));
 
         keyMoveRef.current.accX = newX;
         keyMoveRef.current.accY = newY;
@@ -187,7 +241,31 @@ export default function Canvas({ fitScale = 1 }) {
           payload: s.selectedElementId,
         });
       }
-    };
+      // ── Copy / Paste / Duplicate (Ctrl+C / Ctrl+V / Ctrl+D) ───────────────────────────
+      if (e.key === 'c') {
+        const el = s.pages[s.currentPage].elements.find(el => el.id === s.selectedElementId);
+        if (el) clipboardRef.current = JSON.parse(JSON.stringify(el));
+        return;
+      }
+      if (e.key === 'v') {
+        if (!clipboardRef.current) return;
+        e.preventDefault();
+        const copy = JSON.parse(JSON.stringify(clipboardRef.current));
+        copy.id = `el-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        copy.props = { ...copy.props, x: (copy.props.x || 0) + 10, y: (copy.props.y || 0) + 10 };
+        dispatch({ type: ActionTypes.ADD_ELEMENT, payload: copy });
+        return;
+      }
+      if (e.key === 'd') {
+        e.preventDefault();
+        const el = s.pages[s.currentPage].elements.find(el => el.id === s.selectedElementId);
+        if (!el) return;
+        const copy = JSON.parse(JSON.stringify(el));
+        copy.id = `el-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        copy.props = { ...copy.props, x: (copy.props.x || 0) + 10, y: (copy.props.y || 0) + 10 };
+        dispatch({ type: ActionTypes.ADD_ELEMENT, payload: copy });
+        return;
+      }    };
 
     // keyup: commit accumulated move as a single undo entry
     const handleKeyUp = (e) => {
@@ -256,7 +334,7 @@ export default function Canvas({ fitScale = 1 }) {
     aspectRatio: `${aspect}`,
     position: 'relative',
     overflow: 'hidden',
-    margin: '1rem auto',
+    margin: 0,
     boxSizing: 'border-box',
     transition: 'width 0.2s, height 0.2s',
     display: 'block',
@@ -281,12 +359,22 @@ export default function Canvas({ fitScale = 1 }) {
         transformOrigin: 'center center',
         transition: 'transform 0.2s',
         margin: '1rem auto',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'inline-flex',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
       }}
     >
-      <div className="editor-canvas" style={canvasStyle} onMouseDown={handleCanvasClick}>
+      {/* Ruler grid wrapper: corner + h-ruler on top, v-ruler + canvas below.
+           Sits inside the zoom-scale transform so rulers scale with the canvas. */}
+      <div className="canvas-ruler-wrapper">
+        {/* Top-left corner square */}
+        <RulerCorner />
+        {/* Horizontal ruler along the top edge */}
+        <CanvasRuler orientation="horizontal" length={width} zoom={1} />
+        {/* Vertical ruler along the left edge */}
+        <CanvasRuler orientation="vertical" length={height} zoom={1} />
+        {/* Canvas */}
+        <div className="editor-canvas" style={canvasStyle} onMouseDown={handleCanvasClick}>
         {/* Render all elements on the current page, sorted by z-index. Selection does NOT affect order. */}
         {sortedElements.map((el) => (
           <ElementControls
@@ -304,7 +392,8 @@ export default function Canvas({ fitScale = 1 }) {
         ))}
         {/* Snap guide lines — rendered above all elements, cleared on mouse-up */}
         <SnapGuideLines guides={activeGuides} canvasWidth={width} canvasHeight={height} />
-      </div>
+        </div>{/* end editor-canvas */}
+      </div>{/* end canvas-ruler-wrapper */}
     </div>
   );
 }

@@ -5,7 +5,7 @@
         None = 0,
         VCard = 1,
         LinkList = 2,
-        Blog = 3,
+        Article = 3,
         Portfolio = 4,
         ECommerce = 5,
         Educational = 6,

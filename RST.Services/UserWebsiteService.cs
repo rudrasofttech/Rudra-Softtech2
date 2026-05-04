@@ -12,10 +12,12 @@ namespace RST.Services
     {
         public string Token { get; set; }
         Task<PagedData<UserWebsiteListItemDTO>> GetPagedAsync(int page, int psize, Member member);
+        Task<PagedData<UserWebsiteListItemDTO>> GetTemplatesPagedAsync(int page, int psize, WebsiteType ws, string keywords);
         Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m);
         Task<UserWebsite?> GetByIdAsync(Guid id);
-        Task<bool> IsUniqueNameAsync(string name);
+        Task<bool> IsUniqueNameAsync(string name, Guid? selfId = null);
         Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member);
+        Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member);
         Task<UserWebsite?> CreateVCardAsync(CreateVCardWebsiteDTO model, Member member, HttpRequest request);
         Task<UserWebsite?> CreateLinkListAsync(CreateLinkListWebsiteDTO model, Member member, HttpRequest request);
         Task<UserWebsite?> CreateCanvasAsync(CreateCanvasWebsiteDTO model, Member member, HttpRequest request);
@@ -79,6 +81,55 @@ namespace RST.Services
             return result;
         }
 
+        public async Task<PagedData<UserWebsiteListItemDTO>> GetTemplatesPagedAsync(int page, int psize, WebsiteType ws, string keywords)
+        {
+            var query = _db.UserWebsites.Include(t => t.Owner).Where(t => t.WSType == ws);
+
+            if (!string.IsNullOrWhiteSpace(keywords))
+            {
+                var words = keywords
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Distinct()
+                    .ToList();
+
+                query = query.Where(t =>
+                    words.Any(w =>
+                        (t.Description != null && t.Description.Contains(w)) ||
+                        (t.Keywords != null && t.Keywords.Contains(w))));
+            }
+
+            int count = await query.CountAsync();
+            var result = new PagedData<UserWebsiteListItemDTO>
+            {
+                PageIndex = page,
+                PageSize = psize,
+                TotalRecords = count
+            };
+
+            var paged = await query.OrderBy(t => t.Created)
+                .Skip((page - 1) * psize)
+                .Take(psize)
+                .ToListAsync();
+
+            foreach (var m in paged)
+            {
+                result.Items.Add(new UserWebsiteListItemDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Domain = m.Domain,
+                    Created = m.Created,
+                    Modified = m.Modified,
+                    Status = m.Status,
+                    WSType = m.WSType,
+                    WebstatsId = m.WebstatsScript ?? string.Empty,
+                    OwnerName = m.Owner.FirstName,
+                    Thumbnail = m.Thumbnail
+                });
+            }
+            return result;
+        }
+
         public async Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m)
         {
             if (m == null) return [];
@@ -107,9 +158,16 @@ namespace RST.Services
             return await _db.UserWebsites.FirstOrDefaultAsync(t => t.Id == id);
         }
 
-        public async Task<bool> IsUniqueNameAsync(string name)
+        public async Task<bool> IsUniqueNameAsync(string name, Guid? selfId = null)
         {
-            return !await _db.UserWebsites.AnyAsync(t => t.Name == name);
+            if (!selfId.HasValue)
+            {
+                return !await _db.UserWebsites.AnyAsync(t => t.Name == name);
+            }
+            else
+            {
+                return !await _db.UserWebsites.AnyAsync(t => t.Name == name && t.Id != selfId.Value);
+            }
         }
 
         public async Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member)
@@ -117,9 +175,9 @@ namespace RST.Services
             if (!await IsUniqueNameAsync(model.Name))
                 return null;
 
-            var theme = await _db.UserWebsiteThemes.FirstOrDefaultAsync(t => t.Id == model.ThemeId);
-            if (theme == null)
-                return null;
+            //var theme = await _db.UserWebsiteThemes.FirstOrDefaultAsync(t => t.Id == model.ThemeId);
+            //if (theme == null)
+            //    return null;
 
             if (member == null)
                 return null;
@@ -131,14 +189,50 @@ namespace RST.Services
                 Owner = member,
                 Status = RecordStatus.Inactive,
                 WSType = model.WSType,
-                Html = theme.Html,
-                ThemeId = theme.Id
+                Html = model.TemplateHtml,
+                JsonData = model.JsonData,
+                Description = model.Description,
+                Keywords = model.Tag,
+                PublishStatus = model.PublishStatus,
+                Output = model.HTML
             };
-            if (uw.WSType == WebsiteType.VCard)
-                uw.VisitingCardDetail = new VisitingCardDetail();
+            //if (uw.WSType == WebsiteType.VCard)
+            //    uw.VisitingCardDetail = new VisitingCardDetail();
 
-            uw.JsonData = JsonSerializer.Serialize(uw.JsonData);
+            //uw.JsonData = JsonSerializer.Serialize(uw.JsonData);
             _db.UserWebsites.Add(uw);
+            await _db.SaveChangesAsync();
+            return uw;
+        }
+
+        public async Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member)
+        {
+            if (!await IsUniqueNameAsync(model.Name, model.Id))
+                return null;
+
+            if (member == null)
+                return null;
+
+            var uw = await _db.UserWebsites.FirstOrDefaultAsync(t => t.Id == model.Id);
+            if (uw == null)
+                return null;
+
+            uw.Name = model.Name;
+            uw.WSType = model.WSType;
+            uw.Html = model.TemplateHtml;
+            uw.JsonData = model.JsonData;
+            uw.Description = model.Description;
+            uw.Keywords = model.Tag;
+            uw.PublishStatus = model.PublishStatus;
+            uw.Output = model.HTML;
+            uw.Status = RecordStatus.Inactive;
+            uw.WSType = model.WSType;
+            uw.Html = model.TemplateHtml;
+            uw.JsonData = model.JsonData;
+            uw.Description = model.Description; 
+            uw.Keywords = model.Tag;
+            uw.Modified = DateTime.UtcNow;
+
             await _db.SaveChangesAsync();
             return uw;
         }

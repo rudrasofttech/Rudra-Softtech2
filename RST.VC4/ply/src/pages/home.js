@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Container } from "react-bootstrap";
 import PlyNavbar from "../components/plynavbar";
 import "../styles/globals.css";
+import "../styles/dashboard.css";
 import Loader from '../components/loader';
 import { getWithAuth, postWithAuth } from '../utils/api';
 import { APIURLS } from '../utils/config';
@@ -14,7 +15,6 @@ import Nav from 'react-bootstrap/Nav';
 import HomeAnonymous from '../components/homeanonymous';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
-
 
 
 function Home() {
@@ -31,6 +31,16 @@ function Home() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareSite, setShareSite] = useState(null);
 
+  // Filter state for tabs
+  const [filter, setFilter] = useState('all');
+
+  // Filtered designs
+  const filteredDesigns = designs.filter(site => {
+    if (filter === 'all') return true;
+    if (filter === 'active') return site.status === 0;
+    if (filter === 'inactive') return site.status !== 0;
+    return true;
+  });
 
   useEffect(() => {
     const loadDesigns = async () => {
@@ -111,12 +121,16 @@ function Home() {
     }
     setShowShareModal(false);
   }
-
+  const generateShortId = () => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      const bytes = crypto.getRandomValues(new Uint8Array(8));
+      return Array.from(bytes).map(b => chars[b % chars.length]).join('');
+    }
   const handleCreateDesign = async () => {
     setLoading(true);
     setError('');
     const payload = {
-      WebsiteName: 'Untitled Design',
+      Name: `Untitled Design`,
       Tag: '',
       Description: '',
       JsonData: JSON.stringify({ pages: [{ id: 'page-1', elements: [] }] }),
@@ -125,6 +139,29 @@ function Home() {
     const res = await postWithAuth(`${APIURLS.userWebsite}/createcanvas`, navigate, payload);
     if (res.result && res.data && res.data.id) {
       navigate(`/designeditor/${res.data.id}`);
+    } else {
+      setError(res.errors ? res.errors.join(', ') : 'Failed to create design.');
+    }
+    setLoading(false);
+  };
+
+  const handleHtmlDesign = async () => {
+    setLoading(true);
+    setError('');
+    const payload = {
+      Name: `Untitled-Project-${generateShortId()}`,
+      wsType : 1,
+      TemplateHtml:'',
+      Tag: '',
+      Description: '',
+      JsonData: JSON.stringify({}),
+      Thumbnail: null,
+      HTML : '<html><head><title>Untitled Project</title></head><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;"><h1>Welcome to the HTML Editor</h1></div></body></html>',
+      PublishStatus: 1
+    };
+    const res = await postWithAuth(`${APIURLS.userWebsite}/create`, navigate, payload);
+    if (res.result && res.data && res.data.id) {
+      navigate(`/htmleditor/${res.data.id}`);
     } else {
       setError(res.errors ? res.errors.join(', ') : 'Failed to create design.');
     }
@@ -160,161 +197,157 @@ function Home() {
       </PlyNavbar>
       {!isLoggedIn ? (
         <HomeAnonymous onStart={() => setDummy(Date.now())} />
-      ) : <div>
-        <Container fluid className="my-5">
-          {loading ? <Loader /> : null}
-          {error !== "" ? <div className="text-danger text-center my-2">{error}</div> : null}
-          {!loading ? <>{designs.length > 0 ? (
-            <>
-              <div className="mb-4">
-                <div className='row align-items-center justify-content-center'>
-                  <div className='col-xl-3 col-md-3'>
-                    <button type="button" onClick={() => {
-                      setRedirectUrl('/createvcard');
-                    }} className="fancy-btn w-100 mb-2 mb-md-0">
-                      <span className="icon">💼</span>
-                      Create Visiting Card
-                    </button>
+      ) : <>
+        {/* Sidebar */}
+        <aside className="ply-sidebar">
+          <div className="ply-sidebar-logo">
+            <div className="ply-logo-bars">
+              <span></span><span></span><span></span>
+            </div>
+            <span className="ply-logo-text">ply</span>
+          </div>
+          <div className="ply-nav-section-label">Workspace</div>
+          <nav className="ply-sidebar-nav mb-3">
+            <a href="#" className="nav-link active">
+              <i className="bi bi-grid-fill" style={{ fontSize: 13 }}></i>
+              Projects
+            </a>
+          </nav>
+          <div className="ply-nav-section-label">Quick create</div>
+          <nav className="ply-sidebar-nav">
+            <a href="#" className="nav-link" onClick={() => setRedirectUrl('/htmleditor')}><span className="ply-nav-dot" style={{ background: '#f87171' }}></span> Visiting card</a>
+            <a href="#" className="nav-link" onClick={() => setRedirectUrl('/htmleditor')}><span className="ply-nav-dot" style={{ background: '#60a5fa' }}></span> Link list</a>
+            <a href="#" className="nav-link" onClick={handleCreateDesign}><span className="ply-nav-dot" style={{ background: '#a78bfa' }}></span> Design</a>
+            <a href="#" className="nav-link" onClick={handleHtmlDesign}><span className="ply-nav-dot" style={{ background: '#34d399' }}></span> HTML page</a>
+          </nav>
+          <div className="ply-sidebar-footer">
+            <div className="ply-user-avatar">RJ</div>
+            <span className="ply-user-name">Raj</span>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="ply-main-content">
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <h1 className="fs-5 fw-500 mb-0" style={{ fontWeight: 500, color: '#111827' }}>My Projects</h1>
+            <button className="ply-btn-new">+ New project</button>
+          </div>
+
+          {/* Create cards row */}
+          <div className="row g-3 mb-4">
+            <div className="col-3">
+              <a href="#" className="ply-create-card" onClick={() => setRedirectUrl('/htmleditor')}>
+                <div className="ply-create-card-icon" style={{ background: '#fff0f0' }}>💼</div>
+                <div className="ply-create-card-label">Visiting card</div>
+                <div className="ply-create-card-sub">Personal or business card</div>
+              </a>
+            </div>
+            <div className="col-3">
+              <a href="#" className="ply-create-card" onClick={() => setRedirectUrl('/htmleditor')}>
+                <div className="ply-create-card-icon" style={{ background: '#eff6ff' }}>🔗</div>
+                <div className="ply-create-card-label">Link list</div>
+                <div className="ply-create-card-sub">Curated link page</div>
+              </a>
+            </div>
+            <div className="col-3">
+              <a href="#" className="ply-create-card" onClick={handleCreateDesign}>
+                <div className="ply-create-card-icon" style={{ background: '#f5f3ff' }}>🎨</div>
+                <div className="ply-create-card-label">Design</div>
+                <div className="ply-create-card-sub">Visual design project</div>
+              </a>
+            </div>
+            <div className="col-3">
+              <a href="#" className="ply-create-card" onClick={handleHtmlDesign}>
+                <div className="ply-create-card-icon" style={{ background: '#f0fdf4' }}>⚡</div>
+                <div className="ply-create-card-label">HTML page</div>
+                <div className="ply-create-card-sub">Custom web page</div>
+              </a>
+            </div>
+          </div>
+
+          {/* Projects section header */}
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>My projects</span>
+            <div className="d-flex gap-1">
+              <button className={`ply-filter-tab${filter === 'all' ? ' active' : ''}`} onClick={() => setFilter('all')}>All</button>
+              <button className={`ply-filter-tab${filter === 'active' ? ' active' : ''}`} onClick={() => setFilter('active')}>Active</button>
+              <button className={`ply-filter-tab${filter === 'inactive' ? ' active' : ''}`} onClick={() => setFilter('inactive')}>Inactive</button>
+            </div>
+          </div>
+
+          {/* Project cards */}
+          <div className="row g-3">
+            {filteredDesigns.length === 0 && <div className="text-center text-muted">No projects found.</div>}
+            {filteredDesigns.map((site, index) => (
+              <div className="col-6" key={index}>
+                <div className="ply-project-card">
+                  <div className="d-flex align-items-start justify-content-between mb-2">
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="ply-project-icon" style={{ background: site.wsType === 9 ? '#ede9fe' : '#fef3c7' }}>{site.wsType === 9 ? '🎨' : '💼'}</div>
+                      <div>
+                        <div className="ply-project-title">{site.name || 'Untitled Project'}</div>
+                        <div className="ply-project-type">{site.wsType === 9 ? 'Design project' : (site.wsType === 1 ? 'HTML Page' : 'No type set')}</div>
+                      </div>
+                    </div>
+                    <span className={site.status === 0 ? 'ply-badge-active' : 'ply-badge-inactive'}>{site.status === 0 ? 'Active' : 'Inactive'}</span>
                   </div>
-                  <div className='col-xl-3 col-md-3'>
-                    <button type="button" onClick={() => {
-                      setRedirectUrl('/createlinklist');
-                    }} className="fancy-btn w-100 mb-2 mb-md-0 linklist me-3">
-                      <span className="icon">🔗</span>
-                      Create Link List
-                    </button>
-                  </div>
-                  <div className='col-xl-3 col-md-3'>
-                    <button type="button" onClick={handleCreateDesign} className="fancy-btn w-100 mb-2 mb-md-0 linklist">
-                      <span className="icon">🎨</span>
-                      Create Design
-                    </button>
+                  <hr className="ply-card-divider" />
+                  <div className="d-flex align-items-center justify-content-between">
+                    <span className="ply-card-date">Modified {site.modified ? new Date(site.modified).toLocaleDateString() : '-'}</span>
+                    <div className="d-flex gap-1">
+                      {site.wsType === 1 || site.wsType === 2 ? (
+                        <a
+                          rel="noreferrer"
+                          href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
+                          target="_blank"
+                          className="ply-btn-action"
+                        >
+                          Report
+                        </a>
+                      ) : null}
+                      <button className="ply-btn-action" onClick={() => handleShare(site)}>Share</button>
+                      <button className="ply-btn-action" onClick={() => {
+                        if (site.wsType === 1) {
+                          setRedirectUrl(`/htmleditor/${site.id}`);
+                        } else if (site.wsType === 2) {
+                          setRedirectUrl(`/htmleditor/${site.id}`);
+                        } else if (site.wsType === 9) {
+                          setRedirectUrl(`/designeditor/${site.id}`);
+                        }
+                      }}>Edit</button>
+                      <button className="ply-btn-action danger" onClick={() => handleDelete(site.id)}>Delete</button>
+                    </div>
                   </div>
                 </div>
               </div>
-              <h1 className="my-3">My Projects</h1>
-              <div className="row g-4">
-                {designs.map((site, index) => {
-                  // Set title color based on status
-                  let titleColor = "text-primary";
-                  if (site.status === 0) titleColor = "text-success";
-                  else if (site.status === 1) titleColor = "text-secondary";
-                  else if (site.status === 2) titleColor = "text-danger";
-                  else if (site.status === 3) titleColor = "text-warning";
+            ))}
+          </div>
 
-                  return (
-                    <div className="col-12 col-md-6 col-lg-4" key={index}>
-                      <div className="card h-100 shadow-lg border-0 rounded-4">
-                        <div className="card-body d-flex flex-column justify-content-between">
-                          <div className="mb-2">
-                            <h5 className={`card-title mb-3 d-flex align-items-center gap-2 ${titleColor}`}>
-                              <WebsiteTypeDisplay wt={site.wsType} />
-                              <a rel="noreferrer" href={`https://${site.name}.vc4.in`}
-                                target="_blank" className={`text-decoration-none fw-bold ${titleColor}`}
-                                style={{ fontSize: "1.25rem" }}>
-                                {site.name}
-                              </a>
-                              <span className="ms-auto">
-                                <StatusDisplay status={site.status} />
-                              </span>
-                            </h5>
-                            <div className="mb-2">
-                              <span className="badge bg-light text-dark me-2">
-                                Created: {new Date(site.created).toLocaleDateString()}
-                              </span>
-                              {site.modified ? (
-                                <span className="badge bg-light text-dark">
-                                  Last modified: {new Date(site.modified).toLocaleDateString()}
-                                </span>
-                              ) : null}
-                            </div>
-
-                          </div>
-                          <div className="d-flex flex-wrap gap-2 mt-3">
-                            {site.wsType === 1 || site.wsType === 2 ?
-                              <a
-                                rel="noreferrer"
-                                href={`https://www.webstats.co.in/report?id=${site.webstatsId}`}
-                                target="_blank"
-                                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                              >
-                                <i className="bi bi-bar-chart-line"></i> Report
-                              </a> : null}
-                            <button
-                              type="button"
-                              className="btn btn-outline-primary btn-sm rounded-pill px-3"
-                              onClick={() => handleShare(site)}
-                            >
-                              <i className="bi bi-share"></i> Share
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-outline-dark btn-sm rounded-pill px-3"
-                              disabled={loading || loadingDelete}
-                              onClick={() => {
-                                if (site.wsType === 1) {
-                                  setRedirectUrl(`/editcard/${site.id}`);
-                                } else if (site.wsType === 2) {
-                                  setRedirectUrl(`/editlinklist/${site.id}`);
-                                } else if (site.wsType === 9) {
-                                  setRedirectUrl(`/designeditor/${site.id}`);
-                                }
-                              }}
-                            >
-                              <i className="bi bi-pencil-square"></i> Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger btn-sm rounded-pill px-3"
-                              disabled={loading || loadingDelete}
-                              onClick={() => { handleDelete(site.id); }}
-                            >
-                              <i className="bi bi-trash3"></i> Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : <>
-            <div className="text-center fs-4 py-3">You do not have any websites yet, this is the right time to start.</div>
-            <div className="text-center mt-3">
-              <button type="button" onClick={() => {
-                setRedirectUrl('/createvcard');
-              }} className="btn btn-success btn-lg fs-3 me-4">Create Visiting Card</button>
-              <button type="button" onClick={() => {
-                setRedirectUrl('/createlinklist');
-              }} className="btn btn-primary btn-lg fs-3 me-4">Create Link List</button>
-              <button type="button" onClick={handleCreateDesign} className="btn btn-primary btn-lg fs-3">
-                Create Design
-              </button>
+          {loading && <Loader />}
+          {error && <div className="text-danger text-center my-2">{error}</div>}
+        </main>
+        {/* Share Modal remains unchanged */}
+        <Modal show={showShareModal} onHide={() => setShowShareModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Share Your Site</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="d-flex flex-column gap-2">
+              <Button className='mb-2' variant="success" onClick={() => shareVia('whatsapp')}>WhatsApp</Button>
+              <Button className='mb-2' variant="primary" onClick={() => shareVia('facebook')}>Facebook</Button>
+              <Button className='mb-2' variant="info" onClick={() => shareVia('linkedin')}>LinkedIn</Button>
+              <Button className='mb-2' variant="secondary" onClick={() => shareVia('twitter')}>Twitter</Button>
+              <Button className='mb-2' variant="warning" onClick={() => shareVia('sms')}>SMS</Button>
+              <Button className='mb-2' variant="dark" onClick={() => shareVia('email')}>Email</Button>
             </div>
-          </>}</> : <>Loading websites...</>}
-        </Container>
-      </div>}
-      <Modal show={showShareModal} onHide={() => setShowShareModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Share Your Site</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="d-flex flex-column gap-2">
-            <Button className='mb-2' variant="success" onClick={() => shareVia('whatsapp')}>WhatsApp</Button>
-            <Button className='mb-2' variant="primary" onClick={() => shareVia('facebook')}>Facebook</Button>
-            <Button className='mb-2' variant="info" onClick={() => shareVia('linkedin')}>LinkedIn</Button>
-            <Button className='mb-2' variant="secondary" onClick={() => shareVia('twitter')}>Twitter</Button>
-            <Button className='mb-2' variant="warning" onClick={() => shareVia('sms')}>SMS</Button>
-            <Button className='mb-2' variant="dark" onClick={() => shareVia('email')}>Email</Button>
-          </div>
-          <div className="mt-3">
-            <small>Link to share: <b>{shareSite ? `https://${shareSite.name}.vc4.in` : ''}</b></small>
-            <br />
-            <small>Message: <b>{shareSite ? getShareText(shareSite) : ''}</b></small>
-          </div>
-        </Modal.Body>
-      </Modal>
+            <div className="mt-3">
+              <small>Link to share: <b>{shareSite ? `https://${shareSite.name}.vc4.in` : ''}</b></small>
+              <br />
+              <small>Message: <b>{shareSite ? getShareText(shareSite) : ''}</b></small>
+            </div>
+          </Modal.Body>
+        </Modal>
+      </>}
     </>
   );
 }

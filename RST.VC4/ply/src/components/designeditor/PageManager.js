@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useEditor } from './EditorContext';
 import { DEFAULTS } from './constants';
+import { SHAPE_BY_ID, renderShapeSvgContent } from './shapes';
+import { LINE_BY_ID, renderLineSvgContent } from './lines';
 
 // Helper: parse aspect ratio string (e.g. '16:9') into a numeric ratio.
 // Mirrors the identical helper in Canvas.js for consistent dimension resolution.
@@ -13,7 +15,8 @@ function parseAspectRatio(ratio) {
 // ThumbnailElement: lightweight, non-interactive CSS replica of a single design element.
 // Mirrors the rendering logic from ElementControls.js without drag/resize/edit wiring.
 // All style fallbacks use DEFAULTS from constants.js for consistency.
-function ThumbnailElement({ element }) {
+// Named export so exportPages.js can reuse it for off-screen full-res rendering.
+export function ThumbnailElement({ element }) {
   const props = element.props || {};
   const style = element.style || {};
   // Absolute positioning matches the real canvas layout
@@ -42,8 +45,57 @@ function ThumbnailElement({ element }) {
       const br = `${style.borderRadius ?? DEFAULTS.ELLIPSE_BORDER_RADIUS_PCT}%`;
       return <div style={{ ...base, background: style.background || DEFAULTS.BACKGROUND_RECT, border, borderRadius: br }} />;
     }
-    case 'line':
+    case 'line': {
+      // SVG line — mirrors ElementControls.js exactly so the thumbnail matches the canvas.
+      if (element.lineId) {
+        const lineDef = LINE_BY_ID[element.lineId];
+        const sw = style.strokeWidth ?? 2;
+        const lineH = sw + DEFAULTS.LINE_STROKE_HEIGHT_PADDING * 2;
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ ...base, overflow: 'visible' }}
+            viewBox={`0 0 ${props.width} ${lineH}`}
+            preserveAspectRatio="none"
+          >
+            {renderLineSvgContent(
+              lineDef,
+              props.width,
+              lineH,
+              style.stroke ?? '#222222',
+              sw,
+              style.fill ?? style.stroke ?? '#222222',
+            )}
+          </svg>
+        );
+      }
+      // Legacy div-based line
       return <div style={{ ...base, background: style.background || '#222222', borderRadius: 2 }} />;
+    }
+    case 'shape': {
+      const shapeDef = SHAPE_BY_ID[element.shapeId];
+      if (!shapeDef) return null;
+      const sw = style.strokeWidth ?? 0;
+      const svgPad = sw;
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ ...base, overflow: 'visible' }}
+          viewBox={`${-svgPad} ${-svgPad} ${props.width + svgPad * 2} ${props.height + svgPad * 2}`}
+          preserveAspectRatio="none"
+        >
+          {renderShapeSvgContent(
+            shapeDef,
+            props.width,
+            props.height,
+            style.fill ?? DEFAULTS.BACKGROUND_RECT,
+            style.stroke ?? 'none',
+            sw,
+            style,
+          )}
+        </svg>
+      );
+    }
     case 'image':
       return (
         <img
