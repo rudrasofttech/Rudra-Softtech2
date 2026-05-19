@@ -131,18 +131,42 @@ export default function ElementControls({ element, selected, fitScale = 1, other
     activeCrop.top || activeCrop.right || activeCrop.bottom || activeCrop.left
       ? `inset(${activeCrop.top}px ${activeCrop.right}px ${activeCrop.bottom}px ${activeCrop.left}px)`
       : null;
+
+  // Box-shadow CSS string — declared before the switch so all element cases can reference it
+  const boxShadowCSS = style.boxShadowEnabled
+    ? `${style.boxShadowX ?? 2}px ${style.boxShadowY ?? 4}px ${style.boxShadowBlur ?? 8}px 0px ${style.boxShadowColor ?? 'rgba(0,0,0,0.25)'}`
+    : undefined;
+  // CSS filter drop-shadow for SVG-based shapes: box-shadow cannot follow an SVG outline,
+  // but filter:drop-shadow() does, so the shadow hugs the actual shape boundary.
+  const dropShadowFilter = style.boxShadowEnabled
+    ? `drop-shadow(${style.boxShadowX ?? 2}px ${style.boxShadowY ?? 4}px ${style.boxShadowBlur ?? 8}px ${style.boxShadowColor ?? 'rgba(0,0,0,0.25)'})`
+    : undefined;
+
             // ...existing code...
             // For all other types, use DraggableResizable
 
             switch (element.type) {
-              case 'rect':
-                content = <div style={{ width: '100%', height: '100%', ...style, border, borderRadius }} />;
+              case 'rect': {
+                // Show a dashed editor-only outline when the rect is fully transparent
+                // (background === 'transparent' and no visible border), so the element
+                // remains discoverable on the canvas after being deselected.
+                const isRectTransparent = style.background === 'transparent';
+                const rectHasBorder = (style.borderWidth ?? DEFAULTS.BORDER_WIDTH) > 0;
+                const rectEditorOutline = (isRectTransparent && !rectHasBorder)
+                  ? '1px dashed rgba(120,140,200,0.45)' : undefined;
+                content = <div style={{ width: '100%', height: '100%', ...style, border, borderRadius, outline: rectEditorOutline, boxShadow: boxShadowCSS }} />;
                 break;
+              }
               case 'ellipse': {
                 // borderRadius for ellipse is stored as a percentage (0–100).
                 // Apply it AFTER spreading style so the % string always wins over the raw number.
                 const ellipseRadius = `${style.borderRadius ?? DEFAULTS.ELLIPSE_BORDER_RADIUS_PCT}%`;
-                content = <div style={{ width: '100%', height: '100%', ...style, border, borderRadius: ellipseRadius }} />;
+                // Same editor-only transparent indicator as rect.
+                const isEllipseTransparent = style.background === 'transparent';
+                const ellipseHasBorder = (style.borderWidth ?? DEFAULTS.BORDER_WIDTH) > 0;
+                const ellipseEditorOutline = (isEllipseTransparent && !ellipseHasBorder)
+                  ? '1px dashed rgba(120,140,200,0.45)' : undefined;
+                content = <div style={{ width: '100%', height: '100%', ...style, border, borderRadius: ellipseRadius, outline: ellipseEditorOutline, boxShadow: boxShadowCSS }} />;
                 break;
               }
               case 'line': {
@@ -181,10 +205,18 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                 const shapeDef = SHAPE_BY_ID[element.shapeId];
                 const sw  = style.strokeWidth ?? 0;
                 const svgPad = sw; // add half-stroke padding so stroke isn't clipped
+                // Detect transparent fill: show an editor-only dashed outline so the
+                // shape remains visible and selectable on the canvas even when deselected.
+                // This indicator is rendered inside the SVG here and is NOT included in
+                // exportPages.js (which calls renderShapeSvgContent directly), so it
+                // never appears in exported JPEG/PNG output.
+                const shapeFill = style.fill ?? DEFAULTS.BACKGROUND_RECT;
+                const isTransparentFill = shapeFill === 'transparent' || shapeFill === 'none';
+                const hasVisibleStroke = style.stroke && style.stroke !== 'none' && sw > 0;
                 content = (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
+                    style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible', filter: dropShadowFilter }}
                     viewBox={`${-svgPad} ${-svgPad} ${props.width + svgPad * 2} ${props.height + svgPad * 2}`}
                     preserveAspectRatio="none"
                   >
@@ -192,10 +224,25 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                       shapeDef,
                       props.width,
                       props.height,
-                      style.fill ?? DEFAULTS.BACKGROUND_RECT,
+                      shapeFill,
                       style.stroke ?? 'none',
                       sw,
                       style,
+                    )}
+                    {/* Editor-only dashed outline: visible when fill is transparent and
+                         there is no stroke, so the element boundary stays discoverable.
+                         Not included in export (exportPages.js builds its own SVG). */}
+                    {isTransparentFill && !hasVisibleStroke && (
+                      <rect
+                        x={0.5} y={0.5}
+                        width={Math.max(0, props.width - 1)}
+                        height={Math.max(0, props.height - 1)}
+                        fill="none"
+                        stroke="rgba(120,140,200,0.45)"
+                        strokeWidth={1}
+                        strokeDasharray="5 3"
+                        vectorEffect="non-scaling-stroke"
+                      />
                     )}
                   </svg>
                 );
@@ -214,7 +261,8 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                         objectFit: 'cover',
                         border,
                         borderRadius,
-                        ...style
+                        ...style,
+                        boxShadow: boxShadowCSS,
                       }}
                       className={selected ? DEFAULTS.EDITOR_IMAGE_SELECTABLE : ''}
                       draggable={false}
@@ -294,6 +342,7 @@ export default function ElementControls({ element, selected, fitScale = 1, other
                   letterSpacing: (style.letterSpacing ?? 0) + 'px',
                   boxSizing: 'border-box',
                   overflow: 'hidden',
+                  boxShadow: boxShadowCSS,
                 };
                 if (selected && isEditing) {
                   // Actively editing: show textarea, block mouse events so drag doesn't fire
@@ -346,11 +395,6 @@ export default function ElementControls({ element, selected, fitScale = 1, other
     props.flipY ? 'scaleY(-1)' : '',
   ].filter(Boolean).join(' ');
 
-  // Box-shadow CSS string computed from individual style fields
-  const boxShadowCSS = style.boxShadowEnabled
-    ? `${style.boxShadowX ?? 2}px ${style.boxShadowY ?? 4}px ${style.boxShadowBlur ?? 8}px 0px ${style.boxShadowColor ?? 'rgba(0,0,0,0.25)'}`
-    : undefined;
-
   return (
     <DraggableResizable
       x={props.x}
@@ -362,6 +406,7 @@ export default function ElementControls({ element, selected, fitScale = 1, other
       selected={selected}
       onSelect={onSelect}
       elementId={element.id}
+      type={element.type}
       zoom={(state.zoom || 1) * fitScale}
       enableCropHandles={CROP_SUPPORTED}
       onCropChange={onCropChange}
@@ -380,7 +425,6 @@ export default function ElementControls({ element, selected, fitScale = 1, other
           width: '100%',
           height: '100%',
           transform: flipTransform || undefined,
-          boxShadow: boxShadowCSS,
         }}
       >
         {/* Crop clip wrapper: clips content to the visible (non-cropped) region.

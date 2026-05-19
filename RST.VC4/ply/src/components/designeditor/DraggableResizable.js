@@ -28,14 +28,11 @@ function getResizeMode(type, onlyWidthResize) {
  */
 function buildResizeHandles(resizeMode) {
   if (resizeMode === RESIZE_MODE.LINE) {
-    // Three handles along the line's horizontal axis:
-    //   left  → drag to shorten/lengthen from the left endpoint
-    //   right → drag to shorten/lengthen from the right endpoint
-    //   center → hollow dot; click bubbles to parent draggable-resizable for a move gesture
+    // Two endpoint handles only — left endpoint and right endpoint.
+    // Moving the line is done by dragging anywhere on the bounding box.
     return [
-      { dir: 'w',      handleType: 'resize', style: { left: -6,      top: '50%', marginTop: -6, cursor: 'ew-resize' } },
-      { dir: 'center', handleType: 'move',   style: { left: '50%', marginLeft: -6, top: '50%', marginTop: -6, cursor: 'move' } },
-      { dir: 'e',      handleType: 'resize', style: { right: -6,     top: '50%', marginTop: -6, cursor: 'ew-resize' } },
+      { dir: 'w', handleType: 'resize', style: { left: -6,  top: '50%', marginTop: -6, cursor: 'ew-resize' } },
+      { dir: 'e', handleType: 'resize', style: { right: -6, top: '50%', marginTop: -6, cursor: 'ew-resize' } },
     ];
   }
   if (resizeMode === RESIZE_MODE.WIDTH_ONLY) {
@@ -556,34 +553,35 @@ export default function DraggableResizable({
             top: cropTop,
             right: cropRight,
             bottom: cropBottom,
-            outline: `2px solid ${DEFAULTS.SELECTION_OUTLINE_COLOR}`,
+            // Line elements: no rectangular outline — replaced by a dashed SVG line below
+            outline: type === 'line' ? 'none' : `2px solid ${DEFAULTS.SELECTION_OUTLINE_COLOR}`,
             zIndex: DEFAULTS.CROP_HANDLE_Z_INDEX + 1,
           }}
         >
-          {/* Resize / move handles — appearance and behaviour differ by handleType:
-               'resize' → filled dot, triggers onResizeDown to change element dimensions
-               'move'   → hollow dot (line center), no onResizeDown; click bubbles to the
-                          parent draggable-resizable div which starts a normal drag gesture */}
-          {handles.map(h =>
-            h.handleType === 'move' ? (
-              <div
-                key={h.dir}
-                className="line-move-handle"
-                title="Drag to move"
-                style={{
-                  position: 'absolute',
-                  width: 12,
-                  height: 12,
-                  background: DEFAULTS.LINE_MOVE_HANDLE_BG,
-                  border: DEFAULTS.LINE_MOVE_HANDLE_BORDER,
-                  borderRadius: 6,
-                  zIndex: 10,
-                  boxSizing: 'border-box',
-                  pointerEvents: 'auto',
-                  ...h.style,
-                }}
+          {/* For line elements: draw a dashed selection line connecting the two endpoints */}
+          {type === 'line' && (
+            <svg
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%',
+                overflow: 'visible',
+                pointerEvents: 'none',
+              }}
+            >
+              <line
+                x1={0} y1="50%"
+                x2="100%" y2="50%"
+                stroke={DEFAULTS.SELECTION_OUTLINE_COLOR}
+                strokeWidth={1.5}
+                strokeDasharray="5 3"
               />
-            ) : (
+            </svg>
+          )}
+          {/* Resize handles — filled endpoint dots for lines, corner/side dots for other types */}
+          {handles.map(h => (
               <div
                 key={h.dir}
                 className={h.isSide ? 'resize-handle resize-handle-side' : 'resize-handle'}

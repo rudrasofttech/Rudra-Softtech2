@@ -236,28 +236,28 @@ function Home() {
           {/* Create cards row */}
           <div className="row g-3 mb-4">
             <div className="col-3">
-              <a href="#" className="ply-create-card" onClick={() => setRedirectUrl('/htmleditor')}>
+              <a href="javascript:void(0)" className="ply-create-card" onClick={() => setRedirectUrl('/createvcard')}>
                 <div className="ply-create-card-icon" style={{ background: '#fff0f0' }}>💼</div>
                 <div className="ply-create-card-label">Visiting card</div>
                 <div className="ply-create-card-sub">Personal or business card</div>
               </a>
             </div>
             <div className="col-3">
-              <a href="#" className="ply-create-card" onClick={() => setRedirectUrl('/htmleditor')}>
+              <a href="javascript:void(0)" className="ply-create-card" onClick={() => setRedirectUrl('/createlinklist')}>
                 <div className="ply-create-card-icon" style={{ background: '#eff6ff' }}>🔗</div>
                 <div className="ply-create-card-label">Link list</div>
                 <div className="ply-create-card-sub">Curated link page</div>
               </a>
             </div>
             <div className="col-3">
-              <a href="#" className="ply-create-card" onClick={handleCreateDesign}>
+              <a href="javascript:void(0)" className="ply-create-card" onClick={handleCreateDesign}>
                 <div className="ply-create-card-icon" style={{ background: '#f5f3ff' }}>🎨</div>
                 <div className="ply-create-card-label">Design</div>
                 <div className="ply-create-card-sub">Visual design project</div>
               </a>
             </div>
             <div className="col-3">
-              <a href="#" className="ply-create-card" onClick={handleHtmlDesign}>
+              <a href="javascript:void(0)" className="ply-create-card" onClick={handleHtmlDesign}>
                 <div className="ply-create-card-icon" style={{ background: '#f0fdf4' }}>⚡</div>
                 <div className="ply-create-card-label">HTML page</div>
                 <div className="ply-create-card-sub">Custom web page</div>
@@ -308,9 +308,9 @@ function Home() {
                       <button className="ply-btn-action" onClick={() => handleShare(site)}>Share</button>
                       <button className="ply-btn-action" onClick={() => {
                         if (site.wsType === 1) {
-                          setRedirectUrl(`/htmleditor/${site.id}`);
+                          setRedirectUrl(`/editcard/${site.id}`);
                         } else if (site.wsType === 2) {
-                          setRedirectUrl(`/htmleditor/${site.id}`);
+                          setRedirectUrl(`/editlinklist/${site.id}`);
                         } else if (site.wsType === 9) {
                           setRedirectUrl(`/designeditor/${site.id}`);
                         }

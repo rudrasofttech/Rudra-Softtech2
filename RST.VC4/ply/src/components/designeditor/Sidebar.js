@@ -8,6 +8,55 @@ import { SHAPE_BY_ID, SHAPE_CATALOG } from './shapes';
 import LinePicker from './LinePicker';
 import { LINE_BY_ID, LINE_CATALOG } from './lines';
 
+// ─── Shared color input: native picker + editable hex text field ──────────────
+// onColorChange(colorString) — called with the new CSS color string
+function ColorWithHex({ id, value, onColorChange, className, disabled }) {
+  const [draft, setDraft] = React.useState('');
+  const [focused, setFocused] = React.useState(false);
+
+  const safeValue = value || '#000000';
+  const displayValue = focused ? draft : safeValue;
+
+  function applyHex(raw) {
+    let v = raw.trim();
+    if (v && !v.startsWith('#')) v = '#' + v;
+    if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(v)) {
+      onColorChange(v);
+    }
+  }
+
+  // The native color picker requires exactly a 6-digit hex; fall back gracefully
+  const pickerValue = /^#[0-9A-Fa-f]{6}$/.test(safeValue) ? safeValue : '#000000';
+
+  return (
+    <div className="d-flex align-items-center gap-1">
+      <input
+        id={id}
+        type="color"
+        value={pickerValue}
+        onChange={e => { onColorChange(e.target.value); if (focused) setDraft(e.target.value); }}
+        className={className || 'form-control form-control-color'}
+        disabled={disabled}
+        style={{ width: 34, height: 30, padding: 2, flexShrink: 0, cursor: disabled ? 'not-allowed' : 'pointer' }}
+      />
+      <input
+        type="text"
+        value={displayValue}
+        onFocus={() => { setDraft(safeValue); setFocused(true); }}
+        onBlur={() => { setFocused(false); applyHex(draft); }}
+        onChange={e => { setDraft(e.target.value); applyHex(e.target.value); }}
+        disabled={disabled}
+        placeholder="#000000"
+        className="form-control form-control-sm"
+        style={{ width: 84, fontFamily: 'monospace', fontSize: 12 }}
+        maxLength={9}
+        spellCheck={false}
+        aria-label="Hex color code"
+      />
+    </div>
+  );
+}
+
 // ─── Add Element Panel (narrow left sidebar) ─────────────────────────────────
 export default function Sidebar() {
   const { state, dispatch, ActionTypes } = useEditor();
@@ -447,9 +496,10 @@ export function PropertiesPanel() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label className={DEFAULTS.FORM_LABEL} style={{ fontSize: 10 }}>Color</label>
-                    <input type="color" value={style.boxShadowColor ?? '#00000040'}
-                      onChange={e => handleStyleChange('boxShadowColor', e.target.value)}
-                      className={DEFAULTS.FORM_CONTROL_COLOR} />
+                    <ColorWithHex
+                      value={style.boxShadowColor ?? '#000000'}
+                      onColorChange={v => handleStyleChange('boxShadowColor', v)}
+                    />
                   </div>
                 </div>
               </div>
@@ -524,7 +574,7 @@ export function PropertiesPanel() {
       <>
         <div className={DEFAULTS.FORM_GROUP}>
           <label htmlFor="el-border-color" className={DEFAULTS.FORM_LABEL}>Border Color</label>
-          <input id="el-border-color" type="color" value={style.borderColor || DEFAULTS.BORDER_COLOR} onChange={e => handleStyleChange('borderColor', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} />
+          <ColorWithHex id="el-border-color" value={style.borderColor || DEFAULTS.BORDER_COLOR} onColorChange={v => handleStyleChange('borderColor', v)} />
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
           {/* For ellipse: value is 0–100 interpreted as %, giving 50% = perfect oval/circle */}
@@ -558,11 +608,9 @@ export function PropertiesPanel() {
         {/* Fill */}
         <div className={DEFAULTS.FORM_GROUP}>
           <label className={DEFAULTS.FORM_LABEL}>Fill Color</label>
-          <input
-            type="color"
+          <ColorWithHex
             value={isFillTransparent ? '#eeeeee' : (style.fill || '#eeeeee')}
-            onChange={e => handleStyleChange('fill', e.target.value)}
-            className={DEFAULTS.FORM_CONTROL_COLOR}
+            onColorChange={v => handleStyleChange('fill', v)}
             disabled={isFillTransparent}
           />
           <div className="form-check mt-1">
@@ -579,11 +627,9 @@ export function PropertiesPanel() {
         {/* Stroke */}
         <div className={DEFAULTS.FORM_GROUP}>
           <label className={DEFAULTS.FORM_LABEL}>Stroke Color</label>
-          <input
-            type="color"
+          <ColorWithHex
             value={style.stroke === 'none' || !style.stroke ? '#000000' : style.stroke}
-            onChange={e => handleStyleChange('stroke', e.target.value)}
-            className={DEFAULTS.FORM_CONTROL_COLOR}
+            onColorChange={v => handleStyleChange('stroke', v)}
             disabled={style.stroke === 'none' || !style.stroke}
           />
           <div className="form-check mt-1">
@@ -629,7 +675,7 @@ export function PropertiesPanel() {
       return <>
         <div className={DEFAULTS.FORM_GROUP}>
           <label className={DEFAULTS.FORM_LABEL}>Background</label>
-          <input type="color" value={isTransparent ? DEFAULTS.BACKGROUND_RECT : (style.background || DEFAULTS.BACKGROUND_RECT)} onChange={e => handleStyleChange('background', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} disabled={isTransparent} />
+          <ColorWithHex value={isTransparent ? DEFAULTS.BACKGROUND_RECT : (style.background || DEFAULTS.BACKGROUND_RECT)} onColorChange={v => handleStyleChange('background', v)} disabled={isTransparent} />
           <div className="form-check mt-1">
             <input type="checkbox" className={DEFAULTS.FORM_CHECK_INPUT} id={`bgtransp-${type}`} checked={isTransparent} onChange={e => handleStyleChange('background', e.target.checked ? DEFAULTS.BACKGROUND : DEFAULTS.BACKGROUND_RECT)} />
             <label className={DEFAULTS.FORM_CHECK_LABEL} htmlFor={`bgtransp-${type}`}>Transparent</label>
@@ -680,11 +726,9 @@ export function PropertiesPanel() {
           {/* Color */}
           <div className={DEFAULTS.FORM_GROUP}>
             <label className={DEFAULTS.FORM_LABEL}>Color</label>
-            <input
-              type="color"
+            <ColorWithHex
               value={style.stroke || '#222222'}
-              onChange={e => handleStyleChange('stroke', e.target.value)}
-              className={DEFAULTS.FORM_CONTROL_COLOR}
+              onColorChange={v => handleStyleChange('stroke', v)}
             />
           </div>
           {/* Stroke width — controls both visual thickness and bounding-box height */}
@@ -716,11 +760,9 @@ export function PropertiesPanel() {
           {isSymbolLine && (
             <div className={DEFAULTS.FORM_GROUP}>
               <label className={DEFAULTS.FORM_LABEL}>Symbol Color</label>
-              <input
-                type="color"
+              <ColorWithHex
                 value={style.fill || style.stroke || '#222222'}
-                onChange={e => handleStyleChange('fill', e.target.value)}
-                className={DEFAULTS.FORM_CONTROL_COLOR}
+                onColorChange={v => handleStyleChange('fill', v)}
               />
             </div>
           )}
@@ -731,7 +773,7 @@ export function PropertiesPanel() {
       return <>
         <div className={DEFAULTS.FORM_GROUP}>
           <label className={DEFAULTS.FORM_LABEL}>Line Color</label>
-          <input type="color" value={style.background || '#222222'} onChange={e => handleStyleChange('background', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} />
+          <ColorWithHex value={style.background || '#222222'} onColorChange={v => handleStyleChange('background', v)} />
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
           <label className={DEFAULTS.FORM_LABEL}>Length: {props.width || 20}</label>
@@ -795,12 +837,12 @@ export function PropertiesPanel() {
           </div>
           <div className='mb-2'>
             <label className="form-label">Font Color</label>
-            <input type="color" value={style.color || DEFAULTS.TEXT_COLOR} onChange={e => handleStyleChange('color', e.target.value)} className="form-control w-25" />
+            <ColorWithHex value={style.color || DEFAULTS.TEXT_COLOR} onColorChange={v => handleStyleChange('color', v)} />
           </div>
         </div>
         <div className="form-group my-2">
           <label className="form-label">Background</label>
-          <input type="color" value={isTransparent ? '#ffffff' : (style.background || '#ffffff')} onChange={e => handleStyleChange('background', e.target.value)} className="form-control w-25" disabled={isTransparent} />
+          <ColorWithHex value={isTransparent ? '#ffffff' : (style.background || '#ffffff')} onColorChange={v => handleStyleChange('background', v)} disabled={isTransparent} />
           <div className="form-check mt-1">
             <input type="checkbox" className="form-check-input" id="bgtransp-text" checked={isTransparent} onChange={e => handleStyleChange('background', e.target.checked ? 'transparent' : '#ffffff')} />
             <label className="form-check-label" htmlFor="bgtransp-text">Transparent</label>
@@ -838,7 +880,7 @@ export function PropertiesPanel() {
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
           <label htmlFor="img-bg-color" className={DEFAULTS.FORM_LABEL}>Background</label>
-          <input id="img-bg-color" type="color" value={isTransparent ? DEFAULTS.BACKGROUND_IMAGE : (style.background || DEFAULTS.BACKGROUND_IMAGE)} onChange={e => handleStyleChange('background', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} disabled={isTransparent} />
+          <ColorWithHex id="img-bg-color" value={isTransparent ? DEFAULTS.BACKGROUND_IMAGE : (style.background || DEFAULTS.BACKGROUND_IMAGE)} onColorChange={v => handleStyleChange('background', v)} disabled={isTransparent} />
           <div className="form-check mt-1">
             <input type="checkbox" className={DEFAULTS.FORM_CHECK_INPUT} id="bgtransp-image" checked={isTransparent} onChange={e => handleStyleChange('background', e.target.checked ? DEFAULTS.BACKGROUND : DEFAULTS.BACKGROUND_IMAGE)} />
             <label className={DEFAULTS.FORM_CHECK_LABEL} htmlFor="bgtransp-image">Transparent</label>
@@ -854,7 +896,7 @@ export function PropertiesPanel() {
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
           <label htmlFor="img-border-color" className={DEFAULTS.FORM_LABEL}>Border Color</label>
-          <input id="img-border-color" type="color" value={style.borderColor || DEFAULTS.BORDER_COLOR} onChange={e => handleStyleChange('borderColor', e.target.value)} className={DEFAULTS.FORM_CONTROL_COLOR} />
+          <ColorWithHex id="img-border-color" value={style.borderColor || DEFAULTS.BORDER_COLOR} onColorChange={v => handleStyleChange('borderColor', v)} />
         </div>
         <div className={DEFAULTS.FORM_GROUP}>
           <label htmlFor="img-border-radius" className={DEFAULTS.FORM_LABEL}>Border Radius: {style.borderRadius || DEFAULTS.BORDER_RADIUS}</label>
@@ -948,12 +990,10 @@ export function PropertiesPanel() {
             <form>
               <div className="form-group mb-2">
                 <label htmlFor="canvas-bg-color" className="prop-section-label">Background</label>
-                <input
+                <ColorWithHex
                   id="canvas-bg-color"
-                  type="color"
                   value={state.pages[state.currentPage].background === 'transparent' ? '#ffffff' : (state.pages[state.currentPage].background || '#ffffff')}
-                  onChange={e => dispatch({ type: 'UPDATE_PAGE_BACKGROUND', payload: { pageIndex: state.currentPage, background: e.target.value } })}
-                  className="form-control form-control-color"
+                  onColorChange={v => dispatch({ type: 'UPDATE_PAGE_BACKGROUND', payload: { pageIndex: state.currentPage, background: v } })}
                   disabled={state.pages[state.currentPage].background === 'transparent'}
                 />
                 <div className="form-check mt-1">
@@ -969,12 +1009,10 @@ export function PropertiesPanel() {
               </div>
               <div className="form-group mb-2">
                 <label htmlFor="canvas-border-color" className="prop-section-label">Border Color</label>
-                <input
+                <ColorWithHex
                   id="canvas-border-color"
-                  type="color"
                   value={state.pages[state.currentPage].borderColor || DEFAULTS.BORDER_COLOR}
-                  onChange={e => dispatch({ type: 'UPDATE_PAGE_BORDER', payload: { pageIndex: state.currentPage, borderColor: e.target.value } })}
-                  className="form-control form-control-color"
+                  onColorChange={v => dispatch({ type: 'UPDATE_PAGE_BORDER', payload: { pageIndex: state.currentPage, borderColor: v } })}
                 />
               </div>
               <div className="form-group mb-2">
