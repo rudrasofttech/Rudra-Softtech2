@@ -415,6 +415,21 @@
   border-color: #4a7cdc;
 }
 
+/* Icon sub-category tab strip */
+.shape-picker-subtabs {
+  background: #f8f9fc;
+  border-bottom: 1px solid #eaecf5;
+  padding: 0.25rem 0.6rem 0.2rem;
+}
+.shape-picker-subtab {
+  font-size: 0.65rem;
+  padding: 0.13rem 0.5rem;
+}
+.shape-picker-subtab.active {
+  background: #6c757d;
+  border-color: #6c757d;
+}
+
 /* Scrollable body */
 .shape-picker-body {
   flex: 1;
@@ -514,6 +529,14 @@
   color: #9aa0ab;
   font-size: 0.82rem;
   padding: 1.5rem 0;
+}
+.shape-picker-overflow-hint {
+  text-align: center;
+  color: #9aa0ab;
+  font-size: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #eaecf5;
+  margin-top: 0.25rem;
 }
 
 /* ─── Floating Frosted-Glass Properties Panel (right, over canvas) ────────── */

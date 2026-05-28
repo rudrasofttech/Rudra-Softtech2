@@ -10,7 +10,7 @@ import { SHAPE_CATALOG, SHAPE_CATEGORIES, renderShapeSvgContent } from './shapes
  *   anchorRef          — ref to the trigger button (for positioning)
  */
 export default function ShapePicker({ onSelect, onClose, anchorRef }) {
-  const [search, setSearch]       = useState('');
+  const [search, setSearch]           = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const popupRef = useRef(null);
 
@@ -39,7 +39,10 @@ export default function ShapePicker({ onSelect, onClose, anchorRef }) {
 
   const filtered = SHAPE_CATALOG.filter(s => {
     const matchCat = activeCategory === 'All' || s.category === activeCategory;
-    const matchSearch = !search || s.label.toLowerCase().includes(search.toLowerCase()) || s.category.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      !search ||
+      s.label.toLowerCase().includes(search.toLowerCase()) ||
+      s.category.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -108,6 +111,7 @@ export default function ShapePicker({ onSelect, onClose, anchorRef }) {
             </div>
           </div>
         ))}
+
       </div>
     </div>
   );

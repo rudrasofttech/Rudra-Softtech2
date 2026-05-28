@@ -310,17 +310,17 @@ function renderTickedLine(w, h, stroke, sw) {
   return elems;
 }
 
-function renderGrooveWave(w, h, stroke, sw) {
+function renderGrooveWave(w, h, stroke, sw, halfPeriods) {
   // Two offset sine waves to create a groove/ridge appearance
   const cy = h / 2;
   const a  = h * 0.22;
-  const hp = w / 8;
+  const hp = w / halfPeriods;
   const offset = h * 0.18;
 
   function wavePts(yOff) {
     const pts = [`M 0,${(cy + yOff).toFixed(2)}`];
     pts.push(`Q ${(hp * 0.5).toFixed(2)},${(cy + yOff - a).toFixed(2)} ${hp.toFixed(2)},${(cy + yOff).toFixed(2)}`);
-    for (let i = 1; i < 8; i++) {
+    for (let i = 1; i < halfPeriods; i++) {
       const x = Math.min((i + 1) * hp, w);
       pts.push(`T ${x.toFixed(2)},${(cy + yOff).toFixed(2)}`);
     }
@@ -469,62 +469,83 @@ export const LINE_CATALOG = [
   {
     id: 'sine-wave', label: 'Sine Wave', category: 'Wavy',
     defaultW: 160, defaultH: 24,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={sineWavePath(w, h, 4)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const periods = Math.max(1, Math.round(w / 40));
+      return <path d={sineWavePath(w, h, periods)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />;
+    },
   },
   {
     id: 'tight-wave', label: 'Tight Wave', category: 'Wavy',
     defaultW: 160, defaultH: 16,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={sineWavePath(w, h, 8)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const periods = Math.max(1, Math.round(w / 20));
+      return <path d={sineWavePath(w, h, periods)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />;
+    },
   },
   {
     id: 'loose-wave', label: 'Loose Wave', category: 'Wavy',
     defaultW: 160, defaultH: 30,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={sineWavePath(w, h, 2)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const periods = Math.max(1, Math.round(w / 80));
+      return <path d={sineWavePath(w, h, periods)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />;
+    },
   },
   {
     id: 'spring', label: 'Spring / Coil', category: 'Wavy',
     defaultW: 160, defaultH: 18,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={springPath(w, h, 14)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const coils = Math.max(2, Math.round(w * 14 / 160));
+      return <path d={springPath(w, h, coils)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" />;
+    },
   },
   {
     id: 'groove', label: 'Groove', category: 'Wavy',
     defaultW: 160, defaultH: 18,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) => <>{renderGrooveWave(w, h, stroke, sw)}</>,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const halfPeriods = Math.max(2, Math.round(w / 20));
+      return <>{renderGrooveWave(w, h, stroke, sw, halfPeriods)}</>;
+    },
   },
   // ── Jagged ─────────────────────────────────────────────────────────────────
   {
     id: 'zigzag', label: 'Zigzag', category: 'Jagged',
     defaultW: 160, defaultH: 22,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={zigzagPath(w, h, 10)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const segs = Math.max(2, Math.round(w / 16));
+      return <path d={zigzagPath(w, h, segs)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+    },
   },
   {
     id: 'sawtooth', label: 'Sawtooth', category: 'Jagged',
     defaultW: 160, defaultH: 22,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={sawtoothPath(w, h, 8)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const segs = Math.max(2, Math.round(w / 20));
+      return <path d={sawtoothPath(w, h, segs)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+    },
   },
   {
     id: 'square-wave', label: 'Square Wave', category: 'Jagged',
     defaultW: 160, defaultH: 22,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={squareWavePath(w, h, 6)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="square" strokeLinejoin="miter" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const segs = Math.max(1, Math.round(w * 6 / 160));
+      return <path d={squareWavePath(w, h, segs)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="square" strokeLinejoin="miter" />;
+    },
   },
   {
     id: 'sharp-zigzag', label: 'Sharp Zigzag', category: 'Jagged',
     defaultW: 160, defaultH: 26,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={zigzagPath(w, h, 14)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const segs = Math.max(2, Math.round(w * 14 / 160));
+      return <path d={zigzagPath(w, h, segs)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+    },
   },
   {
     id: 'staircase', label: 'Staircase', category: 'Jagged',
     defaultW: 160, defaultH: 22,
-    render: (w, h, { stroke, strokeWidth: sw = 2 }) =>
-      <path d={staircasePath(w, h, 6)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="square" strokeLinejoin="miter" />,
+    render: (w, h, { stroke, strokeWidth: sw = 2 }) => {
+      const steps = Math.max(2, Math.round(w * 6 / 160));
+      return <path d={staircasePath(w, h, steps)} stroke={stroke} strokeWidth={sw} fill="none" strokeLinecap="square" strokeLinejoin="miter" />;
+    },
   },
   // ── Morse ──────────────────────────────────────────────────────────────────
   {

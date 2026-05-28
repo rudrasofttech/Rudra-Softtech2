@@ -6,14 +6,18 @@
  *   label     — display name shown in the picker
  *   category  — grouping label used in the picker UI
  *   getSvgPath(w, h) — returns an SVG <path> or <polygon> d-string (or null for primitives)
- *   svgElement — 'path' | 'polygon' | 'circle' | 'ellipse' | 'rect' (the SVG tag to render)
+ *   svgElement — 'path' | 'polygon' | 'circle' | 'ellipse' | 'rect' | 'icon' (the SVG tag to render)
  *   defaultW  — suggested initial width
  *   defaultH  — suggested initial height
  *   previewSvg — small inline SVG string shown in the picker grid
  *
  * Adding a new shape: add an entry to SHAPE_CATALOG below. The renderer in
  * ElementControls.js iterates this catalog — no other file needs changing.
+ *
+ * Icons (svgElement: 'icon') are imported from icons.js and appended automatically.
+ * Each icon entry has an additional { iconViewBox, iconCategory, paths[] } fields.
  */
+import { ICON_CATALOG } from './icons';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -555,8 +559,11 @@ export const SHAPE_CATEGORIES = [
   'Symbols',
 ];
 
-/** Quick lookup by id */
-export const SHAPE_BY_ID = Object.fromEntries(SHAPE_CATALOG.map(s => [s.id, s]));
+/** Quick lookup by id — includes both shapes and icons so canvas rendering always works */
+export const SHAPE_BY_ID = {
+  ...Object.fromEntries(SHAPE_CATALOG.map(s => [s.id, s])),
+  ...Object.fromEntries(ICON_CATALOG.map(s => [s.id, s])),
+};
 
 /**
  * Renders the SVG content for a shape definition at given dimensions.
@@ -589,6 +596,43 @@ export function renderShapeSvgContent(shapeDef, w, h, fillColor, strokeColor, st
   if (shapeDef.svgElement === 'path') {
     const d = shapeDef.getSvgPath(w, h, style);
     return <path d={d} fill={fill} stroke={stroke} strokeWidth={sw} />;
+  }
+  if (shapeDef.svgElement === 'icon') {
+    // Scale Bootstrap Icons' native 16×16 (or custom iconViewBox) coordinate space
+    // to the element's actual w×h bounding box.
+    const vbParts = (shapeDef.iconViewBox || '0 0 16 16').split(' ').map(Number);
+    const vw = vbParts[2] || 16;
+    const vh = vbParts[3] || 16;
+    const sx = w / vw;
+    const sy = h / vh;
+
+    // Support both the legacy 'paths' format [{d, fillRule}]
+    // and the current 'elements' format [{tag, d, fill-rule, cx, ...}].
+    const elements = shapeDef.elements
+      || (shapeDef.paths || []).map(p => ({ tag: 'path', d: p.d, 'fill-rule': p.fillRule }));
+
+    return (
+      <g transform={`scale(${sx},${sy})`} fill={fill} stroke="none">
+        {elements.map((el, i) => {
+          const { tag, ...rawAttrs } = el;
+          // Convert SVG attribute kebab-case names to React camelCase
+          const attrs = {};
+          for (const [k, v] of Object.entries(rawAttrs)) {
+            if (v === undefined || v === null) continue;
+            const reactKey = k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+            attrs[reactKey] = v;
+          }
+          if (tag === 'path')     return <path     key={i} {...attrs} />;
+          if (tag === 'circle')   return <circle   key={i} {...attrs} />;
+          if (tag === 'ellipse')  return <ellipse  key={i} {...attrs} />;
+          if (tag === 'rect')     return <rect     key={i} {...attrs} />;
+          if (tag === 'line')     return <line     key={i} {...attrs} />;
+          if (tag === 'polygon')  return <polygon  key={i} {...attrs} />;
+          if (tag === 'polyline') return <polyline key={i} {...attrs} />;
+          return null;
+        })}
+      </g>
+    );
   }
   return null;
 }

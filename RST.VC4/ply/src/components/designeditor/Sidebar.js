@@ -1,9 +1,11 @@
 import React from 'react';
+import ExpandableTextarea from '../expandabletextarea';
 import { LayeringControls } from './ElementControls';
 import { useEditor } from './EditorContext';
 import { DEFAULTS } from './constants';
 import CanvasSizePopup from './CanvasSizePopup';
 import ShapePicker from './ShapePicker';
+import IconPicker from './IconPicker';
 import { SHAPE_BY_ID, SHAPE_CATALOG } from './shapes';
 import LinePicker from './LinePicker';
 import { LINE_BY_ID, LINE_CATALOG } from './lines';
@@ -57,13 +59,190 @@ function ColorWithHex({ id, value, onColorChange, className, disabled }) {
   );
 }
 
+// ─── Font catalog: system fonts + curated Google Fonts ───────────────────────
+const FONT_GROUPS = [
+  {
+    category: 'System',
+    fonts: [
+      { label: 'Default',          value: '' },
+      { label: 'Arial',            value: 'Arial, Helvetica, sans-serif' },
+      { label: 'Segoe UI',         value: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
+      { label: 'Times New Roman',  value: "'Times New Roman', Times, serif" },
+      { label: 'Georgia',          value: 'Georgia, serif' },
+      { label: 'Verdana',          value: 'Verdana, Geneva, sans-serif' },
+      { label: 'Tahoma',           value: 'Tahoma, Geneva, sans-serif' },
+      { label: 'Trebuchet MS',     value: "'Trebuchet MS', Helvetica, sans-serif" },
+      { label: 'Courier New',      value: "'Courier New', Courier, monospace" },
+      { label: 'Impact',           value: 'Impact, Charcoal, sans-serif' },
+      { label: 'Comic Sans MS',    value: "'Comic Sans MS', cursive, sans-serif" },
+      { label: 'Lucida Console',   value: "'Lucida Console', Monaco, monospace" },
+      { label: 'Lucida Sans',      value: "'Lucida Sans Unicode', 'Lucida Grande', sans-serif" },
+      { label: 'Garamond',         value: 'Garamond, serif' },
+      { label: 'Palatino',         value: "Palatino, 'Palatino Linotype', serif" },
+      { label: 'Arial Black',      value: "'Arial Black', Gadget, sans-serif" },
+      { label: 'Brush Script MT',  value: "'Brush Script MT', cursive" },
+    ],
+  },
+  {
+    category: 'Sans-Serif',
+    fonts: [
+      { label: 'Roboto',      value: "'Roboto', sans-serif" },
+      { label: 'Open Sans',   value: "'Open Sans', sans-serif" },
+      { label: 'Lato',        value: "'Lato', sans-serif" },
+      { label: 'Montserrat',  value: "'Montserrat', sans-serif" },
+      { label: 'Poppins',     value: "'Poppins', sans-serif" },
+      { label: 'Nunito',      value: "'Nunito', sans-serif" },
+      { label: 'Raleway',     value: "'Raleway', sans-serif" },
+      { label: 'Inter',       value: "'Inter', sans-serif" },
+      { label: 'Oswald',      value: "'Oswald', sans-serif" },
+      { label: 'Ubuntu',      value: "'Ubuntu', sans-serif" },
+    ],
+  },
+  {
+    category: 'Serif',
+    fonts: [
+      { label: 'Playfair Display',   value: "'Playfair Display', serif" },
+      { label: 'Lora',               value: "'Lora', serif" },
+      { label: 'Merriweather',       value: "'Merriweather', serif" },
+      { label: 'Libre Baskerville',  value: "'Libre Baskerville', serif" },
+      { label: 'Cormorant Garamond', value: "'Cormorant Garamond', serif" },
+      { label: 'EB Garamond',        value: "'EB Garamond', serif" },
+    ],
+  },
+  {
+    category: 'Display',
+    fonts: [
+      { label: 'Bebas Neue',   value: "'Bebas Neue', cursive" },
+      { label: 'Righteous',    value: "'Righteous', cursive" },
+      { label: 'Anton',        value: "'Anton', sans-serif" },
+      { label: 'Lobster',      value: "'Lobster', cursive" },
+      { label: 'Pacifico',     value: "'Pacifico', cursive" },
+      { label: 'Alfa Slab One',value: "'Alfa Slab One', cursive" },
+    ],
+  },
+  {
+    category: 'Handwriting',
+    fonts: [
+      { label: 'Dancing Script', value: "'Dancing Script', cursive" },
+      { label: 'Caveat',         value: "'Caveat', cursive" },
+      { label: 'Satisfy',        value: "'Satisfy', cursive" },
+      { label: 'Sacramento',     value: "'Sacramento', cursive" },
+      { label: 'Great Vibes',    value: "'Great Vibes', cursive" },
+    ],
+  },
+  {
+    category: 'Monospace',
+    fonts: [
+      { label: 'Roboto Mono',     value: "'Roboto Mono', monospace" },
+      { label: 'Source Code Pro', value: "'Source Code Pro', monospace" },
+      { label: 'Space Mono',      value: "'Space Mono', monospace" },
+      { label: 'Fira Code',       value: "'Fira Code', monospace" },
+      { label: 'Inconsolata',     value: "'Inconsolata', monospace" },
+    ],
+  },
+];
+
+// ─── Font picker: searchable grouped dropdown with per-font previews ──────────
+function FontPicker({ value, onChange }) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const ref = React.useRef();
+
+  // Resolve label + css for the currently selected value
+  let currentLabel = 'Default';
+  let currentFamily = '';
+  for (const group of FONT_GROUPS) {
+    for (const font of group.fonts) {
+      if (font.value === value) { currentLabel = font.label; currentFamily = font.value; break; }
+    }
+  }
+
+  // Close when clicking outside
+  React.useEffect(() => {
+    if (!open) return;
+    function handleOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  // Filter groups by search query
+  const q = search.trim().toLowerCase();
+  const visible = FONT_GROUPS
+    .map(g => ({ ...g, fonts: q ? g.fonts.filter(f => f.label.toLowerCase().includes(q)) : g.fonts }))
+    .filter(g => g.fonts.length > 0);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        className="form-select text-start w-100"
+        style={{ fontFamily: currentFamily || 'inherit', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        onClick={() => { setOpen(o => !o); setSearch(''); }}
+      >
+        {currentLabel}
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', zIndex: 9999, top: '100%', left: 0, right: 0,
+          background: '#fff', border: '1px solid #ced4da', borderRadius: 4,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.18)', maxHeight: 320, overflowY: 'auto',
+        }}>
+          <div style={{ padding: '6px 8px', borderBottom: '1px solid #eee', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search fonts…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="form-control form-control-sm"
+            />
+          </div>
+          {visible.map(group => (
+            <div key={group.category}>
+              <div style={{ padding: '4px 10px 2px', fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 1, background: '#f8f9fa', borderBottom: '1px solid #eee', position: 'sticky', top: 40, zIndex: 1 }}>
+                {group.category}
+              </div>
+              {group.fonts.map(font => (
+                <div
+                  key={font.value}
+                  onMouseDown={() => { onChange(font.value); setOpen(false); }}
+                  style={{
+                    padding: '7px 14px',
+                    fontFamily: font.value || 'inherit',
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    background: font.value === value ? '#e8f0fe' : 'transparent',
+                    color: '#212529',
+                    userSelect: 'none',
+                  }}
+                  onMouseEnter={e => { if (font.value !== value) e.currentTarget.style.background = '#f0f4ff'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = font.value === value ? '#e8f0fe' : 'transparent'; }}
+                >
+                  {font.label}
+                </div>
+              ))}
+            </div>
+          ))}
+          {visible.length === 0 && (
+            <div style={{ padding: '14px', color: '#888', textAlign: 'center', fontSize: 13 }}>No fonts match "{search}"</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Add Element Panel (narrow left sidebar) ─────────────────────────────────
 export default function Sidebar() {
   const { state, dispatch, ActionTypes } = useEditor();
   const [showShapePicker, setShowShapePicker] = React.useState(false);
   const [showLinePicker,  setShowLinePicker]  = React.useState(false);
+  const [showIconPicker,  setShowIconPicker]  = React.useState(false);
   const shapesBtnRef = React.useRef();
   const linesBtnRef  = React.useRef();
+  const iconsBtnRef  = React.useRef();
 
   // Hidden file-input ref: triggered by "Add Image" before any element is created
   const imageFileInputRef = React.useRef();
@@ -199,6 +378,39 @@ export default function Sidebar() {
     });
   };
 
+  // Handler for adding an icon element from the IconPicker
+  const handleAddIcon = (iconId) => {
+    setShowIconPicker(false);
+    const iconDef = SHAPE_BY_ID[iconId];
+    if (!iconDef) return;
+    const page = state.pages[state.currentPage];
+    const parseAR = r => { if (!r) return 16 / 9; const [w, h] = r.split(':').map(Number); return (w && h) ? w / h : 16 / 9; };
+    const ar = parseAR(state.aspectRatio);
+    let cW = page.canvasWidth, cH = page.canvasHeight;
+    if (typeof cW === 'number' && typeof cH === 'number') { /* both set */ }
+    else if (typeof cW === 'number') { cH = Math.round(cW / ar); }
+    else if (typeof cH === 'number') { cW = Math.round(cH * ar); }
+    else {
+      cW = DEFAULTS.CANVAS_MAX_W;
+      cH = Math.round(cW / ar);
+      if (cH > DEFAULTS.CANVAS_MAX_H) { cH = DEFAULTS.CANVAS_MAX_H; cW = Math.round(cH * ar); }
+    }
+    const w = iconDef.defaultW;
+    const h = iconDef.defaultH;
+    const centerX = Math.max(0, Math.round((cW - w) / 2));
+    const centerY = Math.max(0, Math.round((cH - h) / 2));
+    dispatch({
+      type: ActionTypes.ADD_ELEMENT,
+      payload: {
+        id: `el-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        type: 'shape',
+        shapeId: iconId,
+        props: { x: centerX, y: centerY, width: w, height: h, rotation: DEFAULTS.ROTATION },
+        style: { fill: DEFAULTS.BACKGROUND_RECT, stroke: 'none', strokeWidth: 0, cornerRadius: 0 },
+      },
+    });
+  };
+
   // Handler for adding a line element from the LinePicker
   const handleAddLine = (lineId) => {
     setShowLinePicker(false);
@@ -246,7 +458,7 @@ export default function Sidebar() {
         <button
           ref={shapesBtnRef}
           className={`add-element-btn${showShapePicker ? ' active' : ''}`}
-          onClick={() => { setShowLinePicker(false); setShowShapePicker(v => !v); }}
+          onClick={() => { setShowLinePicker(false); setShowIconPicker(false); setShowShapePicker(v => !v); }}
           title="Add Shape"
         >
           <i className="bi bi-pentagon add-element-icon" />
@@ -266,7 +478,7 @@ export default function Sidebar() {
         <button
           ref={linesBtnRef}
           className={`add-element-btn${showLinePicker ? ' active' : ''}`}
-          onClick={() => { setShowShapePicker(false); setShowLinePicker(v => !v); }}
+          onClick={() => { setShowShapePicker(false); setShowIconPicker(false); setShowLinePicker(v => !v); }}
           title="Add Line"
         >
           <i className="bi bi-hr add-element-icon" />
@@ -277,6 +489,26 @@ export default function Sidebar() {
             onSelect={handleAddLine}
             onClose={() => setShowLinePicker(false)}
             anchorRef={linesBtnRef}
+          />
+        )}
+      </div>
+
+      {/* Icons button — opens IconPicker popup */}
+      <div className="add-element-btn-wrapper" style={{ position: 'relative' }}>
+        <button
+          ref={iconsBtnRef}
+          className={`add-element-btn${showIconPicker ? ' active' : ''}`}
+          onClick={() => { setShowShapePicker(false); setShowLinePicker(false); setShowIconPicker(v => !v); }}
+          title="Add Icon"
+        >
+          <i className="bi bi-emoji-smile add-element-icon" />
+          <span className="add-element-label">Icons</span>
+        </button>
+        {showIconPicker && (
+          <IconPicker
+            onSelect={handleAddIcon}
+            onClose={() => setShowIconPicker(false)}
+            anchorRef={iconsBtnRef}
           />
         )}
       </div>
@@ -806,30 +1038,12 @@ export function PropertiesPanel() {
       return <>
         <div className="form-group mb-2">
           <label className="form-label">Text</label>
-          <input type="text" value={content || ''} onChange={e => handleFieldChange('content', e.target.value)} className="form-control" />
+          <ExpandableTextarea value={content || ''} onChange={e => handleFieldChange('content', e.target.value)} className="form-control" />
         </div>
         <div className="form-group mb-2">
           <div className='mb-2'>
             <label className="form-label">Font Family</label>
-            <select value={style.fontFamily || ''} onChange={e => handleStyleChange('fontFamily', e.target.value)} className="form-select">
-              <option value="">Default</option>
-              <option value="Arial, Helvetica, sans-serif">Arial</option>
-              <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
-              <option value="'Times New Roman', Times, serif">Times New Roman</option>
-              <option value="Georgia, serif">Georgia</option>
-              <option value="Verdana, Geneva, sans-serif">Verdana</option>
-              <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
-              <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
-              <option value="'Courier New', Courier, monospace">Courier New</option>
-              <option value="Impact, Charcoal, sans-serif">Impact</option>
-              <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
-              <option value="'Lucida Console', Monaco, monospace">Lucida Console</option>
-              <option value="'Lucida Sans Unicode', 'Lucida Grande', sans-serif">Lucida Sans</option>
-              <option value="Garamond, serif">Garamond</option>
-              <option value="Palatino, 'Palatino Linotype', serif">Palatino</option>
-              <option value="'Arial Black', Gadget, sans-serif">Arial Black</option>
-              <option value="'Brush Script MT', cursive">Brush Script MT</option>
-            </select>
+            <FontPicker value={style.fontFamily || ''} onChange={v => handleStyleChange('fontFamily', v)} />
           </div>
           <div className='mb-2'>
             <label className="form-label">Font Size: {style.fontSize || DEFAULTS.FONT_SIZE}</label>

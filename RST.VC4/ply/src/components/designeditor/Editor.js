@@ -145,21 +145,38 @@ function EditorLayout() {
             position: 'relative',
             overflow: 'auto',
             flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
+            minHeight: 0,
           }}
         >
           {/* Floating frosted-glass properties panel — overlays canvas on the right */}
           <PropertiesPanel />
+          {/*
+            Zoom wrapper: provides the scroll content area.
+            Canvas.js applies scale(zoom × fitScale) and Editor.js wrapper applies scale(zoom),
+            so the total on-screen visual size is canvasNative × zoom² × fitScale.
+            We set minHeight/minWidth to match that visual size so the outer overflow:auto
+            container always creates correctly-sized scrollbars.
+            paddingTop/paddingBottom are fixed 20 px screen-pixels at every zoom level —
+            the symmetric padding + flex centering guarantees the canvas always sits exactly
+            20 px from the visible top and bottom edges, at any zoom.
+          */}
           <div
             className="editor-canvas-zoom-wrapper"
             style={{
-              width: '100%',
-              height: '100%',
+              minHeight: Math.max(
+                containerSize.height || 0,
+                cnvH * state.zoom * state.zoom * fitScale + 40
+              ),
+              minWidth: containerSize.width > 0
+                ? Math.max(containerSize.width, cnvW * state.zoom * state.zoom * fitScale)
+                : cnvW * state.zoom * state.zoom * fitScale,
+              paddingTop: 20,
+              paddingBottom: 20,
+              boxSizing: 'border-box',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              overflow: 'auto',
+              overflow: 'visible',
             }}
           >
             <div
@@ -167,15 +184,11 @@ function EditorLayout() {
                 transform: `scale(${state.zoom})`,
                 transformOrigin: 'center center',
                 transition: 'transform 0.2s',
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
               {/* fitScale caps the rendered canvas to 90 % of the container at 100 % zoom */}
-          <Canvas fitScale={fitScale} />
+              <Canvas fitScale={fitScale} />
             </div>
           </div>
         </div>
