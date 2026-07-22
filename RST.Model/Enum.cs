@@ -5,12 +5,13 @@
         None = 0,
         VCard = 1,
         LinkList = 2,
-        Blog = 3,
+        Article = 3,
         Portfolio = 4,
         ECommerce = 5,
         Educational = 6,
         LandingPage = 7,
         Resume = 8,
+        Canvas = 9
     }
     public enum RecordStatus
     {
@@ -18,6 +19,12 @@
         Inactive = 1,
         Deleted = 2,
         Unverified = 3
+    }
+
+    public enum DesignPublishStatus
+    {
+        Public = 1,
+        Private = 2
     }
 
     public enum PostStatus

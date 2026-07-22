@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace RST.Services
@@ -13,19 +12,21 @@ namespace RST.Services
     {
         public string Token { get; set; }
         Task<PagedData<UserWebsiteListItemDTO>> GetPagedAsync(int page, int psize, Member member);
+        Task<PagedData<UserWebsiteListItemDTO>> GetTemplatesPagedAsync(int page, int psize, WebsiteType ws, string keywords);
         Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m);
         Task<UserWebsite?> GetByIdAsync(Guid id);
-        Task<bool> IsUniqueNameAsync(string name);
+        Task<bool> IsUniqueNameAsync(string name, Guid? selfId = null);
         Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member);
+        Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member);
         Task<UserWebsite?> CreateVCardAsync(CreateVCardWebsiteDTO model, Member member, HttpRequest request);
-
         Task<UserWebsite?> CreateLinkListAsync(CreateLinkListWebsiteDTO model, Member member, HttpRequest request);
+        Task<UserWebsite?> CreateCanvasAsync(CreateCanvasWebsiteDTO model, Member member, HttpRequest request);
         Task<bool> DeleteAsync(Guid id, Member member);
         Task<UserWebsite?> UpdateVCardAsync(UpdateVCardModel model, Member member, HttpRequest request, ILogger logger);
         Task<UserWebsite?> UpdateLinkListAsync(UpdateLinkListModel model, Member member, HttpRequest request, ILogger logger);
+        Task<UserWebsite?> UpdateCanvasAsync(UpdateCanvasModel model, Member member, HttpRequest request, ILogger logger);
         Task<UserWebsite?> UpdateThemeAsync(UpdateThemeModel model, Member member);
         Task<UserWebsite?> UpdateStatusAsync(Guid id, RecordStatus status, Member member);
-
         Task<UserWebsite?> UpdateWebstats(Guid id, string webstats, Member member);
         Task<string?> GetHtmlAsync(Guid id, Member member, IUserWebsiteRenderService userWebsiteRenderService);
         string? SaveBase64ImageToFile(string base64Image, string folderRelativePath, string fileNameNoExt, int maxSize, out string? fileExt, ILogger logger);
@@ -36,7 +37,6 @@ namespace RST.Services
         private readonly RSTContext _db = db;
         private readonly VisitDbContext _visitDb = visitDb;
         private readonly ILogger<UserWebsiteService> _logger = logger;
-
 
         public string Token { get; set; }
 
@@ -74,7 +74,57 @@ namespace RST.Services
                     Status = m.Status,
                     WSType = m.WSType,
                     WebstatsId = m.WebstatsScript ?? string.Empty,
-                    OwnerName = m.Owner.FirstName
+                    OwnerName = m.Owner.FirstName,
+                    Thumbnail = m.Thumbnail
+                });
+            }
+            return result;
+        }
+
+        public async Task<PagedData<UserWebsiteListItemDTO>> GetTemplatesPagedAsync(int page, int psize, WebsiteType ws, string keywords)
+        {
+            var query = _db.UserWebsites.Include(t => t.Owner).Where(t => t.WSType == ws);
+
+            if (!string.IsNullOrWhiteSpace(keywords))
+            {
+                var words = keywords
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Distinct()
+                    .ToList();
+
+                query = query.Where(t =>
+                    words.Any(w =>
+                        (t.Description != null && t.Description.Contains(w)) ||
+                        (t.Keywords != null && t.Keywords.Contains(w))));
+            }
+
+            int count = await query.CountAsync();
+            var result = new PagedData<UserWebsiteListItemDTO>
+            {
+                PageIndex = page,
+                PageSize = psize,
+                TotalRecords = count
+            };
+
+            var paged = await query.OrderBy(t => t.Created)
+                .Skip((page - 1) * psize)
+                .Take(psize)
+                .ToListAsync();
+
+            foreach (var m in paged)
+            {
+                result.Items.Add(new UserWebsiteListItemDTO
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Domain = m.Domain,
+                    Created = m.Created,
+                    Modified = m.Modified,
+                    Status = m.Status,
+                    WSType = m.WSType,
+                    WebstatsId = m.WebstatsScript ?? string.Empty,
+                    OwnerName = m.Owner.FirstName,
+                    Thumbnail = m.Thumbnail
                 });
             }
             return result;
@@ -97,7 +147,8 @@ namespace RST.Services
                     Status = t.Status,
                     WSType = t.WSType,
                     WebstatsId = t.WebstatsScript ?? string.Empty,
-                    OwnerName = t.Owner.FirstName
+                    OwnerName = t.Owner.FirstName,
+                    Thumbnail = t.Thumbnail
                 })
                 .ToListAsync();
         }
@@ -107,9 +158,16 @@ namespace RST.Services
             return await _db.UserWebsites.FirstOrDefaultAsync(t => t.Id == id);
         }
 
-        public async Task<bool> IsUniqueNameAsync(string name)
+        public async Task<bool> IsUniqueNameAsync(string name, Guid? selfId = null)
         {
-            return !await _db.UserWebsites.AnyAsync(t => t.Name == name);
+            if (!selfId.HasValue)
+            {
+                return !await _db.UserWebsites.AnyAsync(t => t.Name == name);
+            }
+            else
+            {
+                return !await _db.UserWebsites.AnyAsync(t => t.Name == name && t.Id != selfId.Value);
+            }
         }
 
         public async Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member)
@@ -117,9 +175,9 @@ namespace RST.Services
             if (!await IsUniqueNameAsync(model.Name))
                 return null;
 
-            var theme = await _db.UserWebsiteThemes.FirstOrDefaultAsync(t => t.Id == model.ThemeId);
-            if (theme == null)
-                return null;
+            //var theme = await _db.UserWebsiteThemes.FirstOrDefaultAsync(t => t.Id == model.ThemeId);
+            //if (theme == null)
+            //    return null;
 
             if (member == null)
                 return null;
@@ -131,14 +189,50 @@ namespace RST.Services
                 Owner = member,
                 Status = RecordStatus.Inactive,
                 WSType = model.WSType,
-                Html = theme.Html,
-                ThemeId = theme.Id
+                Html = model.TemplateHtml,
+                JsonData = model.JsonData,
+                Description = model.Description,
+                Keywords = model.Tag,
+                PublishStatus = model.PublishStatus,
+                Output = model.HTML
             };
-            if (uw.WSType == WebsiteType.VCard)
-                uw.VisitingCardDetail = new VisitingCardDetail();
+            //if (uw.WSType == WebsiteType.VCard)
+            //    uw.VisitingCardDetail = new VisitingCardDetail();
 
-            uw.JsonData = JsonSerializer.Serialize(uw.JsonData);
+            //uw.JsonData = JsonSerializer.Serialize(uw.JsonData);
             _db.UserWebsites.Add(uw);
+            await _db.SaveChangesAsync();
+            return uw;
+        }
+
+        public async Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member)
+        {
+            if (!await IsUniqueNameAsync(model.Name, model.Id))
+                return null;
+
+            if (member == null)
+                return null;
+
+            var uw = await _db.UserWebsites.FirstOrDefaultAsync(t => t.Id == model.Id);
+            if (uw == null)
+                return null;
+
+            uw.Name = model.Name;
+            uw.WSType = model.WSType;
+            uw.Html = model.TemplateHtml;
+            uw.JsonData = model.JsonData;
+            uw.Description = model.Description;
+            uw.Keywords = model.Tag;
+            uw.PublishStatus = model.PublishStatus;
+            uw.Output = model.HTML;
+            uw.Status = RecordStatus.Inactive;
+            uw.WSType = model.WSType;
+            uw.Html = model.TemplateHtml;
+            uw.JsonData = model.JsonData;
+            uw.Description = model.Description; 
+            uw.Keywords = model.Tag;
+            uw.Modified = DateTime.UtcNow;
+
             await _db.SaveChangesAsync();
             return uw;
         }
@@ -194,7 +288,6 @@ namespace RST.Services
                 AboutInfo = model.AboutInfo,
                 Photos = model.Photos ?? []
             };
-
 
             var userWebsite = new UserWebsite
             {
@@ -286,7 +379,7 @@ namespace RST.Services
             await _db.SaveChangesAsync();
             try
             {
-                var res =  AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" }, member.PublicID);
+                var res = AddWebsiteToWebstats(new AddWebsiteModel() { Name = $"{model.WebsiteName}.vc4.in" }, member.PublicID);
                 userWebsite.WebstatsScript = res?.WebsiteId.ToString() ?? string.Empty;
                 await _db.SaveChangesAsync();
             }
@@ -294,6 +387,52 @@ namespace RST.Services
             {
                 _logger.LogError(ex, "Failed to add website to webstats");
             }
+            return userWebsite;
+        }
+
+        public async Task<UserWebsite?> CreateCanvasAsync(CreateCanvasWebsiteDTO model, Member member, HttpRequest request)
+        {
+            //if (!await IsUniqueNameAsync(model.WebsiteName))
+            //    return null;
+
+            if (member == null)
+                return null;
+
+            var websiteId = Guid.NewGuid();
+            var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+
+            string thumbnailPath = string.Empty;
+            if (!string.IsNullOrWhiteSpace(model.Thumbnail) && model.Thumbnail.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                string? fileExt;
+                var relativePath = SaveBase64ImageToFile(model.Thumbnail, $"drive/uwpics/{websiteId}", "thumbnail", 800, out fileExt, _logger);
+                if (relativePath != null)
+                    thumbnailPath = $"{hostUrl}{relativePath}";
+            }
+            else if (!string.IsNullOrWhiteSpace(model.Thumbnail))
+            {
+                thumbnailPath = model.Thumbnail;
+            }
+
+            var userWebsite = new UserWebsite
+            {
+                Id = websiteId,
+                Created = DateTime.UtcNow,
+                Name = model.Name,
+                Owner = member,
+                WSType = WebsiteType.Canvas,
+                Status = RecordStatus.Active,
+                ThemeId = Guid.Empty,
+                Html = string.Empty,
+                JsonData = model.JsonData,
+                Thumbnail = thumbnailPath,
+                Description = model.Description,
+                Keywords = model.Tag,
+                PublishStatus = model.PublishStatus
+            };
+
+            _db.UserWebsites.Add(userWebsite);
+            await _db.SaveChangesAsync();
             return userWebsite;
         }
 
@@ -399,7 +538,6 @@ namespace RST.Services
                 uw.VisitingCardDetail.Logo = model.Logo;
             }
 
-            // Update other fields as before
             uw.VisitingCardDetail.Company = model.Company ?? string.Empty;
             uw.VisitingCardDetail.TagLine = model.TagLine ?? string.Empty;
             uw.VisitingCardDetail.Keywords = model.Keywords ?? string.Empty;
@@ -601,6 +739,75 @@ namespace RST.Services
             return uw;
         }
 
+        public async Task<UserWebsite?> UpdateCanvasAsync(UpdateCanvasModel model, Member member, HttpRequest request, ILogger logger)
+        {
+            if (member == null)
+                return null;
+
+            var uw = await _db.UserWebsites
+                .Include(t => t.Owner)
+                .FirstOrDefaultAsync(t => t.Id == model.Id && t.Owner.ID == member.ID);
+
+            if (uw == null || uw.WSType != WebsiteType.Canvas)
+                return null;
+
+            var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+            var folderRelativePath = $"drive/uwpics/{uw.Id}";
+
+            if (string.IsNullOrWhiteSpace(model.Thumbnail))
+            {
+                foreach (var ext in new[] { ".png", ".jpg" })
+                {
+                    var thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, $"thumbnail{ext}");
+                    try
+                    {
+                        if (System.IO.File.Exists(thumbPath))
+                            System.IO.File.Delete(thumbPath);
+                    }
+                    catch (Exception fileEx)
+                    {
+                        logger.LogWarning(fileEx, "Failed to delete thumbnail file for website {WebsiteId}", uw.Id);
+                    }
+                }
+                uw.Thumbnail = string.Empty;
+            }
+            else if (model.Thumbnail.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                string? fileExt;
+                var relativePath = SaveBase64ImageToFile(model.Thumbnail, folderRelativePath, "thumbnail", 800, out fileExt, logger);
+                if (relativePath != null)
+                {
+                    var altExt = fileExt == ".png" ? ".jpg" : ".png";
+                    var altPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, $"thumbnail{altExt}");
+                    try
+                    {
+                        if (System.IO.File.Exists(altPath))
+                            System.IO.File.Delete(altPath);
+                    }
+                    catch (Exception fileEx)
+                    {
+                        logger.LogWarning(fileEx, "Failed to delete alternate thumbnail for website {WebsiteId}", uw.Id);
+                    }
+                    uw.Thumbnail = $"{hostUrl}{relativePath}";
+                }
+            }
+            else
+            {
+                uw.Thumbnail = model.Thumbnail;
+            }
+            uw.Name = model.Name ?? string.Empty;
+            uw.Keywords = model.Tag ?? string.Empty;
+            uw.Description = model.Description ?? string.Empty;
+            uw.PublishStatus = model.PublishStatus;
+            uw.JsonData = model.JsonData;
+            uw.Modified = DateTime.UtcNow;
+
+            _db.UserWebsites.Update(uw);
+            await _db.SaveChangesAsync();
+
+            return uw;
+        }
+
         public async Task<UserWebsite?> UpdateThemeAsync(UpdateThemeModel model, Member member)
         {
             if (member == null)
@@ -656,6 +863,7 @@ namespace RST.Services
 
             if (website == null)
                 return null;
+
             string html = string.Empty;
             if (website.WSType == WebsiteType.VCard && !string.IsNullOrWhiteSpace(website.JsonData))
             {
@@ -667,6 +875,7 @@ namespace RST.Services
                 website.LinkListDetail = JsonSerializer.Deserialize<LinkListDetail>(website.JsonData) ?? new LinkListDetail();
                 html = await userWebsiteRenderService.GetRenderedHtmlAsync(website.Html, website.LinkListDetail);
             }
+
             website.Output = html;
             await _db.SaveChangesAsync();
 
@@ -701,7 +910,6 @@ namespace RST.Services
                 var fileName = $"{fileNameNoExt}{fileExt}";
                 var filePath = Path.Combine(folderPath, fileName);
 
-                // Resize image to maxSize x maxSize maintaining aspect ratio
                 using (var inputStream = new MemoryStream(bytes))
                 using (var image = System.Drawing.Image.FromStream(inputStream))
                 {
@@ -782,7 +990,6 @@ namespace RST.Services
             return false;
         }
 
-
         private AddWebsiteResponse? AddWebsiteToWebstats(AddWebsiteModel model, Guid userId)
         {
             model.Name = model.Name.Replace(" ", "");
@@ -799,7 +1006,7 @@ namespace RST.Services
                     };
                     _visitDb.Websites.Add(website);
                     _visitDb.SaveChanges();
-                    
+
                     var result = new AddWebsiteResponse()
                     {
                         Script = string.Empty,
