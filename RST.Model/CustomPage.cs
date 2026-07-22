@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,9 +17,13 @@ namespace RST.Model
         public string Name { get; set; } = null!;
         [Required]
         public DateTime DateCreated { get; set; }
+        public int CreatedByID { get; set; }
+        [ForeignKey(nameof(CreatedByID))]
         [Required]
         public Member CreatedBy { get; set; } = null!;
         public DateTime? DateModified { get; set; }
+        public int? ModifiedByID { get; set; }
+        [ForeignKey(nameof(ModifiedByID))]
         public Member? ModifiedBy { get; set; }
         public PostStatus Status { get; set; } = PostStatus.Draft;
         public bool Sitemap { get; set; }
