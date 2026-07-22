@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO.UserWebsite;
@@ -12,36 +11,10 @@ namespace RST.Web.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class UserWebsiteThemeController : ControllerBase
+    public class UserWebsiteThemeController(IUserWebsiteThemeService themeService, ILogger<UserWebsiteThemeController> logger, RSTContext context) : RSTBaseController(context)
     {
-        private readonly IUserWebsiteThemeService _themeService;
-        private readonly ILogger<UserWebsiteThemeController> _logger;
-        private readonly RSTContext db;
-        public UserWebsiteThemeController(IUserWebsiteThemeService themeService, ILogger<UserWebsiteThemeController> logger, RSTContext context)
-        {
-            _themeService = themeService;
-            _logger = logger;
-            db = context;
-        }
-
-        private bool CheckRole(string roles)
-        {
-            if (string.IsNullOrWhiteSpace(roles))
-                return false;
-
-            var allowedRoles = roles
-                .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
-                .Select(r => r.Trim())
-                .Where(r => !string.IsNullOrEmpty(r))
-                .ToList();
-
-            var userRoles = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToList();
-
-            return allowedRoles.Any(ar => userRoles.Any(ur => string.Equals(ar, ur, StringComparison.OrdinalIgnoreCase)));
-        }
+        private readonly IUserWebsiteThemeService _themeService = themeService;
+        private readonly ILogger<UserWebsiteThemeController> _logger = logger;
 
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string k = "", [FromQuery] int page = 1, [FromQuery] WebsiteType? wstype = WebsiteType.None, [FromQuery] int ps = 9)
@@ -88,12 +61,11 @@ namespace RST.Web.Controllers
 
             try
             {
-                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                var createdBy = await GetMemberIdByEmailAsync(email);
+                var createdBy = GetCurrentMember();
                 if (createdBy == null)
                     return Unauthorized(new { error = "User not found." });
 
-                var theme = await _themeService.CreateThemeAsync(model, createdBy.Value, HttpContext.Request);
+                var theme = await _themeService.CreateThemeAsync(model, createdBy.ID, HttpContext.Request);
                 if (theme == null)
                     return Conflict(new { error = "Theme with this name already exists or thumbnail is invalid." });
 
@@ -121,11 +93,11 @@ namespace RST.Web.Controllers
             try
             {
                 var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                var modifiedBy = await GetMemberIdByEmailAsync(email);
+                var modifiedBy = GetCurrentMember();
                 if (modifiedBy == null)
                     return Unauthorized(new { error = "User not found." });
 
-                var theme = await _themeService.UpdateThemeAsync(id, model, modifiedBy.Value, HttpContext.Request);
+                var theme = await _themeService.UpdateThemeAsync(id, model, modifiedBy.ID, HttpContext.Request);
                 if (theme == null)
                     return Conflict(new { error = "Theme not found, duplicate name, or invalid thumbnail." });
 
@@ -156,12 +128,6 @@ namespace RST.Web.Controllers
                 _logger.LogError(ex, "Error deleting user website theme");
                 return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
-        }
-
-        private async Task<int?> GetMemberIdByEmailAsync(string email)
-        {
-            var member = await db.Members.FirstOrDefaultAsync(d => d.Email == email);
-            return member?.ID;
         }
     }
 }

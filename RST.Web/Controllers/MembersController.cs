@@ -1,27 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
-using System.Net;
-using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class MembersController(RSTContext context) : ControllerBase
+    public class MembersController(RSTContext context) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
-
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
-
+        
         [HttpGet]
         public IActionResult Get(int page = 1, int psize = 20)
         {
@@ -72,8 +63,8 @@ namespace RST.Web.Controllers
                 }
 
                 member.Password = data.NewPassword;
-                member.ModifiedBy = db.Members.First(d => d.Email == User.Identity.Name);
-                member.ModifyDate = DateTime.Now;
+                member.ModifiedBy = GetCurrentMember();
+                member.ModifyDate = DateTime.UtcNow;
                 db.SaveChanges();
                 return Ok();
             }
@@ -122,7 +113,7 @@ namespace RST.Web.Controllers
                     return NotFound();
                 }
                 member.Status = RecordStatus.Deleted;
-                member.ModifyDate = DateTime.Now;
+                member.ModifyDate = DateTime.UtcNow;
                 db.Entry(member).State = EntityState.Modified; db.SaveChanges();
 
                 return Ok(member);

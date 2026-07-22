@@ -12,57 +12,72 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class CustomPagesController(RSTContext context) : ControllerBase
+    public class CustomPagesController(RSTContext context, ILogger<CustomPagesController> logger) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
-
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
+        private readonly ILogger<CustomPagesController> _logger = logger;
 
         [HttpGet]
         [Route("list")]
-        public IActionResult Get()
+        public IActionResult List([FromQuery] int p = 1, [FromQuery] int ps = 10, [FromQuery] string? q = null)
         {
             if (!CheckRole("admin,demo"))
                 return Unauthorized(new { error = Utility.UnauthorizedMessage });
-
-            var result = new List<CustomPageDTO>();
+            if (ps <= 0 || ps > 20)
+                ps = 20;
             try
             {
+                var query = db.CustomPages
+                    .Include(t => t.CreatedBy)
+                    .Include(t => t.ModifiedBy)
+                    .AsQueryable();
 
-                foreach (var m in db.CustomPages.Include(t => t.CreatedBy).Include(t => t.ModifiedBy)
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    var keyword = q.Trim().ToLower();
+                    query = query.Where(t =>
+                        t.Name.ToLower().Contains(keyword) ||
+                        t.Title.ToLower().Contains(keyword));
+                }
+
+                query = query
                     .OrderByDescending(t => t.DateModified)
                     .ThenByDescending(t => t.DateCreated)
-                    .ThenBy(t => t.Name).ToList())
-                {
+                    .ThenBy(t => t.Name);
 
-                    result.Add(new CustomPageDTO()
-                    {
-                        ID = m.ID,
-                        Body = m.Body,
-                        CreatedBy = m.CreatedBy == null ? 0 : m.CreatedBy.ID,
-                        Title = m.Title,
-                        Status = m.Status,
-                        CreatedByName = m.CreatedBy == null ? "" : m.CreatedBy.FirstName,
-                        DateCreated = m.DateCreated,
-                        DateModified = m.DateModified,
-                        Head = m.Head,
-                        ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
-                        Name = m.Name,
-                        NoTemplate = m.NoTemplate,
-                        PageMeta = m.PageMeta,
-                        Sitemap = m.Sitemap,
-                        ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
-                    });
-                }
+                var result = new PagedData<CustomPageDTO>
+                {
+                    TotalRecords = query.Count(),
+                    PageIndex = p,
+                    PageSize = ps,
+                    Items = [.. query
+                        .Skip((p - 1) * ps)
+                        .Take(ps)
+                        .Select(m => new CustomPageDTO()
+                        {
+                            ID = m.ID,
+                            Body = m.Body,
+                            CreatedBy = m.CreatedBy == null ? 0 : m.CreatedBy.ID,
+                            Title = m.Title,
+                            Status = m.Status,
+                            CreatedByName = m.CreatedBy == null ? "" : m.CreatedBy.FirstName,
+                            DateCreated = m.DateCreated,
+                            DateModified = m.DateModified,
+                            Head = m.Head,
+                            ModifiedBy = (m.ModifiedBy == null) ? 0 : m.ModifiedBy.ID,
+                            Name = m.Name,
+                            NoTemplate = m.NoTemplate,
+                            PageMeta = m.PageMeta,
+                            Sitemap = m.Sitemap,
+                            ModifiedByName = (m.ModifiedBy == null) ? "" : m.ModifiedBy.FirstName
+                        })]
+                };
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+                _logger.LogError(ex, "CustomPagesController > List");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
 
@@ -84,7 +99,8 @@ namespace RST.Web.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+                _logger.LogError(ex, "CustomPagesController > Get");
+                return StatusCode(500, new { error = Utility.ServerErrorMessage });
             }
         }
 
@@ -108,8 +124,7 @@ namespace RST.Web.Controllers
 
             try
             {
-                var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                var m = db.Members.First(d => d.Email == email);
+                var m = GetCurrentMember();
                 var cp = db.CustomPages.First(t => t.ID == page.ID);
                 cp.Head = page.Head;
                 cp.Name = page.Name;
@@ -129,8 +144,6 @@ namespace RST.Web.Controllers
             {
                 return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
             }
-
-            
         }
 
         [HttpPost]
@@ -163,12 +176,11 @@ namespace RST.Web.Controllers
             {
                 if (!db.CustomPages.Any(t => t.Name.Trim() == page.Name.Trim()))
                 {
-                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                    var m = db.Members.First(d => d.Email == email);
+                    var m = GetCurrentMember();
                     var cp = new CustomPage()
                     {
                         Body = page.Body,
-                        CreatedBy = m,
+                        CreatedBy = m ?? throw new InvalidOperationException("Unable to determine current member."),
                         DateCreated = DateTime.UtcNow,
                         Head = page.Head,
                         Name = page.Name,
@@ -187,6 +199,61 @@ namespace RST.Web.Controllers
                 {
                     return BadRequest(new { error = "Page with same name exist." });
                 }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = Utility.ServerErrorMessage, exception = ex.Message });
+            }
+        }
+
+        // POST: api/CustomPages/copy/5
+        [HttpPost]
+        [Route("copy/{id}")]
+        public IActionResult Copy(int id)
+        {
+            if (!CheckRole("admin"))
+                return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
+            try
+            {
+                var source = db.CustomPages.FirstOrDefault(t => t.ID == id);
+                if (source == null)
+                    return NotFound();
+
+                var member = GetCurrentMember();
+                if (member == null)
+                    return Unauthorized(new { error = Utility.UnauthorizedMessage });
+
+                // Generate a unique name by appending COPY suffix(es)
+                var newName = source.Name + " COPY";
+                var newTitle = source.Title + " COPY";
+
+                int counter = 1;
+                while (db.CustomPages.Any(t => t.Name.Trim() == newName.Trim()))
+                {
+                    newName = source.Name + " COPY " + counter;
+                    newTitle = source.Title + " COPY " + counter;
+                    counter++;
+                }
+
+                var copy = new CustomPage
+                {
+                    Body = source.Body,
+                    CreatedBy = member,
+                    DateCreated = DateTime.UtcNow,
+                    Head = source.Head,
+                    Name = newName,
+                    NoTemplate = source.NoTemplate,
+                    PageMeta = source.PageMeta,
+                    Sitemap = source.Sitemap,
+                    Status = source.Status,
+                    Title = newTitle
+                };
+
+                db.CustomPages.Add(copy);
+                db.SaveChanges();
+
+                return Ok(copy);
             }
             catch (Exception ex)
             {
