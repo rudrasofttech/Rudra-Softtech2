@@ -29,21 +29,12 @@ namespace RST.Web.Controllers
         IUserWebsiteService userWebsiteService,
         ILogger<UserWebsiteController> logger,
         IUserWebsiteRenderService userWebsiteRenderService,
-        RSTContext db, EmailService emailService) : ControllerBase
+        RSTContext db, EmailService emailService) : RSTBaseController(db)
     {
         private readonly IUserWebsiteService _userWebsiteService = userWebsiteService;
         private readonly ILogger<UserWebsiteController> _logger = logger;
         private readonly IUserWebsiteRenderService _userWebsiteRenderService = userWebsiteRenderService;
-        private readonly RSTContext _db = db;
         private readonly EmailService _emailService = emailService;
-
-        private Member? GetCurrentMember()
-        {
-            var email = User.Claims.FirstOrDefault(t => t.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
-            if (string.IsNullOrWhiteSpace(email))
-                return null;
-            return _db.Members.FirstOrDefault(d => d.Email == email);
-        }
 
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int psize = 20)

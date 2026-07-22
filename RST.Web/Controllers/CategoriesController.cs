@@ -3,21 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
-using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoriesController(ILogger<CategoriesController> _logger, RSTContext context) : ControllerBase
+    public class CategoriesController(ILogger<CategoriesController> _logger, RSTContext context) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
         private readonly ILogger<CategoriesController> logger = _logger;
-
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
 
         // GET: api/Categories
         [HttpGet]

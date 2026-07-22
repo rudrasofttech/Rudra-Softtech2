@@ -14,16 +14,11 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class EmailMessagesController(RSTContext context, WebsiteSettingsService wsService, IWebHostEnvironment environment) : ControllerBase
+    public class EmailMessagesController(RSTContext context, WebsiteSettingsService wsService, IWebHostEnvironment environment) : RSTBaseController(context)
     {
         private readonly IWebHostEnvironment _environment = environment;
-        private readonly RSTContext db = context;
         private readonly WebsiteSettingsService _wsService = wsService;
 
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
 
         [Route("emailgroups")]
         [HttpGet]
@@ -31,7 +26,7 @@ namespace RST.Web.Controllers
         {
             try
             {
-                return Ok(db.EmailMessages.Select(t => new { EmailGroup = t.EmailGroup }).Distinct().ToList());
+                return Ok(db.EmailMessages.Select(t => new { t.EmailGroup }).Distinct().ToList());
             }
             catch (Exception ex)
             {
@@ -64,20 +59,22 @@ namespace RST.Web.Controllers
                 {
                     if (m.Newsletter)
                     {
-                        var em = new EmailMessage();
-                        em.CCAddress = string.Empty;
-                        em.CreateDate = DateTime.UtcNow;
-                        em.SentDate = DateTime.UtcNow;
-                        em.EmailGroup = dto.EmailGroup.Trim();
-                        em.EmailType = EmailMessageType.Newsletter;
-                        em.FromAddress = newsletteremail;
-                        em.FromName = sitename;
-                        em.LastAttempt = DateTime.UtcNow;
-                        em.Subject = dto.Subject.Trim();
-                        em.ToAddress = m.Email;
-                        em.ToName = m.FirstName;
-                        em.Message = rs.KeyValue;
-                        em.PublicID = Guid.NewGuid();
+                        var em = new EmailMessage
+                        {
+                            CCAddress = string.Empty,
+                            CreateDate = DateTime.UtcNow,
+                            SentDate = DateTime.UtcNow,
+                            EmailGroup = dto.EmailGroup.Trim(),
+                            EmailType = EmailMessageType.Newsletter,
+                            FromAddress = newsletteremail,
+                            FromName = sitename,
+                            LastAttempt = DateTime.UtcNow,
+                            Subject = dto.Subject.Trim(),
+                            ToAddress = m.Email,
+                            ToName = m.FirstName,
+                            Message = rs.KeyValue,
+                            PublicID = Guid.NewGuid()
+                        };
                         string emessage = $"{_environment.WebRootPath}/EmailWrapper.html";
                         emessage = emessage.Replace("[root]", siteurl);
                         emessage = emessage.Replace("[id]", em.ID.ToString());

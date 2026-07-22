@@ -1,26 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
 using RST.Model.DTO;
-using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class CustomDataSourcesController(ILogger<CustomDataSourcesController> _logger, RSTContext context) : ControllerBase
+    public class CustomDataSourcesController(ILogger<CustomDataSourcesController> _logger, RSTContext context) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
         private readonly ILogger<CustomDataSourcesController> logger = _logger;
-
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
 
         [HttpGet]
         public IActionResult Get()
@@ -62,7 +54,6 @@ namespace RST.Web.Controllers
 
             try
             {
-
                 var customDataSource = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
                 if (customDataSource == null)
                     return NotFound(new { error = "Data source not found." });
@@ -94,8 +85,7 @@ namespace RST.Web.Controllers
                 var cds = db.CustomDataSources.FirstOrDefault(t => t.ID == id);
                 if (cds != null)
                 {
-                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                    var m = db.Members.First(d => d.Email == email);
+                    var m = GetCurrentMember();
                     cds.HtmlTemplate = model.HtmlTemplate;
                     cds.Name = model.Name;
                     cds.Query = model.Query;
@@ -131,12 +121,11 @@ namespace RST.Web.Controllers
             {
                 if (!db.CustomDataSources.Any(t => t.Name.Trim() == model.Name.Trim()))
                 {
-                    var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                    var m = db.Members.First(d => d.Email == email);
+                    var m = GetCurrentMember();
 
                     var cds = new CustomDataSource()
                     {
-                        CreatedBy = m,
+                        CreatedBy = m ?? throw new InvalidOperationException("Unable to determine current member."),
                         DateCreated = DateTime.UtcNow,
                         HtmlTemplate = model.HtmlTemplate.Trim(),
                         Name = model.Name.Trim(),

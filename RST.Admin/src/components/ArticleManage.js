@@ -361,9 +361,9 @@ export class ArticleManage extends Component {
                         </div>
 
                         <div className="mb-3">
-                            <label htmlFor="OGImage" className="form-label">Facebook Image (Required)</label>
+                            <label htmlFor="OGImage" className="form-label">Facebook Image</label>
                             <input className="form-control" disabled={this.state.loading} id="OGImage" name="OGImage"
-                                required
+                                
                                 type="text" value={this.state.ogImage} onChange={this.handleChange} />
                         </div>
                         <div className="mb-3">

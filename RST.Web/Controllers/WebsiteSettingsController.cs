@@ -1,25 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RST.Context;
 using RST.Model;
-using System.Net;
-using System.Security.Claims;
 
 namespace RST.Web.Controllers
 {
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class WebsiteSettingsController(ILogger<WebsiteSettingsController> _logger, RSTContext context) : ControllerBase
+    public class WebsiteSettingsController(ILogger<WebsiteSettingsController> _logger, RSTContext context) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
         private readonly ILogger<WebsiteSettingsController> logger = _logger;
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
 
         [HttpGet]
         public IActionResult Get()

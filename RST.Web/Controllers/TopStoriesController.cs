@@ -10,15 +10,11 @@ namespace RST.Web.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TopStoriesController(ILogger<TopStoriesController> _logger, RSTContext context) : ControllerBase
+    public class TopStoriesController(ILogger<TopStoriesController> _logger, RSTContext context) : RSTBaseController(context)
     {
-        private readonly RSTContext db = context;
+        
         private readonly ILogger<TopStoriesController> logger = _logger;
-        private bool CheckRole(string roles)
-        {
-            return User.Claims.Any(t => t.Type == ClaimTypes.Role && roles.Contains(t.Value));
-        }
-
+        
         [HttpGet]
         public IActionResult Get()
         {
@@ -83,12 +79,14 @@ namespace RST.Web.Controllers
                         return NotFound(new { error = "Post not found" });
                     else
                     {
-                        var email = User.Claims.First(t => t.Type == ClaimTypes.Email).Value;
-                        var m = db.Members.First(d => d.Email == email);
-                        var ts = new TopStory() { 
-                            CreatedBy = m, 
-                            DateCreated = DateTime.UtcNow, 
-                            Post = post };
+                        
+                        var m = GetCurrentMember();
+                        var ts = new TopStory()
+                        {
+                            CreatedBy = m ?? throw new ArgumentNullException(nameof(m)),
+                            DateCreated = DateTime.UtcNow,
+                            Post = post
+                        };
 
                         db.TopStories.Add(ts);
                         db.SaveChanges();
