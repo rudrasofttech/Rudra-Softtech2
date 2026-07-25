@@ -10,8 +10,6 @@ namespace RST.Model.DTO.UserWebsite
         [MinLength(3, ErrorMessage = "Page name must be at least 3 characters long.")]
         [DomainSafeName]
         public string Name { get; set; } = string.Empty;
-        [Required]
-        public WebsiteType WSType { get; set; }
         public string TemplateHtml { get; set; } = string.Empty;
         public string JsonData { get; set; } = string.Empty;
         public string HTML { get; set; } = string.Empty;

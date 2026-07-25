@@ -187,8 +187,8 @@ namespace RST.Services
                 Created = DateTime.UtcNow,
                 Name = model.Name,
                 Owner = member,
-                Status = RecordStatus.Inactive,
-                WSType = model.WSType,
+                Status = RecordStatus.Active,
+                WSType = WebsiteType.HTML,
                 Html = model.TemplateHtml,
                 JsonData = model.JsonData,
                 Description = model.Description,
@@ -225,8 +225,8 @@ namespace RST.Services
             uw.Keywords = model.Tag;
             uw.PublishStatus = model.PublishStatus;
             uw.Output = model.HTML;
-            uw.Status = RecordStatus.Inactive;
-            uw.WSType = model.WSType;
+            //uw.Status = RecordStatus.Inactive;
+            //uw.WSType = model.WSType;
             uw.Html = model.TemplateHtml;
             uw.JsonData = model.JsonData;
             uw.Description = model.Description; 

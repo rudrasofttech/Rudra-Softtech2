@@ -10,7 +10,7 @@
         ECommerce = 5,
         Educational = 6,
         LandingPage = 7,
-        Resume = 8,
+        HTML = 8,
         Canvas = 9
     }
     public enum RecordStatus
