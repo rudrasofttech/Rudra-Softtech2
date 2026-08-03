@@ -1,148 +1,266 @@
-﻿import React, { Component } from 'react';
-import { Link, Redirect } from 'react-router-dom';
-import { Table, FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
+﻿import React, { useEffect, useState } from 'react';
+import { Redirect } from 'react-router-dom';
+import { FormGroup, ControlLabel, FormControl } from 'react-bootstrap';
 import { MessageStrip } from './MessageStrip';
 import { API } from './api';
 import settings from '../setting-lines.png';
 import Spinner from './shared/Spinner';
 
-export class WebsiteSettings extends Component {
-    displayName = WebsiteSettings.name
+export function WebsiteSettings() {
+    const token = localStorage.getItem("token");
+    const initialFormData = {
+        Address: "",
+        AdminName: "",
+        CommonHeadContent: "",
+        ContactEmail: "",
+        EmailSignature: "",
+        NewsletterEmail: "",
+        Phone: "",
+        SiteFooter: "",
+        SiteHeader: "",
+        SiteName: "",
+        SiteTitle: "",
+        SiteUrl: ""
+    };
+    const [formData, setFormData] = useState({
+        ...initialFormData
+    });
+    const [loading, setLoading] = useState(false);
+    const [bsstyle, setBsstyle] = useState('');
+    const [message, setMessage] = useState('');
+    const [loggedin] = useState(localStorage.getItem("token") !== null);
+    const [fetchingSitemap, setFetchingSitemap] = useState(false);
+    const [generatingSitemap, setGeneratingSitemap] = useState(false);
 
-    constructor(props) {
-        super(props);
+    useEffect(() => {
+        let isMounted = true;
 
-        this.state = {
-            Address: "", AdminName: "", CommonHeadContent: "", ContactEmail: "", EmailSignature: "",
-            NewsletterEmail: "", Phone: "", SiteFooter: "",
-            SiteHeader: "", SiteName: "", SiteTitle: "", SiteUrl: "", token: localStorage.getItem("token"),
-            loading: false, loggedin: localStorage.getItem("token") === null ? false : true,
-            bsstyle: '', message: ''
-        };
+        setLoading(true);
+        setBsstyle('');
+        setMessage('');
 
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    componentDidMount() {
-        this.setState({ loading: true, bsstyle: '', message: '' });
         fetch(API.GetURL() + '/WebsiteSettings', {
             method: 'get',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.state.token}`
+                'Authorization': `Bearer ${token}`
             }
         })
             .then(response => {
                 if (response.status === 200) {
-                    response.json()
-                        .then(data => {
-                            console.log(data);
-                            for (var k in data) {
-                                if (data[k].keyName === "Address") {
-                                    this.setState({ Address: data[k].keyValue });
-                                } else if (data[k].keyName === "AdminName") {
-                                    this.setState({ AdminName: data[k].keyValue });
-                                } else if (data[k].keyName === "CommonHeadContent") {
-                                    this.setState({ CommonHeadContent: data[k].keyValue });
-                                } else if (data[k].keyName === "ContactEmail") {
-                                    this.setState({ ContactEmail: data[k].keyValue });
-                                } else if (data[k].keyName === "EmailSignature") {
-                                    this.setState({ EmailSignature: data[k].keyValue });
-                                } else if (data[k].keyName === "NewsletterEmail") {
-                                    this.setState({ NewsletterEmail: data[k].keyValue });
-                                } else if (data[k].keyName === "Phone") {
-                                    this.setState({ Phone: data[k].keyValue });
-                                } else if (data[k].keyName === "SiteFooter") {
-                                    this.setState({ SiteFooter: data[k].keyValue });
-                                } else if (data[k].keyName === "SiteHeader") {
-                                    this.setState({ SiteHeader: data[k].keyValue });
-                                } else if (data[k].keyName === "SiteName") {
-                                    this.setState({ SiteName: data[k].keyValue });
-                                } else if (data[k].keyName === "SiteTitle") {
-                                    this.setState({ SiteTitle: data[k].keyValue });
-                                } else if (data[k].keyName === "SiteURL") {
-                                    this.setState({ SiteUrl: data[k].keyValue });
-                                }
+                    return response.json().then(data => {
+                        if (!isMounted) {
+                            return;
+                        }
+
+                        const updatedData = { ...initialFormData };
+                        for (var k in data) {
+                            if (data[k].keyName === "Address") {
+                                updatedData.Address = data[k].keyValue;
+                            } else if (data[k].keyName === "AdminName") {
+                                updatedData.AdminName = data[k].keyValue;
+                            } else if (data[k].keyName === "CommonHeadContent") {
+                                updatedData.CommonHeadContent = data[k].keyValue;
+                            } else if (data[k].keyName === "ContactEmail") {
+                                updatedData.ContactEmail = data[k].keyValue;
+                            } else if (data[k].keyName === "EmailSignature") {
+                                updatedData.EmailSignature = data[k].keyValue;
+                            } else if (data[k].keyName === "NewsletterEmail") {
+                                updatedData.NewsletterEmail = data[k].keyValue;
+                            } else if (data[k].keyName === "Phone") {
+                                updatedData.Phone = data[k].keyValue;
+                            } else if (data[k].keyName === "SiteFooter") {
+                                updatedData.SiteFooter = data[k].keyValue;
+                            } else if (data[k].keyName === "SiteHeader") {
+                                updatedData.SiteHeader = data[k].keyValue;
+                            } else if (data[k].keyName === "SiteName") {
+                                updatedData.SiteName = data[k].keyValue;
+                            } else if (data[k].keyName === "SiteTitle") {
+                                updatedData.SiteTitle = data[k].keyValue;
+                            } else if (data[k].keyName === "SiteURL") {
+                                updatedData.SiteUrl = data[k].keyValue;
                             }
-                        });
-                } else {
-                    response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.error });
-                    }).catch(err => {
-                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                        }
+
+                        setFormData(updatedData);
                     });
                 }
-            }).catch(err => {
-                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
-            }).finally(() => {
-                this.setState({ loading: false });
+
+                return response.json().then(data => {
+                    if (isMounted) {
+                        setBsstyle('danger');
+                        setMessage(data.error);
+                    }
+                }).catch(() => {
+                    if (isMounted) {
+                        setBsstyle('danger');
+                        setMessage("Unable to process request.");
+                    }
+                });
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setBsstyle('danger');
+                    setMessage("Unable to contact server.");
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setLoading(false);
+                }
             });
-    }
 
-    handleChange(e) {
-        if (e.target.name === "Address") {
-            this.setState({ Address: e.target.value });
+        return () => {
+            isMounted = false;
+        };
+    }, [token]);
 
-        } else if (e.target.name === "AdminName") {
-            this.setState({ AdminName: e.target.value });
-        } else if (e.target.name === "ContactEmail") {
-            this.setState({ ContactEmail: e.target.value });
-        }
-        else if (e.target.name === "CommonHeadContent") {
-            this.setState({ CommonHeadContent: e.target.value });
-        } else if (e.target.name === "EmailSignature") {
-            this.setState({ EmailSignature: e.target.value });
-        } else if (e.target.name === "NewsletterEmail") {
-            this.setState({ NewsletterEmail: e.target.value });
-        } else if (e.target.name === "Phone") {
-            this.setState({ Phone: e.target.value });
-        } else if (e.target.name === "SiteHeader") {
-            this.setState({ SiteHeader: e.target.value });
-        } else if (e.target.name === "SiteFooter") {
-            this.setState({ SiteFooter: e.target.value });
-        } else if (e.target.name === "SiteName") {
-            this.setState({ SiteName: e.target.value });
-        } else if (e.target.name === "SiteTitle") {
-            this.setState({ SiteTitle: e.target.value });
-        } else if (e.target.name === "SiteURL") {
-            this.setState({ SiteUrl: e.target.value });
-        }
-        this.saveWebsiteSetting(e.target.name, e.target.value);
-    }
+    const saveWebsiteSetting = (keyname, keyvalue) => {
+        setBsstyle('');
+        setMessage('');
 
-    saveWebsiteSetting(keyname, keyvalue) {
-        this.setState({ bsstyle: '', message: '' });
         fetch(API.GetURL() + '/websitesettings/update',
             {
                 method: 'post',
                 body: JSON.stringify({ keyName: keyname, keyValue: keyvalue }),
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.state.token}`
+                    'Authorization': `Bearer ${token}`
                 }
             })
             .then(response => {
                 if (response.status === 200 || response.status === 204) {
-                    this.setState({ bsstyle: 'success', message: "Website setting saved." });
+                    setBsstyle('success');
+                    setMessage("Website setting saved.");
                 }
                 else {
                     response.json().then(data => {
-                        this.setState({ bsstyle: 'danger', message: data.error });
-                    }).catch(err => {
-                        this.setState({ bsstyle: 'danger', message: "Unable to process request." });
+                        setBsstyle('danger');
+                        setMessage(data.error);
+                    }).catch(() => {
+                        setBsstyle('danger');
+                        setMessage("Unable to process request.");
                     });
                 }
             }).catch(err => {
                 console.log(err);
-                this.setState({ bsstyle: 'danger', message: "Unable to contact server." });
+                setBsstyle('danger');
+                setMessage("Unable to contact server.");
             });
-    }
+    };
 
-    renderTable() {
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        saveWebsiteSetting(name, value);
+    };
+
+    const getSitemap = () => {
+        setBsstyle('');
+        setMessage('');
+        setFetchingSitemap(true);
+
+        fetch(API.GetURL() + '/utility/sitemap', {
+            method: 'get',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || "Unable to download sitemap.");
+                    }).catch(() => {
+                        throw new Error("Unable to download sitemap.");
+                    });
+                }
+
+                return response.blob();
+            })
+            .then(blob => {
+                const fileUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.download = 'sitemap.xml';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(fileUrl);
+
+                setBsstyle('success');
+                setMessage('Sitemap downloaded successfully.');
+            })
+            .catch(err => {
+                setBsstyle('danger');
+                setMessage(err.message || "Unable to contact server.");
+            })
+            .finally(() => {
+                setFetchingSitemap(false);
+            });
+    };
+
+    const generateSitemap = () => {
+        setBsstyle('');
+        setMessage('');
+        setGeneratingSitemap(true);
+
+        fetch(API.GetURL() + '/utility/generate-sitemap', {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (response.status === 200 || response.status === 204) {
+                    setBsstyle('success');
+                    setMessage('Sitemap generated successfully.');
+                    return;
+                }
+
+                response.json().then(data => {
+                    setBsstyle('danger');
+                    setMessage(data.error || "Unable to generate sitemap.");
+                }).catch(() => {
+                    setBsstyle('danger');
+                    setMessage("Unable to process request.");
+                });
+            })
+            .catch(() => {
+                setBsstyle('danger');
+                setMessage("Unable to contact server.");
+            })
+            .finally(() => {
+                setGeneratingSitemap(false);
+            });
+    };
+
+    const renderTable = () => {
         return (
             <div>
                 <div className="fixedBottom">
-                    <MessageStrip message={this.state.message} bsstyle={this.state.bsstyle} />
+                    <MessageStrip message={message} bsstyle={bsstyle} />
+                </div>
+                <div className="mb-4">
+                    <ControlLabel className="fw-bold d-block">Sitemap</ControlLabel>
+                    <div className="d-flex gap-2 flex-wrap">
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary"
+                            onClick={getSitemap}
+                            disabled={fetchingSitemap || generatingSitemap}
+                        >
+                            {fetchingSitemap ? 'Downloading...' : 'Get Sitemap'}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={generateSitemap}
+                            disabled={fetchingSitemap || generatingSitemap}
+                        >
+                            {generatingSitemap ? 'Generating...' : 'Generate Sitemap'}
+                        </button>
+                    </div>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="Address">
@@ -150,9 +268,9 @@ export class WebsiteSettings extends Component {
                         <FormControl
                             name="Address"
                             type="text"
-                            value={this.state.Address}
+                            value={formData.Address}
                             placeholder="Enter Office Address"
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         />
                     </FormGroup>
                 </div>
@@ -162,18 +280,18 @@ export class WebsiteSettings extends Component {
                         <FormControl
                             name="AdminName"
                             type="text"
-                            value={this.state.AdminName}
+                            value={formData.AdminName}
                             placeholder=""
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         />
                     </FormGroup>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="ContactEmail">
                         <ControlLabel className="fw-bold">Contact Email</ControlLabel>
-                        <FormControl name="ContactEmail" onChange={this.handleChange}
+                        <FormControl name="ContactEmail" onChange={handleChange}
                             type="email"
-                            value={this.state.ContactEmail}
+                            value={formData.ContactEmail}
                             placeholder=""
                         />
                     </FormGroup>
@@ -181,8 +299,8 @@ export class WebsiteSettings extends Component {
                 <div className="mb-4">
                     <FormGroup controlId="NewsletterEmail">
                         <ControlLabel className="fw-bold">Newsletter Email</ControlLabel>
-                        <FormControl name="NewsletterEmail" onChange={this.handleChange}
-                            type="email" value={this.state.NewsletterEmail}
+                        <FormControl name="NewsletterEmail" onChange={handleChange}
+                            type="email" value={formData.NewsletterEmail}
                             rows="4"
                         />
                     </FormGroup>
@@ -190,41 +308,41 @@ export class WebsiteSettings extends Component {
                 <div className="mb-4">
                     <FormGroup controlId="Phone">
                         <ControlLabel className="fw-bold">Phone</ControlLabel>
-                        <FormControl name="Phone" onChange={this.handleChange}
+                        <FormControl name="Phone" onChange={handleChange}
                             type="text"
-                            value={this.state.Phone} />
+                            value={formData.Phone} />
                     </FormGroup>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="SiteTitle">
                         <ControlLabel className="fw-bold">Site Title</ControlLabel>
-                        <FormControl name="SiteTitle" onChange={this.handleChange}
+                        <FormControl name="SiteTitle" onChange={handleChange}
                             type="text"
-                            value={this.state.SiteTitle} />
+                            value={formData.SiteTitle} />
                     </FormGroup>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="SiteName">
                         <ControlLabel className="fw-bold">Site Name</ControlLabel>
-                        <FormControl name="SiteName" onChange={this.handleChange}
+                        <FormControl name="SiteName" onChange={handleChange}
                             type="text"
-                            value={this.state.SiteName} />
+                            value={formData.SiteName} />
                     </FormGroup>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="SiteUrl">
                         <ControlLabel className="fw-bold">Site Url</ControlLabel>
-                        <FormControl name="SiteUrl" onChange={this.handleChange}
+                        <FormControl name="SiteUrl" onChange={handleChange}
                             type="text"
-                            value={this.state.SiteUrl} />
+                            value={formData.SiteUrl} />
                     </FormGroup>
                 </div>
                 <div className="mb-4">
                     <FormGroup controlId="CommonHeadContent">
                         <ControlLabel className="fw-bold">Common Head Content</ControlLabel>
-                        <FormControl name="CommonHeadContent" onChange={this.handleChange}
+                        <FormControl name="CommonHeadContent" onChange={handleChange}
                             componentClass="textarea"
-                            value={this.state.CommonHeadContent}
+                            value={formData.CommonHeadContent}
                             placeholder="" rows="10"
                         />
                     </FormGroup>
@@ -232,9 +350,9 @@ export class WebsiteSettings extends Component {
                 <div className="mb-4">
                     <FormGroup controlId="EmailSignature">
                         <ControlLabel className="fw-bold">Email Signature</ControlLabel>
-                        <FormControl name="EmailSignature" onChange={this.handleChange}
+                        <FormControl name="EmailSignature" onChange={handleChange}
                             componentClass="textarea"
-                            value={this.state.EmailSignature}
+                            value={formData.EmailSignature}
                             rows="4"
                         />
                     </FormGroup>
@@ -242,9 +360,9 @@ export class WebsiteSettings extends Component {
                 <div className="mb-4">
                     <FormGroup controlId="SiteFooter">
                         <ControlLabel className="fw-bold">Site Footer</ControlLabel>
-                        <FormControl name="SiteFooter" onChange={this.handleChange}
+                        <FormControl name="SiteFooter" onChange={handleChange}
                             componentClass="textarea"
-                            value={this.state.SiteFooter}
+                            value={formData.SiteFooter}
                             rows="8"
                         />
                     </FormGroup>
@@ -252,25 +370,23 @@ export class WebsiteSettings extends Component {
                 <div className="mb-4">
                     <FormGroup controlId="SiteHeader">
                         <ControlLabel className="fw-bold">Site Header</ControlLabel>
-                        <FormControl name="SiteHeader" onChange={this.handleChange}
+                        <FormControl name="SiteHeader" onChange={handleChange}
                             componentClass="textarea"
-                            value={this.state.SiteHeader}
+                            value={formData.SiteHeader}
                             rows="8"
                         />
                     </FormGroup>
                 </div>
             </div>
         );
-    }
+    };
 
-    render() {
-
-        if (!this.state.loggedin) {
-            return (<Redirect to="/loginform" />);
-        } else {
-            let contents = this.state.loading
+    if (!loggedin) {
+        return (<Redirect to="/loginform" />);
+    } else {
+            let contents = loading
                 ? <Spinner />
-                : this.renderTable();
+                : renderTable();
             return (
                 <div>
                     <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom sticky-top bg-white">
@@ -280,6 +396,5 @@ export class WebsiteSettings extends Component {
                     {contents}
                 </div>
             );
-        }
     }
 }
