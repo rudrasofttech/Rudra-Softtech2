@@ -218,7 +218,6 @@ namespace RST.Services
                 return null;
 
             uw.Name = model.Name;
-            uw.WSType = model.WSType;
             uw.Html = model.TemplateHtml;
             uw.JsonData = model.JsonData;
             uw.Description = model.Description;
