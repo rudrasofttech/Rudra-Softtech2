@@ -141,7 +141,7 @@ namespace RST.Web.Controllers
                 
                 model.HTML = SanitizeHtml(model.HTML);
 
-                var uw = await _userWebsiteService.CreateAsync(model, member);
+                var uw = await _userWebsiteService.CreateAsync(model, member, HttpContext.Request);
                 if (uw == null)
                     return BadRequest(new { error = "Website with this name already exists or theme not found." });
 
@@ -164,7 +164,7 @@ namespace RST.Web.Controllers
                     return Unauthorized(new { error = "User not found." });
 
                 model.HTML = SanitizeHtml(model.HTML);
-                var uw = await _userWebsiteService.UpdateAsync(model, member);
+                var uw = await _userWebsiteService.UpdateAsync(model, member, HttpContext.Request);
                 if (uw == null)
                     return BadRequest(new { error = "Website with this name already exists or theme not found." });
 

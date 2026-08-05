@@ -21,6 +21,7 @@ namespace RST.Model.DTO.UserWebsite
         public string Description { get; set; } = string.Empty;
 
         public DesignPublishStatus PublishStatus { get; set; } = DesignPublishStatus.Public;
+        public string Thumbnail { get; set; } = string.Empty;
     }
 
     public class UpdateUserWebsiteDTO {
@@ -47,6 +48,8 @@ namespace RST.Model.DTO.UserWebsite
         public string Description { get; set; } = string.Empty;
 
         public DesignPublishStatus PublishStatus { get; set; } = DesignPublishStatus.Public;
+
+        public string Thumbnail { get; set; } = string.Empty;
     }
 
     public class AddWebsiteModel

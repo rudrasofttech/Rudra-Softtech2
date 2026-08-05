@@ -1,3 +1,4 @@
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,8 +17,8 @@ namespace RST.Services
         Task<List<UserWebsiteListItemDTO>> GetMyWebsitesAsync(Member m);
         Task<UserWebsite?> GetByIdAsync(Guid id);
         Task<bool> IsUniqueNameAsync(string name, Guid? selfId = null);
-        Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member);
-        Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member);
+        Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member, HttpRequest request);
+        Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member, HttpRequest request);
         Task<UserWebsite?> CreateVCardAsync(CreateVCardWebsiteDTO model, Member member, HttpRequest request);
         Task<UserWebsite?> CreateLinkListAsync(CreateLinkListWebsiteDTO model, Member member, HttpRequest request);
         Task<UserWebsite?> CreateCanvasAsync(CreateCanvasWebsiteDTO model, Member member, HttpRequest request);
@@ -170,7 +171,7 @@ namespace RST.Services
             }
         }
 
-        public async Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member)
+        public async Task<UserWebsite?> CreateAsync(CreateUserWebsiteDTO model, Member member, HttpRequest request)
         {
             if (!await IsUniqueNameAsync(model.Name))
                 return null;
@@ -181,9 +182,24 @@ namespace RST.Services
 
             if (member == null)
                 return null;
+            var websiteId = Guid.NewGuid();
+            var hostUrl = $"{request.Scheme}://{request.Host.Value}";
 
+            string thumbnailPath = string.Empty;
+            if (!string.IsNullOrWhiteSpace(model.Thumbnail) && model.Thumbnail.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                string? fileExt;
+                var relativePath = SaveBase64ImageToFile(model.Thumbnail, $"drive/uwpics/{websiteId}", "thumbnail", 800, out fileExt, _logger);
+                if (relativePath != null)
+                    thumbnailPath = $"{hostUrl}{relativePath}";
+            }
+            else if (!string.IsNullOrWhiteSpace(model.Thumbnail))
+            {
+                thumbnailPath = model.Thumbnail;
+            }
             var uw = new UserWebsite
             {
+                Id = websiteId,
                 Created = DateTime.UtcNow,
                 Name = model.Name,
                 Owner = member,
@@ -194,7 +210,8 @@ namespace RST.Services
                 Description = model.Description,
                 Keywords = model.Tag,
                 PublishStatus = model.PublishStatus,
-                Output = model.HTML
+                Output = model.HTML,
+                Thumbnail = thumbnailPath
             };
             //if (uw.WSType == WebsiteType.VCard)
             //    uw.VisitingCardDetail = new VisitingCardDetail();
@@ -205,7 +222,7 @@ namespace RST.Services
             return uw;
         }
 
-        public async Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member)
+        public async Task<UserWebsite?> UpdateAsync(UpdateUserWebsiteDTO model, Member member, HttpRequest request)
         {
             if (!await IsUniqueNameAsync(model.Name, model.Id))
                 return null;
@@ -216,6 +233,51 @@ namespace RST.Services
             var uw = await _db.UserWebsites.FirstOrDefaultAsync(t => t.Id == model.Id);
             if (uw == null)
                 return null;
+
+            var hostUrl = $"{request.Scheme}://{request.Host.Value}";
+            var folderRelativePath = $"drive/uwpics/{uw.Id}";
+
+            if (string.IsNullOrWhiteSpace(model.Thumbnail))
+            {
+                foreach (var ext in new[] { ".png", ".jpg" })
+                {
+                    var thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, $"thumbnail{ext}");
+                    try
+                    {
+                        if (System.IO.File.Exists(thumbPath))
+                            System.IO.File.Delete(thumbPath);
+                    }
+                    catch (Exception fileEx)
+                    {
+                        logger.LogWarning(fileEx, "Failed to delete thumbnail file for website {WebsiteId}", uw.Id);
+                    }
+                }
+                uw.Thumbnail = string.Empty;
+            }
+            else if (model.Thumbnail.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                string? fileExt;
+                var relativePath = SaveBase64ImageToFile(model.Thumbnail, folderRelativePath, "thumbnail", 800, out fileExt, logger);
+                if (relativePath != null)
+                {
+                    var altExt = fileExt == ".png" ? ".jpg" : ".png";
+                    var altPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderRelativePath, $"thumbnail{altExt}");
+                    try
+                    {
+                        if (System.IO.File.Exists(altPath))
+                            System.IO.File.Delete(altPath);
+                    }
+                    catch (Exception fileEx)
+                    {
+                        logger.LogWarning(fileEx, "Failed to delete alternate thumbnail for website {WebsiteId}", uw.Id);
+                    }
+                    uw.Thumbnail = $"{hostUrl}{relativePath}";
+                }
+            }
+            else
+            {
+                uw.Thumbnail = model.Thumbnail;
+            }
 
             uw.Name = model.Name;
             uw.Html = model.TemplateHtml;
